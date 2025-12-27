@@ -79,6 +79,8 @@ if(DRACHMA_BUILD_GUI)
 endif()
 
 # Tests
+option(DRACHMA_BUILD_FUZZ "Build fuzzing harnesses" OFF)
+
 if(DRACHMA_BUILD_TESTS)
     enable_testing()
     add_executable(schnorr_test tests/crypto/schnorr_test.cpp)
@@ -105,6 +107,47 @@ if(DRACHMA_BUILD_TESTS)
     target_link_libraries(fork_resolution_test PRIVATE drachma_layer1)
     add_test(NAME fork_resolution_test COMMAND fork_resolution_test)
 
+    add_executable(chainstate_tests tests/chainstate/chainstate_tests.cpp)
+    target_link_libraries(chainstate_tests PRIVATE drachma_layer1)
+    add_test(NAME chainstate_tests COMMAND chainstate_tests)
+
+    add_executable(mempool_tests tests/mempool/mempool_tests.cpp)
+    target_link_libraries(mempool_tests PRIVATE drachma_layer2)
+    add_test(NAME mempool_tests COMMAND mempool_tests)
+
+    add_executable(block_validation_tests tests/validation/block_validation_tests.cpp)
+    target_link_libraries(block_validation_tests PRIVATE drachma_layer1)
+    add_test(NAME block_validation_tests COMMAND block_validation_tests)
+
+    add_executable(p2p_integration_test tests/net/p2p_integration_test.cpp)
+    target_link_libraries(p2p_integration_test PRIVATE drachma_layer2)
+    add_test(NAME p2p_integration_test COMMAND p2p_integration_test)
+
+    if(DRACHMA_BUILD_FUZZ)
+        add_executable(fuzz_schnorr tests/crypto/fuzz_schnorr.cpp)
+        target_link_libraries(fuzz_schnorr PRIVATE drachma_layer1)
+        target_compile_options(fuzz_schnorr PRIVATE -fsanitize=fuzzer,address)
+        target_link_options(fuzz_schnorr PRIVATE -fsanitize=fuzzer,address)
+
+        add_executable(fuzz_tagged_hash tests/crypto/fuzz_tagged_hash.cpp)
+        target_link_libraries(fuzz_tagged_hash PRIVATE drachma_layer1)
+        target_compile_options(fuzz_tagged_hash PRIVATE -fsanitize=fuzzer,address)
+        target_link_options(fuzz_tagged_hash PRIVATE -fsanitize=fuzzer,address)
+
+        add_executable(fuzz_validation tests/validation/fuzz_validation.cpp)
+        target_link_libraries(fuzz_validation PRIVATE drachma_layer1)
+        target_compile_options(fuzz_validation PRIVATE -fsanitize=fuzzer,address)
+        target_link_options(fuzz_validation PRIVATE -fsanitize=fuzzer,address)
+    else()
+        add_executable(fuzz_schnorr tests/crypto/fuzz_schnorr.cpp)
+        target_link_libraries(fuzz_schnorr PRIVATE drachma_layer1)
+
+        add_executable(fuzz_tagged_hash tests/crypto/fuzz_tagged_hash.cpp)
+        target_link_libraries(fuzz_tagged_hash PRIVATE drachma_layer1)
+
+        add_executable(fuzz_validation tests/validation/fuzz_validation.cpp)
+        target_link_libraries(fuzz_validation PRIVATE drachma_layer1)
+    endif()
     add_executable(fuzz_schnorr tests/crypto/fuzz_schnorr.cpp)
     target_link_libraries(fuzz_schnorr PRIVATE drachma_layer1)
 

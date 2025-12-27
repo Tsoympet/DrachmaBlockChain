@@ -1,2 +1,9 @@
-// TODO: Full implementation will be added by Codex.
-// Part of the DRACHMA blockchain project.
+#include "block.h"
+
+uint256 BlockHash(const BlockHeader& header) {
+    return TaggedHash("BLOCK",
+        reinterpret_cast<const uint8_t*>(&header),
+        sizeof(BlockHeader)
+    );
+}
+

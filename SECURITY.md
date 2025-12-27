@@ -1,42 +1,36 @@
 # Security Policy
 
-## Reporting a Vulnerability
-
 We take security and consensus safety seriously. Please report suspected vulnerabilities **privately** and **do not** open public issues.
 
-- **Preferred contact:** security@drachma.org (optionally encrypted; request the GPG fingerprint in your initial email)
+## Reporting a Vulnerability
+- **Preferred contact:** security@drachma.org (request GPG fingerprint in your initial email; encrypted reports encouraged)
 - **Alternate:** GitHub "Report a vulnerability" (Security tab) to open a private advisory with maintainers
-- **Information to include:**
-  - A description of the issue and potential impact (especially consensus divergence or DoS)
-  - Minimal reproduction steps, logs, test vectors, or proof-of-concept if available
-  - Affected versions/commit hashes and environment details
-  - Whether the issue has been disclosed elsewhere
+- **Include:** impact description, reproduction steps, logs/vectors, affected versions/commit hashes, environment, and disclosure plans.
 
-## Responsible Disclosure Process
+### Response Targets
+- Acknowledgement within **3 business days**
+- Triage update within **7 days**
+- Fix/mitigation plan for critical issues within **30 days** (may defer public details to protect users)
 
-1. Report the issue privately via email or GitHub advisory.
-2. We will acknowledge receipt within **3 business days** and assign a tracking ID.
-3. Maintainers will triage severity and impacted components (consensus, networking, wallet, miners, build, docs).
-4. You will receive periodic updates (at least weekly) until resolution. For consensus-affecting bugs, expect additional peer review.
-5. Coordinated disclosure timelines will be agreed upon before public release. We aim to publish fixes within **30 days** for critical issues, but may defer public details to protect users.
-6. Once remediated, we will publish release notes and advisories summarizing impact, fixes, and mitigations.
-
-## Bounties and Acknowledgment
-
-- We do not operate a formal monetary bounty program at this time.
-- We are happy to acknowledge reporters in release notes and advisories (with consent). Anonymous reporting is respected.
+## Bug Bounty Program
+- **Status:** Active for consensus, networking, wallet, miners, and build/release pipelines.
+- **Rewards:**
+  - Critical consensus faults (chain split, inflation) — up to **10,000 USD** equivalent in stablecoin.
+  - Remote DoS on default-config nodes — up to **2,000 USD**.
+  - Wallet key/seed exfiltration — up to **5,000 USD**.
+- **Eligibility:** First-come disclosure, must provide working proof-of-concept; exploits of outdated dependencies without impact are excluded.
+- **Process:**
+  1. Submit privately with "Bounty" in the subject.
+  2. Maintain embargo until coordinated release; payment follows patch availability and validation.
+  3. Optionally request public acknowledgment in release notes or remain anonymous.
 
 ## Scope
+- Consensus logic, networking, wallet services, miners, build scripts, release artifacts, configuration defaults, and documentation that could mislead users in a way that impacts security.
 
-- Consensus logic, networking, wallet services, miners, build scripts, release artifacts, and configuration defaults.
-- Documentation that could mislead users in a way that impacts security.
+### Out of Scope
+- Third-party pools or forks not maintained here
+- Hypothetical issues without actionable details
+- Vulnerabilities requiring full host compromise with no network effect
 
-## Out of Scope
-
-- Third-party pools or forks not maintained in this repository.
-- Hypothetical attacks without actionable details.
-- Vulnerabilities requiring root/administrator access on a fully compromised host without network implications.
-
-## External Audits
-
-We welcome external audits ahead of each tagged release. Auditors can open a private issue titled "Security Audit Request" to coordinate scope, timelines, and key exchange. Release candidates will be announced on the repository Releases page with binary hashes and optional detached signatures to simplify verification.
+## Audit Invitations
+We welcome independent audits prior to each tagged release candidate. Auditors can open a private issue titled "Security Audit Request" to coordinate scope, timelines, sample binaries, and key exchange. Release candidates will publish binary hashes and detached GPG signatures to simplify verification.

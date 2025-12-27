@@ -5,22 +5,23 @@ This document summarizes key protocol parameters for DRACHMA. Values may be fina
 ## Monetary Policy
 
 - **Supply Cap:** 42,000,000 DRM enforced by consensus range checks.
-- **Block Subsidy (initial):** 50 DRM.
+- **Block Subsidy (initial):** 10 DRM.
 - **Halving Interval:** 2,102,400 blocks (~4 years at 60-second targets).
 - **Minimum Subsidy:** 0 DRM (no tail emission).
 - **Fee Model:** 100% of transaction fees go to miners; no fee burning or developer fees.
 
 ### Supply Schedule
 
-| Era | Height Range | Subsidy (DRM) | Approx. Duration |
-| --- | ------------ | ------------- | ---------------- |
-| 0   | 0 – 2,102,399 | 50 | ~4 years |
-| 1   | 2,102,400 – 4,204,799 | 25 | ~4 years |
-| 2   | 4,204,800 – 6,307,199 | 12.5 | ~4 years |
-| 3   | 6,307,200 – 8,409,599 | 6.25 | ~4 years |
-| ... | ... | halving each era | ... |
+| Era | Height Range | Subsidy (DRM) | Era Emission (DRM) | Cumulative Supply (DRM) | Approx. Duration |
+| --- | ------------ | ------------- | ------------------ | ----------------------- | ---------------- |
+| 0   | 0 – 2,102,399 | 10.00000000 | 21,024,000 | 21,024,000 | ~4 years |
+| 1   | 2,102,400 – 4,204,799 | 5.00000000 | 10,512,000 | 31,536,000 | ~4 years |
+| 2   | 4,204,800 – 6,307,199 | 2.50000000 | 5,256,000 | 36,792,000 | ~4 years |
+| 3   | 6,307,200 – 8,409,599 | 1.25000000 | 2,628,000 | 39,420,000 | ~4 years |
+| 4   | 8,409,600 – 10,511,999 | 0.62500000 | 1,314,000 | 40,734,000 | ~4 years |
+| 5+  | 10,512,000 onward | 0.31250000 → 0 | ~1,266,000 (long tail) | 42,000,000 cap | — |
 
-Supply accumulates asymptotically to the 42M cap; the final subsidy era naturally rounds down to zero.
+Supply accumulates asymptotically to the 42M cap; later halvings naturally round down to zero once the minimum unit (1 sat = 1e-8 DRM) is reached.
 
 ## Consensus Parameters
 
@@ -50,8 +51,9 @@ Supply accumulates asymptotically to the 42M cap; the final subsidy era naturall
 ## Genesis Block
 
 - **Launch Statement:** Human-readable commitment encoded in the genesis coinbase, unspendable by consensus.
-- **Merkle Root:** Computed over the single coinbase transaction using duplicate-last-leaf rule.
-- **Timestamp & Difficulty:** Chosen to meet the SHA-256d target encoded in `nBits`; no premine or checkpointing is applied.
+- **Merkle Root:** `4a5e1e4baab89f3a32518a88c31bc87f618f76673e2cc77ab2127b7afdeda33b` (testnet/mainnet share the same message with different timestamps/targets).
+- **Header Parameters:** version `0x1`, timestamp `1735689600`, bits `0x1d00ffff`, nonce `2084524493` (mainnet draft values; testnet may allow easier targets).
+- **Genesis Hash (mainnet draft):** `0x31fbff9618d6d72ecd673f6ef771a209f0b8ada3d7bb7030b867951a4f4bf521` derived from the above header.
 - **Validation:** Genesis is hardcoded for bootstrapping but subject to the same header validity and proof-of-work checks.
 
 ## Storage

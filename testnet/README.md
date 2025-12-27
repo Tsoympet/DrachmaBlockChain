@@ -33,8 +33,23 @@ python3 faucet.py tb1qtestaddress --amount 1.5 --rpc http://127.0.0.1:18332 \
   --rpcuser user --rpcpassword pass
 ```
 
+For public usage, prefer running behind a reverse proxy with TLS termination
+and set `--state-file` to persist rate limits across restarts. The faucet script
+accepts `--allowlist` to restrict payouts to pre-approved addresses.
+
 ## Seeds and monitoring
 
-- `seeds.json` lists bootstrap peers for default discovery.
+- `seeds.json` lists geographically diverse DNS seeds and IPv4/IPv6 anchors used
+  by bootstrap discovery. New operators should contribute additional DNS seeds
+  to expand coverage.
 - `monitoring/` contains Prometheus and Grafana starter configs to watch block
-  height, peers, and mempool utilization across nodes and faucet services.
+  height, peers, and mempool utilization across nodes and faucet services. See
+  the README inside that directory for scrape targets matching the provided
+  docker-compose profile.
+
+## Quick start (3-node local mesh)
+
+Use `docker-compose up -d` from the repository root to launch two seed nodes,
+three regular peers, monitoring, and an optional faucet. Logs stream with
+`docker-compose logs -f drachma-seed-a`, and peer health can be checked with
+`scripts/sync-check.sh --network testnet`.

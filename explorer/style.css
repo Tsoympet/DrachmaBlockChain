@@ -1,8 +1,74 @@
-body { font-family: Arial, sans-serif; background: #0d1117; color: #e6edf3; margin: 0; padding: 0; }
-header { background: #161b22; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; }
-main { padding: 20px; display: grid; grid-template-columns: 1fr; gap: 16px; }
-section { background: #161b22; padding: 16px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
-button { background: #238636; color: #fff; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
-button:hover { background: #2ea043; }
-input { padding: 8px; width: 280px; max-width: 100%; margin-right: 8px; border-radius: 4px; border: 1px solid #30363d; background: #0d1117; color: #e6edf3; }
-pre { background: #0d1117; padding: 12px; border-radius: 6px; overflow-x: auto; }
+:root {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  color: #e6e9ef;
+  background: #0f1117;
+}
+
+body {
+  margin: 0;
+  padding: 0 1.5rem 2rem;
+  background: radial-gradient(circle at 20% 20%, #1f2733, #0f1117 45%);
+}
+
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.2rem 0;
+}
+
+h1 { margin: 0; letter-spacing: 0.08em; }
+
+main {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 1rem;
+}
+
+section {
+  background: #161b24;
+  border: 1px solid #222a36;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.35);
+}
+
+.status input {
+  background: #0b0d12;
+  color: #e6e9ef;
+  border: 1px solid #222a36;
+  border-radius: 6px;
+  padding: 0.45rem;
+  width: 260px;
+}
+
+button {
+  background: linear-gradient(120deg, #00a7ff, #0066ff);
+  border: none;
+  color: #fff;
+  padding: 0.5rem 0.9rem;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-left: 0.35rem;
+}
+
+button:hover { filter: brightness(1.08); }
+
+.controls { display: flex; gap: 0.5rem; }
+.controls input { flex: 1; }
+
+pre, #address-summary {
+  background: #0b0d12;
+  border: 1px solid #222a36;
+  padding: 0.75rem;
+  border-radius: 6px;
+  color: #9ac7ff;
+  height: 220px;
+  overflow: auto;
+}
+
+footer {
+  margin-top: 1.5rem;
+  text-align: center;
+  color: #6b778d;
+}

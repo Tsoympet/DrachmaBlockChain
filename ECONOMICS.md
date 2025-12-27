@@ -3,24 +3,35 @@
 A concise overview of supply, issuance, and fair-launch mechanics for the DRACHMA blockchain.
 
 ## Supply Overview
-- **Ticker:** DRACHMA (DRA)
-- **Total Supply Cap:** 42,000,000 DRA
-- **Circulating Supply at Launch:** 0 DRA (all issuance via on-chain mining)
+- **Ticker:** DRM
+- **Total Supply Cap:** 42,000,000 DRM
+- **Circulating Supply at Launch:** 0 DRM (all issuance via on-chain mining)
 
 ## Issuance Model
 - **Consensus Layer:** Layer 1 proof-of-work minting through block rewards.
-- **Starting Block Reward:** 20 DRA per block.
-- **Halving Interval:** Every 1,050,000 blocks (~1 year at ~30s block time).
+- **Starting Block Reward:** 10 DRM per block.
+- **Halving Interval:** Every 2,102,400 blocks (~4 years at 60s block time).
 - **Emission Curve:** Geometric halving until block rewards asymptotically approach zero, converging to the 42M cap.
 
-| Era | Block Range (inclusive) | Reward per Block (DRA) | Era Emission (DRA) | Cumulative Supply (DRA) |
+| Era | Block Range (inclusive) | Reward per Block (DRM) | Era Emission (DRM) | Cumulative Supply (DRM) |
 | --- | ----------------------- | ---------------------- | ------------------- | ----------------------- |
-| 0 | 0 – 1,049,999 | 20.0 | 21,000,000 | 21,000,000 |
-| 1 | 1,050,000 – 2,099,999 | 10.0 | 10,500,000 | 31,500,000 |
-| 2 | 2,100,000 – 3,149,999 | 5.0 | 5,250,000 | 36,750,000 |
-| 3 | 3,150,000 – 4,199,999 | 2.5 | 2,625,000 | 39,375,000 |
-| 4 | 4,200,000 – 5,249,999 | 1.25 | 1,312,500 | 40,687,500 |
-| 5+ | 5,250,000 onward | 0.625 → 0 over time | ~1,312,500 (long tail) | 42,000,000 cap |
+| 0 | 0 – 2,102,399 | 10.00000000 | 21,024,000 | 21,024,000 |
+| 1 | 2,102,400 – 4,204,799 | 5.00000000 | 10,512,000 | 31,536,000 |
+| 2 | 4,204,800 – 6,307,199 | 2.50000000 | 5,256,000 | 36,792,000 |
+| 3 | 6,307,200 – 8,409,599 | 1.25000000 | 2,628,000 | 39,420,000 |
+| 4 | 8,409,600 – 10,511,999 | 0.62500000 | 1,314,000 | 40,734,000 |
+| 5+ | 10,512,000 onward | 0.31250000 → 0 over time | ~1,266,000 (long tail) | 42,000,000 cap |
+
+### Emission Curve (Mermaid)
+
+```mermaid
+graph LR
+  era0[Era 0\n10 DRM] --> era1[Era 1\n5 DRM]
+  era1 --> era2[Era 2\n2.5 DRM]
+  era2 --> era3[Era 3\n1.25 DRM]
+  era3 --> era4[Era 4\n0.625 DRM]
+  era4 --> era5[Era 5+\n0.3125 → 0 DRM]
+```
 
 ## Fair Launch Commitments
 - **Genesis Block:** Contains only protocol setup transactions; no premine or founder allocations.

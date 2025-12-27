@@ -4,7 +4,7 @@ These steps guard the first epoch of DRACHMA mainnet and outline operational
 responses for early incidents.
 
 ## Pre-flight
-- Confirm genesis fields hash to `00000000drachmagenesis...` as recorded in
+- Confirm genesis fields hash to `0000099e1b8d4c7f5e6fbc85db3f1a4be810e5dc3fa1aa0b1aa55d1b335c1abc` as recorded in
   `genesis.json`.
 - Ensure at least three independent seed operators are online and reachable.
 - Publish signed binaries built from CI (see `.github/workflows/release.yml`).

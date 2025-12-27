@@ -13,46 +13,62 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
+    env:
+      BUILD_TYPE: Release
+      BUILD_DIR: build
     steps:
       - uses: actions/checkout@v4
       - name: Set up CMake
         uses: jwlawson/actions-setup-cmake@v1
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: sudo apt-get update && sudo apt-get install -y ninja-build libssl-dev libboost-all-dev
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: brew install ninja boost openssl@3
       - name: Configure
-        run: cmake -S . -B build -DDRACHMA_BUILD_GUI=OFF -DDRACHMA_BUILD_TESTS=OFF
+        run: cmake -S . -B ${BUILD_DIR} -G Ninja -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DDRACHMA_BUILD_GUI=ON -DDRACHMA_BUILD_TESTS=OFF
       - name: Build
-        run: cmake --build build --config Release --parallel
-      - name: Archive artifacts
-        if: runner.os != 'Windows'
+        run: cmake --build ${BUILD_DIR} --config ${BUILD_TYPE} --parallel
+      - name: Bundle artifacts
+        shell: bash
         run: |
-          tar -czf drachma-${{ runner.os }}.tar.gz -C build .
-      - name: Archive artifacts (Windows)
-        if: runner.os == 'Windows'
-        run: |
-          7z a drachma-Windows.zip ./build/*
-      - name: Upload artifact
+          ARTIFACT_NAME=drachma-${{ runner.os }}-${BUILD_TYPE}
+          if [[ "${{ runner.os }}" == "Windows" ]]; then
+            7z a ${ARTIFACT_NAME}.zip ./${BUILD_DIR}/*
+          else
+            tar -czf ${ARTIFACT_NAME}.tar.gz -C ${BUILD_DIR} .
+          fi
+      - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
-          name: drachma-${{ runner.os }}
+          name: drachma-${{ runner.os }}-${BUILD_TYPE}
           path: |
-            drachma-${{ runner.os }}.tar.gz
-            drachma-Windows.zip
+            drachma-${{ runner.os }}-${BUILD_TYPE}.tar.gz
+            drachma-${{ runner.os }}-${BUILD_TYPE}.zip
           if-no-files-found: ignore
-      - name: Sign artifacts
+      - name: Import GPG key
         if: secrets.RELEASE_GPG_KEY != ''
         env:
           SIGNING_KEY: ${{ secrets.RELEASE_GPG_KEY }}
+        run: echo "$SIGNING_KEY" | gpg --batch --import
+      - name: Sign artifacts
+        if: secrets.RELEASE_GPG_KEY != ''
+        env:
           SIGNING_PASS: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
+        shell: bash
         run: |
-          echo "$SIGNING_KEY" | gpg --batch --import
-          for f in drachma-*; do
-            gpg --batch --yes --passphrase "$SIGNING_PASS" --detach-sign "$f"
+          for f in drachma-${{ runner.os }}-${BUILD_TYPE}.*; do
+            gpg --batch --yes --pinentry-mode loopback --passphrase "$SIGNING_PASS" --detach-sign "$f"
+            shasum -a 256 "$f" > "$f.sha256"
           done
       - name: Publish GitHub Release assets
         if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            drachma-*.tar.gz*
-            drachma-Windows.zip*
+            drachma-${{ runner.os }}-${BUILD_TYPE}.*
+          draft: false
+          prerelease: ${{ contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,88 +1,58 @@
-# DRACHMA Deployment Guide (Mainnet)
+# DRACHMA Deployment Guide
 
-This guide describes how to prepare, deploy, and operate DRACHMA nodes for mainnet. It assumes familiarity with Linux server administration and a trusted build pipeline.
+This guide covers hardened procedures for running DRACHMA nodes on the public
+testnet and preparing for mainnet launch.
 
-## Host Preparation
+## Prerequisites
+- 64-bit Linux host with recent kernel, `curl`, `jq`, and `docker`/`docker-compose` (for containerized setups).
+- Open firewall for the chosen P2P port (default 19335 testnet / 9333 mainnet).
+- Dedicated user account to run the daemon; avoid running as root.
 
-- **Operating system:** Use a long-term-support Linux distribution with timely security updates.
-- **Isolation:** Run nodes under a dedicated user with minimal privileges. Prefer systemd units or containers with seccomp/AppArmor.
-- **Storage:** Allocate fast SSD storage for blocks and chainstate; keep backups of `wallet.dat`/keystore on encrypted media.
-- **Time sync:** Enable NTP or chrony; poor clocks can trigger timestamp rejections.
-- **Networking:** Open only required ports (P2P 9333, RPC 8332). Restrict RPC to localhost or a VPN; disable passwordless auth.
+## Building from source
+1. Clone the repository and run `scripts/build.sh`.
+2. Verify the resulting binary hash matches the published release notes.
+3. Record the commit hash used for reproducibility and attestation.
 
-## Build and Install
+## Running a node
+- Quick start: `scripts/start-node.sh -n testnet` will create a minimal config in
+  `~/.drachma-testnet` and launch the daemon using the built binary.
+- For production, copy `mainnet/config.sample.conf` into your datadir, adjust
+  RPC credentials, and run `scripts/start-node.sh -n mainnet -c /path/to/drachma.conf`.
+- Confirm connectivity with `scripts/sync-check.sh --network testnet` (or
+  `mainnet`) which validates checkpoint height and block freshness.
 
-1. Follow [`docs/building.md`](building.md) with a release build profile.
-2. Verify maintainer signatures on tags and compare SHA-256 checksums of binaries.
-3. Install artifacts to a managed prefix, e.g., `/opt/drachma`, and record the exact commit hash.
+## Docker-based multi-node testnet
+- `docker-compose up -d` launches two seed nodes, three regular peers, a faucet,
+  Prometheus, and Grafana. The compose file exposes RPC on 18332/18333/18334 and
+  metrics on 9311 for the first seed.
+- Tail logs with `docker-compose logs -f drachma-seed-a` and inspect metrics via
+  Grafana at http://localhost:3000 (default password `drachma`).
 
-## Configuration
+## Security hardening
+- Restrict RPC access to localhost or VPN ranges; always set strong RPC
+  credentials and consider TLS termination via a reverse proxy for public
+  faucets.
+- Keep `checkpoints.json` up-to-date to resist long-range forks and configure
+  `maxuploadtarget` and `banscore` as in `mainnet/config.sample.conf`.
+- Enable systemd service isolation with `ProtectSystem=strict`, `NoNewPrivileges`
+  and `PrivateTmp=yes`.
 
-Create a `drachma.conf` under your datadir (default `~/.drachma`):
+## Upgrades
+- Use `scripts/upgrade-node.sh -b /path/to/new/drachma_node --sha256 <digest>
+  --restart -s drachma.service` to atomically install new binaries and restart a
+  managed service.
+- Always back up configs and the `wallet.dat` (if applicable) before upgrading;
+  the script automatically preserves the previous binary with a timestamp.
 
-```
-network=mainnet
-listen=1
-rpcuser=<user>
-rpcpassword=<strong-password>
-txindex=1
-maxconnections=64
-banthreshold=100
-``` 
+## Monitoring and health
+- Prometheus and Grafana dashboards live in `testnet/monitoring/`; update scrape
+  targets if your hostnames differ from the default compose stack.
+- `scripts/sync-check.sh` alarms when the tip age exceeds a threshold or the node
+  lags published checkpoints—use in cron or CI.
 
-Additional recommendations:
-
-- Set `addnode=` entries to vetted seed hosts; use both IPv4 and IPv6.
-- For miners/pools, expose RPC over TLS-terminated proxies only.
-- Pin `datadir` to a dedicated filesystem and enable log rotation (systemd or `logrotate`).
-
-## Running as a Service (systemd)
-
-Example unit:
-
-```
-[Unit]
-Description=DRACHMA Node
-After=network-online.target
-Wants=network-online.target
-
-[Service]
-User=drachma
-Group=drachma
-ExecStart=/opt/drachma/bin/drachmad --datadir=/var/lib/drachma --configfile=/etc/drachma/drachma.conf
-Restart=on-failure
-LimitNOFILE=65536
-PrivateTmp=yes
-ProtectSystem=full
-ProtectHome=yes
-NoNewPrivileges=yes
-
-[Install]
-WantedBy=multi-user.target
-```
-
-Enable with `systemctl enable --now drachma.service` after placing the config and creating directories with the correct ownership.
-
-## Monitoring and Alerts
-
-- Export metrics via the RPC or built-in telemetry endpoints if enabled; scrape with Prometheus/Telegraf.
-- Watch disk, memory, and peer counts; alert on stalled tip height or repeated reorgs.
-- Keep hashes of expected binaries and scripts; detect drift with periodic integrity checks.
-
-## Backup and Recovery
-
-- Back up encrypted wallet/keystore files and configuration; do **not** back up the entire chainstate.
-- Test restores on an offline machine; verify balances via RPC and compare against a known-good node.
-- Keep multiple copies of the mnemonic/seed in separate secure locations; never store unencrypted keys on production hosts.
-
-## Incident Response
-
-- In case of suspected compromise, revoke credentials, rotate RPC passwords, and redeploy from a trusted image.
-- If a consensus bug is suspected, halt miners, preserve logs, and coordinate with maintainers using signed channels.
-- Avoid unilateral patches; run only reviewed, signed releases until a coordinated fix is available.
-
-## Post-Launch Hygiene
-
-- Apply security updates promptly and reboot on kernel or OpenSSL patches.
-- Periodically resync a fresh node to validate chain integrity.
-- Audit `drachma.conf` for drift from recommended defaults after each release.
+## Backups and recovery
+- Periodically back up the data directory and `drachma.conf`. For wallet nodes,
+  export encrypted backups via the layer3 app’s backup menu or copy `wallet.dat`
+  while the wallet is locked.
+- Validate backups by restoring onto an isolated host and verifying `getbalance`
+  and a few historical transactions via RPC.

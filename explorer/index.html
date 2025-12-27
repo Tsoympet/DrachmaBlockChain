@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>DRACHMA Explorer (Light)</title>
+  <title>DRACHMA Explorer</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -12,6 +12,7 @@
       <label for="rpc">RPC URL</label>
       <input id="rpc" type="text" value="http://localhost:18332" />
       <button id="refresh">Refresh</button>
+      <span id="network"></span>
     </div>
   </header>
   <main>
@@ -21,11 +22,37 @@
     </section>
     <section>
       <h2>Lookup Block</h2>
-      <input id="block-id" type="text" placeholder="Height or hash" />
-      <button id="lookup">Lookup</button>
+      <div class="controls">
+        <input id="block-id" type="text" placeholder="Height or hash" />
+        <button id="lookup">Lookup</button>
+      </div>
       <pre id="block-json"></pre>
     </section>
+    <section>
+      <h2>Lookup Transaction</h2>
+      <div class="controls">
+        <input id="tx-id" type="text" placeholder="Transaction hash" />
+        <button id="tx-lookup">Lookup</button>
+      </div>
+      <pre id="tx-json"></pre>
+    </section>
+    <section>
+      <h2>Address Summary</h2>
+      <div class="controls">
+        <input id="address" type="text" placeholder="Address" />
+        <button id="address-lookup">Lookup</button>
+      </div>
+      <div id="address-summary"></div>
+    </section>
+    <section>
+      <h2>Mempool</h2>
+      <button id="mempool-refresh">List Mempool</button>
+      <pre id="mempool"></pre>
+    </section>
   </main>
+  <footer>
+    <small>Powered by DRACHMA JSON-RPC. No cookies, no tracking.</small>
+  </footer>
   <script>
     async function rpcCall(rpcUrl, method, params = []) {
       const response = await fetch(rpcUrl, {
@@ -41,11 +68,17 @@
     async function refreshTip() {
       const rpc = document.getElementById('rpc').value;
       try {
-        const height = await rpcCall(rpc, 'getblockcount');
-        const hash = await rpcCall(rpc, 'getbestblockhash');
+        const [height, hash, net] = await Promise.all([
+          rpcCall(rpc, 'getblockcount'),
+          rpcCall(rpc, 'getbestblockhash'),
+          rpcCall(rpc, 'getnetworkinfo').catch(() => ({ network: 'unknown' }))
+        ]);
+        const network = typeof net === 'object' ? net.network || 'unknown' : net;
         document.getElementById('tip').textContent = `Height: ${height} / Hash: ${hash}`;
+        document.getElementById('network').textContent = `Network: ${network}`;
       } catch (err) {
         document.getElementById('tip').textContent = `Error: ${err.message}`;
+        document.getElementById('network').textContent = '';
       }
     }
 
@@ -62,8 +95,55 @@
       }
     }
 
+    async function lookupTx() {
+      const rpc = document.getElementById('rpc').value;
+      const txid = document.getElementById('tx-id').value.trim();
+      if (!txid) return;
+      try {
+        const tx = await rpcCall(rpc, 'gettransaction', [txid]);
+        document.getElementById('tx-json').textContent = JSON.stringify(tx, null, 2);
+      } catch (err) {
+        document.getElementById('tx-json').textContent = `Error: ${err.message}`;
+      }
+    }
+
+    async function lookupAddress() {
+      const rpc = document.getElementById('rpc').value;
+      const address = document.getElementById('address').value.trim();
+      if (!address) return;
+      try {
+        const [balance, utxos] = await Promise.all([
+          rpcCall(rpc, 'getbalance', [address]),
+          rpcCall(rpc, 'listunspent', [address]).catch(() => [])
+        ]);
+        const lines = [`Balance: ${balance}`, `Spendable outputs: ${utxos.length}`];
+        if (utxos.length) {
+          lines.push('UTXOs:');
+          utxos.slice(0, 10).forEach((u) => lines.push(`${u.txid}:${u.vout} amount=${u.amount}`));
+          if (utxos.length > 10) lines.push('...');
+        }
+        document.getElementById('address-summary').textContent = lines.join('\n');
+      } catch (err) {
+        document.getElementById('address-summary').textContent = `Error: ${err.message}`;
+      }
+    }
+
+    async function refreshMempool() {
+      const rpc = document.getElementById('rpc').value;
+      try {
+        const txids = await rpcCall(rpc, 'getrawmempool');
+        document.getElementById('mempool').textContent = txids.join('\n');
+      } catch (err) {
+        document.getElementById('mempool').textContent = `Error: ${err.message}`;
+      }
+    }
+
     document.getElementById('refresh').addEventListener('click', refreshTip);
     document.getElementById('lookup').addEventListener('click', lookupBlock);
+    document.getElementById('tx-lookup').addEventListener('click', lookupTx);
+    document.getElementById('address-lookup').addEventListener('click', lookupAddress);
+    document.getElementById('mempool-refresh').addEventListener('click', refreshMempool);
+
     refreshTip();
   </script>
 </body>

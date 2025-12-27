@@ -1,5 +1,7 @@
 [
-  { "host": "tn1.drachma.org", "port": 19335, "desc": "Foundation testnet seed" },
-  { "host": "tn2.drachma.org", "port": 19335, "desc": "Community seed" },
-  { "host": "203.0.113.77", "port": 19335, "desc": "Geo-diverse seed" }
+  { "host": "tn-seed-eu.drachma.net", "port": 19335, "desc": "Foundation-operated EU DNS seed" },
+  { "host": "tn-seed-us.drachma.net", "port": 19335, "desc": "Community-operated US DNS seed" },
+  { "host": "tn-seed-apac.drachma.net", "port": 19335, "desc": "APAC DNS seed" },
+  { "host": "198.51.100.77", "port": 19335, "desc": "North America IPv4 bootstrap" },
+  { "host": "2001:db8:abcd:1::5", "port": 19335, "desc": "IPv6 bootstrap" }
 ]

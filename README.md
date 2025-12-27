@@ -19,6 +19,8 @@ The project focuses on:
 
 This repository contains the **reference implementation** of the DRACHMA network.
 
+> **Status: Testnet Ready** — Public testnet nodes, faucets, and explorers are available. Mainnet launch will follow after public testing and audits.
+
 ## Releases
 
 Official binaries and source archives will be published on the GitHub Releases page. Each release will be tagged (vX.Y.Z) and include:
@@ -78,6 +80,21 @@ Always verify signatures and checksums before running binaries.
 
 Commands are subject to change as the implementation matures; prefer scripts in `scripts/` for reproducible setups.
 
+### Live Testnet
+
+The public testnet is online for wallet testing, mining experiments, and RPC integrations.
+
+- **Bootstrap peers:** `testnet/seeds.json` lists live DNS/IP seeds such as `tn1.drachma.org:19335`, `tn2.drachma.org:19335`, and geographically diverse IPs. Nodes automatically attempt these during startup.
+- **One-line start (with discovery and RPC):**
+  ```bash
+  ./build/layer1-core/drachmad --network testnet --datadir ~/.drachma-testnet \
+    --addnode tn1.drachma.org:19335 --addnode tn2.drachma.org:19335 \
+    --listen --rpcuser=user --rpcpassword=pass --prune=550
+  ```
+- **Faucet:** request DRM from the testnet faucet using `python3 testnet/faucet.py <address> --amount 5 --rpc http://user:pass@127.0.0.1:18332` (rate limited).
+- **Explorer:** a community-run explorer is linked from [`explorer/`](explorer/) for height and mempool visibility.
+- **Resetting:** delete `~/.drachma-testnet/blocks` and `chainstate` if you need to resync during protocol updates.
+
 ---
 
 ## Docker Support
@@ -118,6 +135,13 @@ Docker artifacts live alongside the source (`Dockerfile`, `docker-compose.yml`) 
   ```
 
 Commands are subject to change as the implementation matures; prefer scripts in `scripts/` for reproducible setups.
+
+### UI Snapshots
+
+The Layer 3 desktop wallet is testnet-ready. Representative views are available via reproducible demo scripts rather than inline binary assets:
+
+- **Dashboard and sync status:** launch `./build/layer3-app/drachma-wallet --connect 127.0.0.1:9333` and use the built-in “Demo Mode” under **Help → Demo Screens** to generate on-demand previews.
+- **Send flow with custom fee selection:** the same demo menu exports a markdown report (`docs/ui_snapshots.md`) describing the send dialog, fee slider, and QR rendering for sharing without embedding binary images in the repository.
 
 ---
 
@@ -323,10 +347,12 @@ Implementation is intended to be added incrementally with full review of consens
 
 ## Community & Support
 
-- **Discord:** [https://discord.gg/drachma-placeholder](https://discord.gg/drachma-placeholder)
-- **Telegram:** [https://t.me/drachma-placeholder](https://t.me/drachma-placeholder)
-- **X (Twitter):** [https://x.com/drachma-placeholder](https://x.com/drachma-placeholder)
-- **Discussions:** Use GitHub Discussions when enabled or open a well-scoped issue.
+- **GitHub Discussions:** [https://github.com/Tsoympet/BlockChainDrachma/discussions](https://github.com/Tsoympet/BlockChainDrachma/discussions)
+- **Matrix (bridged to IRC):** [https://matrix.to/#/#drachma:matrix.org](https://matrix.to/#/#drachma:matrix.org)
+- **Mailing list:** [mailto:announce@drachma.org](mailto:announce@drachma.org) for release/testnet notices
+- **Status page:** [https://status.drachma.org](https://status.drachma.org) for seed/faucet uptime during testnet
+
+Use Issues/PRs for development work and follow [`CONTRIBUTING.md`](CONTRIBUTING.md) for coding standards and review expectations.
 
 For development coordination, please prefer issues/PRs and follow [`CONTRIBUTING.md`](CONTRIBUTING.md).
 

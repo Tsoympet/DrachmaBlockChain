@@ -1,64 +1,92 @@
-# DRACHMA Protocol Specification
+# DRACHMA Protocol Overview
 
-## Networks
-- **Mainnet magic:** Custom value assigned in consensus parameters.
-- **Testnet magic:** Distinct value; permits minimum-difficulty blocks when allowed by timestamp rules.
-- **Ports:** Separate defaults for mainnet and testnet for P2P and RPC to avoid accidental cross-talk.
+This document summarizes the DRACHMA network protocol, block and transaction structures, and Proof-of-Work rules as implemented in the reference stack.
 
-## Block Header
-Fields are little-endian where applicable:
-- `version` (int32)
-- `prev_block` (32-byte hash)
-- `merkle_root` (32-byte hash)
-- `time` (uint32 epoch seconds)
-- `nBits` (compact target)
-- `nonce` (uint32)
+## Network Topology and Messaging
 
-Hashing uses double SHA-256 over the serialized header. Versionbits signaling is encoded in the version field per deployment settings in consensus parameters.
+- **Transport:** TCP with length-prefixed messages and optional TLS where configured by services.
+- **Handshake:** Version exchange, service flags, network ID (mainnet/testnet), and best-known chain tip.
+- **Inventory/Relay:** Peers announce inventories (blocks, transactions). Compact block relay and fee-based transaction admission are handled in Layer 2.
+- **Rate Limits:** DoS controls and misbehavior scoring are enforced by services; consensus code remains deterministic and stateless.
 
-## Transactions
-- Deterministic serialization with tagged SHA-256 transaction IDs.
-- Inputs reference previous outputs by hash and index and include a minimal unlocking script.
-- Outputs contain a value in atomic units and a locking script.
-- Scripts are intentionally limited: push-only data, numeric comparison, and Schnorr signature verification. No loops or recursion are permitted.
+## Block Structure (Layer 1)
 
-## Merkle Tree
-Transaction IDs form the leaves. When a layer has an odd count, the final element is duplicated. Internal nodes hash the concatenation of left and right child values using SHA-256d. The root is placed in the block header and verified during block validation.
+```
+Block {
+  Header {
+    version           uint32
+    prev_block_hash   uint256
+    merkle_root       uint256
+    time              uint32 (unix, median-time-past constrained)
+    bits              uint32 (compact target)
+    nonce             uint32
+  }
+  transactions       vector<Transaction>
+}
+```
 
-## Proof-of-Work
-- Algorithm: SHA-256d
-- Target spacing: 60 seconds
-- Retarget window: 60 blocks (3,600 seconds)
-- Adjustment clamp: ±25% per period
-- Testnet minimum difficulty: allowed when a block timestamp is more than one target spacing behind the previous block; mainnet disallows this shortcut.
+- **Size limits:** Enforced per consensus rules (maximum serialized block size and sigops limits).
+- **Merkle root:** Computed over the ordered transaction list. Coinbase is transaction 0 and includes block height and extra nonce.
+- **Validation:** Header PoW meets target; timestamps respect median-time-past; chainwork accumulates via target computation.
 
-Difficulty is stored in compact form (`nBits`). Validation expands the target, checks ranges, and verifies the block hash is below the target.
+## Transaction Structure
 
-## Subsidy and Fees
-- Initial block subsidy: 50 DRM
-- Halving interval: 210,000 blocks
-- Supply cap: 42,000,000 DRM enforced by consensus money-range rules
-- Fees: the sum of input minus output values within a block are paid to the coinbase transaction.
+```
+Transaction {
+  version    int32
+  inputs     vector<TxIn>
+  outputs    vector<TxOut>
+  lock_time  uint32
+}
 
-## Block Validation
-1. Check header syntax and proof-of-work target against difficulty rules.
-2. Ensure the previous block hash connects to known chain state.
-3. Recompute and compare Merkle root.
-4. Validate each transaction: correct serialization, signatures, scripts, and money ranges.
-5. Enforce coinbase maturity before spends and verify block reward does not exceed subsidy plus fees.
-6. Commit state changes atomically; reorg logic rolls back state to the fork point before applying competing branches.
+TxIn {
+  prevout { txid uint256, index uint32 }
+  script_sig   bytes
+  sequence     uint32
+}
 
-## P2P Messages (Layer 2)
-Layer 2 relays headers, blocks, and transactions using deterministic message formats. Messages are authenticated via network magic bytes and length fields. The relay policy includes:
-- Fee and size limits for mempool admission
-- DoS protections via bounded queues
-- Stateless verification for untrusted peers
+TxOut {
+  value        int64 (satoshis equivalent)
+  script_pubkey bytes
+}
+```
 
-## RPC Interface (Layer 2)
-An authenticated RPC server exposes operational methods such as querying chain height, submitting transactions, and inspecting wallet balances. Authentication uses per-node credentials; no unauthenticated calls are permitted.
+- **Signature rules:** Script execution follows consensus-defined opcode set; scripts are validated in Layer 1.
+- **Locktime/sequence:** Relative and absolute locktimes enforced per consensus rules; mempool may apply stricter policy.
+- **Fee calculation:** Inputs minus outputs; minimum relay and mempool policies live in services.
 
-## Wallet Behavior
-Wallets derive keys from a 24-word mnemonic and store encrypted seeds. Address generation follows deterministic derivation; spending requires Schnorr signatures over transaction digests. Change outputs and fee selection follow mempool relay policy to ensure transactions propagate.
+## Proof of Work
 
-## Cross-Chain (Non-Consensus)
-Cross-chain adapters verify external proofs (headers plus Merkle branches) without altering consensus state. Relayers queue messages and present proofs to wallets or monitoring tools. No minted assets or peg-in/peg-out logic exists inside consensus; any bridging is strictly informational.
+- **Hashing:** Double SHA-256 over the serialized block header.
+- **Target encoding:** `bits` uses compact encoding; Layer 1 recalculates the target for the next block per difficulty adjustment parameters defined in the codebase (see `layer1-core` difficulty module).
+- **Validation:** A block is valid if `double_sha256(header) <= target` and all other consensus checks pass.
+- **Work templates:** Layer 2 exposes RPC endpoints to retrieve block templates for miners. Miners modify `nonce` and extra nonce in coinbase; timestamp updates are permitted within validity bounds.
+
+## Mempool and Relay (Layer 2)
+
+- **Admission:** Checks fee rate, standardness of scripts, and ancestor/descendant limits before relaying to peers.
+- **Propagation:** Inv/getdata/tx flows, compact block relay for blocks. Transactions are rebroadcast periodically to maintain network health.
+- **Fee estimation:** Rolling estimator based on confirmed transactions; feeds wallet construction.
+
+## Wallet and Addresses (Layer 2)
+
+- HD wallet with deterministic key derivation (BIP32-style hierarchy).
+- Address formats follow the repository's selected scheme (base58/bech32 equivalent as implemented under wallet modules).
+- Wallets construct transactions referencing Layer 1 consensus rules and submit via RPC to P2P relay.
+
+## Light Clients and Indexing
+
+- Layer 2 may expose lightweight proofs (headers-first synchronization, transaction lookups) using indices built from chain data.
+- Merkle proofs allow verification of transaction inclusion without full blocks.
+
+## Extensibility and Compatibility
+
+- **Consensus changes:** Require activation mechanisms (height- or time-based) and broad review. Services and UI must remain compatible across activations.
+- **Non-consensus changes:** RPC additions or mempool policy tweaks do not affect historical validity but should maintain backward compatibility.
+
+## References in Codebase
+
+- **Consensus/Validation:** `layer1-core/` modules for block/transaction checks, difficulty calculation, and chainstate.
+- **Networking/Policy/RPC:** `layer2-services/` for P2P, mempool, fee estimation, and RPC handlers.
+- **Wallet/Keys:** Wallet backends and key management under `layer2-services/`.
+- **Miners:** Reference CPU/GPU miners under `miners/` consuming RPC work templates.

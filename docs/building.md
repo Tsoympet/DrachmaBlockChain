@@ -1,71 +1,101 @@
 # Building DRACHMA
 
-This guide outlines how to build the DRACHMA reference implementation on common platforms. The project uses CMake and a C++17 toolchain.
+This guide describes how to build the DRACHMA reference stack across platforms. DRACHMA uses CMake and a C++17 toolchain; deterministic builds are encouraged for releases.
 
 ## Prerequisites
 
-- CMake >= 3.18
-- C++17 compiler (GCC >= 10 or Clang >= 11)
-- OpenSSL (for cryptography and RPC)
-- Boost (filesystem, program_options, asio)
-- SQLite or LevelDB equivalents as introduced in future releases
-- Python 3 (for scripts/tests)
-- CUDA Toolkit or OpenCL SDK for GPU miners (optional)
+### Toolchain
+- **CMake:** >= 3.22
+- **C++ Compiler:** GCC >= 11 or Clang >= 13 with full C++17 support
+- **Python:** >= 3.9 for scripts and tests
+- **Git:** for source retrieval
 
-On Debian/Ubuntu:
+### Libraries
+- **OpenSSL** (crypto, RPC/TLS)
+- **Boost** (filesystem, program_options, asio, serialization)
+- **SQLite** (wallet/indexing) and/or **LevelDB** (chainstate) depending on build options
+- **Zlib** (compression for network and storage)
+- **cURL** (optional, for some service integrations)
 
-```bash
-sudo apt update
-sudo apt install -y build-essential cmake libssl-dev libboost-all-dev python3
-# GPU miners (optional)
-sudo apt install -y ocl-icd-opencl-dev
-```
+### GPU (optional)
+- **CUDA Toolkit** >= 11.7 for NVIDIA miners
+- **OpenCL SDK** (vendor specific) for AMD/Intel miners
+- Matching vendor drivers with development headers.
 
-## Configure & Build
+### Platform-specific packages
+- **Debian/Ubuntu:** `sudo apt install build-essential cmake pkg-config libssl-dev libboost-all-dev libsqlite3-dev libleveldb-dev libz-dev python3 python3-pip ocl-icd-opencl-dev`
+- **Fedora/RHEL:** `sudo dnf install gcc gcc-c++ cmake openssl-devel boost-devel sqlite-devel leveldb-devel zlib-devel python3 ocl-icd-devel`
+- **macOS (Homebrew):** `brew install cmake openssl boost sqlite leveldb zlib python` (set `OPENSSL_ROOT_DIR` if needed)
+- **Windows (MSVC + vcpkg):** Install Visual Studio 2022, CMake, and acquire dependencies via `vcpkg install openssl boost sqlite3 leveldb zlib`.
 
-```bash
-git clone https://github.com/Tsoympet/BlockChainDrachma.git
-cd BlockChainDrachma
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel
-```
+## Configure and Build
 
-Artifacts are produced under `build/` following the repository layout (e.g., `build/layer1-core/`, `build/layer3-app/`).
+1. Clone repository and initialize submodules if present:
+   ```bash
+   git clone https://github.com/Tsoympet/BlockChainDrachma.git
+   cd BlockChainDrachma
+   git submodule update --init --recursive
+   ```
+2. Configure with CMake:
+   ```bash
+   cmake -S . -B build \
+     -DCMAKE_BUILD_TYPE=Release \
+     -DBUILD_TESTS=ON \
+     -DENABLE_GUI=ON \
+     -DENABLE_WALLET=ON \
+     -DENABLE_GPU_MINERS=ON
+   ```
+   Toggle options as needed (see below).
+3. Build:
+   ```bash
+   cmake --build build --parallel
+   ```
+4. Run tests (if enabled):
+   ```bash
+   ctest --test-dir build --output-on-failure
+   ```
 
-### Debug Builds
+Artifacts follow the repository layout under `build/` (e.g., `build/layer1-core/`, `build/layer2-services/`, `build/layer3-app/`, `build/miners/`).
 
-```bash
-cmake -S . -B build-debug -DCMAKE_BUILD_TYPE=Debug
-cmake --build build-debug --parallel
-ctest --test-dir build-debug --output-on-failure
-```
+## Notable CMake Options
 
-### Deterministic/CI Builds
+- `CMAKE_BUILD_TYPE` = `Release` | `Debug` | `RelWithDebInfo`
+- `ENABLE_WALLET` (ON/OFF): build wallet/key management
+- `ENABLE_GUI` (ON/OFF): build desktop client under `layer3-app`
+- `ENABLE_P2P` (ON/OFF): networking services
+- `ENABLE_GPU_MINERS` (ON/OFF): CUDA/OpenCL miners
+- `CUDA_TOOLKIT_ROOT_DIR` / `OpenCL_INCLUDE_DIR` / `OpenCL_LIBRARY`: override GPU paths
+- `ENABLE_TESTS` or `BUILD_TESTS` (ON/OFF): unit/integration tests
+- `USE_SYSTEM_LIBS` (ON/OFF): prefer system dependencies over vendored
 
-- Use a pinned toolchain container or the provided `Dockerfile` for reproducibility.
-- Avoid system-wide library overrides; prefer explicit paths via `-D` flags when necessary.
+Pass options via `-D<OPTION>=<VALUE>` during configuration.
 
-## Running
+## Cross-Platform Notes
 
-- **Node (testnet):** `./build/layer1-core/drachmad --network testnet --datadir ~/.drachma`
-- **Services:** run the Layer 2 daemon after the node to expose RPC and mempool services.
-- **Desktop app:** `./build/layer3-app/drachma-wallet --connect 127.0.0.1:9333`
-- **Miners:** see `docs/mining-guide.md`.
+- **Linux:** Preferred for production nodes. Ensure `ulimit -n` is sufficient for P2P peers. Use `libstdc++` matching compiler version.
+- **macOS:** Specify OpenSSL path: `-DOPENSSL_ROOT_DIR=$(brew --prefix openssl)` when CMake cannot locate it.
+- **Windows:** Configure from a “x64 Native Tools” shell. Use Ninja (`-G Ninja`) for faster builds. Set `-DOPENSSL_ROOT_DIR` to your vcpkg install path. Disable GPU miners if CUDA/OpenCL SDKs are absent.
+- **Containers:** The provided `Dockerfile` and `docker-compose.yml` offer reproducible environments for CI and testing.
+
+## GPU Build Tips
+
+- For CUDA, ensure `nvcc --version` matches the driver; set `-DCMAKE_CUDA_ARCHITECTURES` for target GPUs.
+- For OpenCL, install vendor SDK and ICD loader; verify with `clinfo`.
+- Disable GPU miners on systems without compatible hardware to shorten build times.
 
 ## Troubleshooting
 
-- Ensure submodules are initialized if introduced later: `git submodule update --init --recursive`.
-- Delete the build directory when switching compilers or major dependencies.
-- For GPU miners, verify drivers and toolkit versions; set `CUDA_HOME` or `OpenCL` paths when needed.
+- **Missing headers/libraries:** Inspect `CMakeError.log` under `build/CMakeFiles/`. Provide explicit paths via `-D<VAR>=...`.
+- **Stale caches:** Remove the build directory when switching compilers or major options: `rm -rf build`.
+- **Linker errors on macOS:** Add `-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0` or adjust to your SDK.
+- **GPU issues:** Ensure driver/toolkit versions match; export `CUDA_HOME` or set `OpenCL` variables. Try `-DENABLE_GPU_MINERS=OFF` to isolate.
+- **Reproducible builds:** Pin compiler versions, use container images, and avoid unpinned package upgrades.
 
-## Platform Notes
+## Build Targets
 
-- **Linux:** primary development target; CI runs here first.
-- **macOS:** may require `brew install cmake openssl boost`. Set `OPENSSL_ROOT_DIR` if autodetection fails.
-- **Windows:** use MSVC 2019+ or clang-cl with Visual Studio generator. Prefer vcpkg/Conan for dependencies.
+- **Layer 1 Core Daemon:** `layer1-core/drachmad`
+- **Services Daemon:** `layer2-services/drachma-services`
+- **Desktop App:** `layer3-app/drachma-wallet`
+- **Reference Miners:** `miners/drachma-miner-cpu`, `miners/drachma-miner-gpu`
 
-## Next Steps
-
-- Read `docs/architecture.md` for the layered model.
-- Follow `CONTRIBUTING.md` before submitting patches.
-- Use `SECURITY.md` to report vulnerabilities privately.
+Install paths can be set via `-DCMAKE_INSTALL_PREFIX` followed by `cmake --install build`.

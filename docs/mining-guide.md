@@ -1,76 +1,87 @@
 # DRACHMA Mining Guide
 
-This guide describes how to run the reference CPU and GPU miners against a DRACHMA node.
+This guide explains how to run the reference CPU and GPU miners, tune performance, and choose hardware for DRACHMA's PoW.
+
+## Miner Binaries
+
+- **CPU Miner:** `miners/drachma-miner-cpu`
+- **GPU Miner:** `miners/drachma-miner-gpu` (CUDA or OpenCL depending on build)
+
+Both miners communicate with Layer 2 services via RPC to fetch block templates and submit solved headers.
 
 ## Prerequisites
 
-- A running Layer 1 node and Layer 2 services exposing mining RPC (default ports shown below).
-- Credentials for RPC (user/password or token).
-- For GPU miners: updated drivers and CUDA/OpenCL runtime.
+- A synced DRACHMA node and services stack with RPC enabled.
+- RPC credentials or access tokens configured (see Layer 2 service docs).
+- For GPU mining: compatible drivers and CUDA/OpenCL runtime installed.
 
-## Configuration
-
-1. Build the project (see `docs/building.md`).
-2. Ensure your node is listening for miner RPC submissions:
-   ```bash
-   ./build/layer1-core/drachmad --network testnet --rpcuser=user --rpcpassword=pass --rpcbind=127.0.0.1 --rpcport=8332
-   ```
-3. Start Layer 2 services (if separated) to expose work templates on port `9333` (example):
-   ```bash
-   ./build/layer2-services/drachma-service --connect 127.0.0.1:8333 --work-port 9333
-   ```
-
-## CPU Miner
+## Starting the CPU Miner
 
 ```bash
-./build/miners/cpu-miner/drachma-cpuminer \
-  --rpc http://127.0.0.1:8332 \
-  --user user --pass pass \
-  --threads 4
+./miners/drachma-miner-cpu \
+  --rpc-url http://127.0.0.1:9332 \
+  --rpc-user <user> --rpc-pass <pass> \
+  --threads <num>
 ```
 
-- Adjust `--threads` to match available CPU cores.
-- Monitor logs for accepted/rejected shares and block submissions.
+- `--threads`: Number of CPU worker threads. Start with `nproc - 1` to leave one core for system tasks.
+- The miner periodically requests new templates and automatically handles chain tips and difficulty adjustments.
 
-## GPU Miner (CUDA)
+## Starting the GPU Miner
 
+CUDA example:
 ```bash
-./build/miners/gpu-miner/drachma-cuda \
-  --url 127.0.0.1:9333 \
-  --user user --pass pass \
-  --intensity 22 --devices 0
+./miners/drachma-miner-gpu \
+  --rpc-url http://127.0.0.1:9332 \
+  --rpc-user <user> --rpc-pass <pass> \
+  --backend cuda --devices 0,1 \
+  --intensity 22
 ```
 
-- Tune `--intensity` based on GPU memory/thermal limits.
-- Use `--devices` to select GPUs (comma-separated indices).
-
-## GPU Miner (OpenCL)
-
+OpenCL example:
 ```bash
-./build/miners/gpu-miner/drachma-opencl \
-  --url 127.0.0.1:9333 \
-  --user user --pass pass \
-  --platform 0 --device 0 --work-batch 256
+./miners/drachma-miner-gpu \
+  --rpc-url http://127.0.0.1:9332 \
+  --rpc-user <user> --rpc-pass <pass> \
+  --backend opencl --platform 0 --devices 0 \
+  --work-size 256
 ```
 
-- Use `--list-devices` to enumerate available platforms/devices.
-- Start with modest batch sizes to avoid watchdog resets.
+Key flags:
+- `--backend`: `cuda` or `opencl`.
+- `--devices`: Comma-separated device indices.
+- `--platform`: OpenCL platform index (for AMD/Intel stacks).
+- `--intensity` / `--work-size`: Tune kernel occupancy and batch size.
 
-## Best Practices
+## Performance Tuning
 
-- Keep your node and miners on stable power and connectivity.
-- Use dedicated wallets for mining payouts and regularly back up keys.
-- Monitor temperatures; configure throttling to avoid hardware damage.
-- Prefer LAN connections between miners and the node to minimize latency.
+- **CPU:**
+  - Use hugepages and NUMA pinning on multi-socket systems.
+  - Set `--threads` to match physical cores; hyper-threading yields diminishing returns.
+  - Pin miner threads with `taskset` or `numactl` to reduce cross-node latency.
+- **GPU:**
+  - Match `--intensity`/`--work-size` to available VRAM and bus bandwidth.
+  - Keep GPUs cool; hash rate drops when thermal throttling triggers.
+  - Use recent drivers; outdated OpenCL ICDs often reduce stability.
+- **Node/Network:**
+  - Run miners close to the node (same LAN) to minimize RPC latency.
+  - Ensure the services daemon has sufficient peers for timely template updates.
+
+## Hardware Recommendations
+
+- **Entry / Development:** 4–8 core CPU, integrated or low-end GPU; suitable for testing.
+- **Prosumer:** 12–24 core CPU, modern NVIDIA RTX (30/40 series) or AMD RDNA2/3 GPUs with >= 8 GB VRAM.
+- **Enterprise:** Multi-GPU rigs with high-efficiency PSUs, adequate cooling, and stable power delivery. Consider ECC memory on hosts for reliability.
+
+## Monitoring and Stability
+
+- Enable verbose logs during tuning: `--log-level debug`.
+- Watch acceptance rate; frequent rejects indicate stale work or unstable overclocks.
+- Restart miners after driver updates to reload kernels.
 
 ## Troubleshooting
 
-- **Connection refused:** confirm RPC ports, credentials, and firewalls.
-- **Low hashrate:** check driver versions, intensity settings, and CPU scaling.
-- **Stale shares:** reduce network latency, increase work refresh frequency, and ensure clocks are synchronized (NTP).
-
-## Safety Notes
-
-- Do not run untrusted miner binaries. Build from source or verify signatures.
-- Avoid running miners as root; use dedicated users with minimal permissions.
-- Report suspected vulnerabilities privately via `SECURITY.md`.
+- **RPC auth failures:** Verify credentials and ensure RPC is bound to the expected interface.
+- **Low hash rate:** Reduce intensity, update drivers, or test another backend (CUDA vs OpenCL).
+- **Stales or rejects:** Improve connectivity to peers, lower overclocks, and ensure system clocks are synchronized (NTP).
+- **Build/runtime errors:** Rebuild miners with matching driver/toolkit versions; see `docs/building.md` for GPU build notes.

@@ -1,63 +1,86 @@
 # DRACHMA Architecture
 
-This document summarizes the layered architecture, boundaries, and design principles of DRACHMA (DRM).
+DRACHMA is organized into a strict three-layer stack to keep consensus-critical code minimal, isolate operational services, and allow the user interface to evolve independently. Each layer is versioned separately but communicates through stable, explicit interfaces.
 
-## Layered Model
+## Layer Overview
+
+- **Layer 1 – Core (Consensus Engine):** Implements deterministic validation and chainstate management. Responsibilities include block/transaction verification, UTXO set updates, PoW difficulty and target computation, and chain reorganization. Components live primarily under `layer1-core/` and `common/`.
+- **Layer 2 – Services (Networking + Wallet):** Hosts all non-consensus daemons: P2P networking, mempool, fee policy, block/transaction relay, RPC/CLI, indexing, and wallet/key management. Source is under `layer2-services/` and may be restarted or upgraded without affecting consensus state.
+- **Layer 3 – App (User Interface):** Desktop/GUI client and distribution packaging located in `layer3-app/`. It consumes RPC and wallet APIs; it never executes consensus rules directly.
+
+## Interaction Diagram
 
 ```mermaid
-graph TB
-  subgraph L1[Layer 1: Consensus Core]
-    Validation[Validation Engine]
-    UTXO[UTXO Set]
-    POW[Proof-of-Work]
-    Storage[Block/Chainstate Storage]
+graph LR
+  subgraph L1[Layer 1: Core]
+    Valid[Validation & Chainstate]
+    POW[Proof-of-Work Targeting]
+    Storage[Blocks/UTXO Storage]
   end
 
   subgraph L2[Layer 2: Services]
-    P2P[P2P Networking]
-    RPC[RPC & CLI]
-    Wallet[Wallet Backend]
-    Mempool[Mempool & Fee Policy]
-    Indexer[Lightweight Indexing]
+    P2P[P2P Node & Mempool]
+    RPC[RPC/CLI & Indexing]
+    Wallet[Wallet/Keys]
   end
 
-  subgraph L3[Layer 3: Desktop App]
-    UI[UI/UX]
-    Controls[Miner Controls]
-    Docs[User Docs]
+  subgraph L3[Layer 3: App]
+    UI[Desktop/GUI]
+    UX[User Flows]
   end
 
   Miners[Reference Miners]
 
-  Validation -->|blocks, tx| P2P
-  POW --> Miners
-  P2P --> Wallet
-  Mempool --> Miners
-  Wallet --> UI
+  %% Interactions
+  P2P -->|broadcast blocks/tx| Valid
+  P2P -->|relay candidates| Wallet
+  Wallet -->|construct tx| Valid
+  RPC -->|expose| P2P
+  RPC -->|expose| Wallet
+  UI -->|RPC calls| RPC
+  UX -->|txn requests| Wallet
+  Valid -->|work template| Miners
+  Miners -->|PoW solutions| P2P
+  Valid --> Storage
+  P2P --> Storage
 ```
 
-### Layer Boundaries
+## Responsibilities and Boundaries
 
-- **Layer 1 (Consensus):** Deterministic, versioned rules. No network policy, no UI logic. Outputs validated blocks, transactions, and UTXO state.
-- **Layer 2 (Services):** Non-consensus. Responsible for network connectivity, mempool policy, RPC, and wallet operations. May be restarted or replaced without chain impact.
-- **Layer 3 (Desktop):** User-facing, distribution-focused. Consumes RPC and wallet services; never enforces consensus.
-- **Reference Miners:** Separate binaries using RPC/work submission; they do not embed consensus logic beyond header construction.
+### Layer 1: Core
+- Deterministic validation of blocks and transactions, including script execution, sequence/locktime checks, and consensus-critical fees.
+- Difficulty/target calculation and header validity (PoW, timestamps, versioning).
+- Canonical chain selection, reorganizations, and snapshot handling.
+- Persistent storage of blocks, headers, and UTXO set.
+- **Never** manages network policy, wallet operations, or UI logic.
 
-### Design Tenets
+### Layer 2: Services
+- P2P session management, peer discovery, inventory/compact block relay, bandwidth controls, and ban scores.
+- Mempool admission (policy, ancestor/descendant tracking), fee estimation, and transaction rebroadcast.
+- RPC/CLI endpoints for node control, wallet actions, mining work templates, and diagnostics.
+- Wallet/key management: HD derivation, address formats, signing, and transaction assembly that references Layer 1 rules.
+- Indexing for wallet balance lookup, block/transaction queries, and potential light client support.
 
-- **Minimalism:** Avoid unbounded programmability and governance mechanisms.
-- **Auditability:** Clear data formats, deterministic validation, and reproducible builds.
-- **Security:** Preference for well-studied primitives (SHA-256d, Schnorr) and minimal trusted surfaces.
-- **Portability:** C++17 with careful dependency selection. GPU miners support CUDA/OpenCL where available.
+### Layer 3: App
+- GUI/desktop experience for end users, including node controls, wallet management, and miner configuration panels.
+- Packaging, localization, and OS integration.
+- Consumes only documented RPC and wallet APIs from Layer 2; can be replaced without consensus impact.
 
-### Data Flows
+### Reference Miners
+- Separate binaries under `miners/` implementing CPU and GPU work loops.
+- Pull block templates and submit solved headers via Layer 2 RPC.
+- Do not embed consensus logic beyond header assembly and nonce scanning.
 
-- Blocks/transactions enter via Layer 2, validated in Layer 1, and persisted.
-- Wallets derive keys and construct transactions in Layer 2, using Layer 1 validation rules for signing.
-- Miners fetch work templates via RPC, build candidate blocks, and submit solutions back to services for propagation.
+## Data and Control Flows
 
-### Release & Upgrade Strategy
+1. Incoming blocks/transactions arrive via Layer 2 P2P, are validated by Layer 1, and then persisted.
+2. Wallets in Layer 2 derive keys, assemble transactions using Layer 1 rules, and broadcast through the mempool.
+3. Miners request templates from Layer 2, run PoW (CPU/GPU), and return solutions; Layer 1 validates before gossiping.
+4. Layer 3 drives user actions (create transaction, start miner) solely through RPC, leaving consensus surfaces untouched.
 
-- Consensus changes require explicit activation plans and broad review.
-- Services and UI may iterate faster but must remain backward compatible with deployed nodes when possible.
-- Releases should be reproducible and signed; see `docs/building.md` for deterministic build guidance.
+## Upgrade Strategy
+
+- **Consensus (Layer 1):** Any rule change requires explicit activation logic and broad review. Releases should be reproducible and signed.
+- **Services (Layer 2):** Can iterate faster but must maintain compatibility with deployed Layer 1 rules. Backward-compatible RPC changes are preferred.
+- **App (Layer 3):** UI features can ship independently as long as they honor stable RPC contracts.
+- **Miners:** Follow the same template/RPC contracts; performance improvements should not alter consensus assumptions.

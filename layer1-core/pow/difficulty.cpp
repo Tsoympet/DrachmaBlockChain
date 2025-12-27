@@ -47,7 +47,7 @@ static uint32_t TargetToCompact(const cpp_int& target)
         compact >>= 8 * (size - 3);
     }
 
-    if (compact & 0x008000) {
+    if (compact & 0x00800000) {
         compact >>= 8;
         size += 1;
     }

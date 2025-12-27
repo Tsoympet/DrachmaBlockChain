@@ -151,14 +151,15 @@ void RPCServer::Accept()
 
 void RPCServer::HandleSession(boost::asio::ip::tcp::socket socket)
 {
-    auto remote = socket.remote_endpoint().address().to_string();
+    auto ownedSocket = std::make_shared<boost::asio::ip::tcp::socket>(std::move(socket));
+    auto remote = ownedSocket->remote_endpoint().address().to_string();
     auto buf = std::make_shared<boost::beast::flat_buffer>();
     auto req = std::make_shared<http::request<http::string_body>>();
-    http::async_read(socket, *buf, *req, [this, buf, req, remote, s = std::move(socket)](const boost::system::error_code& ec, std::size_t) mutable {
+    http::async_read(*ownedSocket, *buf, *req, [this, buf, req, remote, ownedSocket](const boost::system::error_code& ec, std::size_t) mutable {
         if (!ec) {
             auto resp = Process(*req, remote);
             auto sp = std::make_shared<http::response<http::string_body>>(std::move(resp));
-            http::async_write(s, *sp, [sp](const boost::system::error_code&, std::size_t) {});
+            http::async_write(*ownedSocket, *sp, [ownedSocket, sp](const boost::system::error_code&, std::size_t) {});
         }
     });
 }

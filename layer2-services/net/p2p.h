@@ -65,8 +65,8 @@ private:
     void ConnectSeeds();
     void LoadDNSSeeds();
     void RegisterPeer(const std::shared_ptr<PeerState>& peer);
-    void QueueMessage(PeerState& peer, const Message& msg);
-    void WriteLoop(PeerState& peer);
+    void QueueMessage(const std::shared_ptr<PeerState>& peer, const Message& msg);
+    void WriteLoop(const std::shared_ptr<PeerState>& peer);
     void ReadLoop(const std::shared_ptr<PeerState>& peer);
     void Dispatch(const PeerState& peer, const Message& msg);
     bool RateLimit(PeerState& peer);
@@ -91,12 +91,14 @@ private:
     std::unordered_map<std::string, std::chrono::steady_clock::time_point> m_banned;
     std::set<uint256> m_seenInventory;
     boost::asio::steady_timer m_timer;
+    boost::asio::steady_timer m_seedTimer;
     PayloadProvider m_txProvider;
     PayloadProvider m_blockProvider;
     uint32_t m_localHeight{0};
-    const size_t m_maxMsgsPerMinute{600};
+    const size_t m_maxMsgsPerMinute{200};
     const int m_banThreshold{100};
     const std::chrono::minutes m_banTime{10};
+    bool m_stopped{false};
 };
 
 } // namespace net

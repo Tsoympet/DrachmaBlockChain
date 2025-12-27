@@ -1,5 +1,7 @@
 [
-  { "host": "seed1.drachma.org", "port": 9333, "desc": "Foundation-operated seed" },
-  { "host": "seed2.drachma.org", "port": 9333, "desc": "Community-operated seed" },
-  { "host": "198.51.100.42", "port": 9333, "desc": "Anycast bootstrap" }
+  { "host": "seed-eu.drachma.org", "port": 9333, "desc": "Foundation-operated EU seed" },
+  { "host": "seed-us.drachma.org", "port": 9333, "desc": "Community-operated US seed" },
+  { "host": "seed-apac.drachma.org", "port": 9333, "desc": "APAC seed" },
+  { "host": "198.51.100.42", "port": 9333, "desc": "Anycast IPv4 bootstrap" },
+  { "host": "2001:db8:88::99", "port": 9333, "desc": "IPv6 bootstrap" }
 ]

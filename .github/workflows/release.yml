@@ -1,14 +1,14 @@
 name: Release
 
 on:
-  workflow_dispatch:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 jobs:
-  build-and-package:
-    name: Build ${{ matrix.os }}
+  build-and-release:
+    name: Build and sign (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -16,59 +16,86 @@ jobs:
     env:
       BUILD_TYPE: Release
       BUILD_DIR: build
+      ARTIFACT_BASENAME: drachma-${{ runner.os }}-${{ github.ref_name || 'nightly' }}
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
       - name: Set up CMake
         uses: jwlawson/actions-setup-cmake@v1
+
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
         run: sudo apt-get update && sudo apt-get install -y ninja-build libssl-dev libboost-all-dev
+
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
         run: brew install ninja boost openssl@3
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          choco install ninja
+          choco install gnupg
+
       - name: Configure
         run: cmake -S . -B ${BUILD_DIR} -G Ninja -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DDRACHMA_BUILD_GUI=ON -DDRACHMA_BUILD_TESTS=OFF
+
       - name: Build
         run: cmake --build ${BUILD_DIR} --config ${BUILD_TYPE} --parallel
-      - name: Bundle artifacts
+
+      - name: Archive binaries
         shell: bash
         run: |
-          ARTIFACT_NAME=drachma-${{ runner.os }}-${BUILD_TYPE}
+          mkdir -p artifacts
           if [[ "${{ runner.os }}" == "Windows" ]]; then
-            7z a ${ARTIFACT_NAME}.zip ./${BUILD_DIR}/*
+            7z a "artifacts/${ARTIFACT_BASENAME}.zip" "${BUILD_DIR}/*"
           else
-            tar -czf ${ARTIFACT_NAME}.tar.gz -C ${BUILD_DIR} .
+            tar -czf "artifacts/${ARTIFACT_BASENAME}.tar.gz" -C "${BUILD_DIR}" .
           fi
-      - name: Upload build artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: drachma-${{ runner.os }}-${BUILD_TYPE}
-          path: |
-            drachma-${{ runner.os }}-${BUILD_TYPE}.tar.gz
-            drachma-${{ runner.os }}-${BUILD_TYPE}.zip
-          if-no-files-found: ignore
+
+      - name: Generate checksums
+        shell: bash
+        run: |
+          cd artifacts
+          for f in *; do
+            if [[ -f "$f" ]]; then
+              shasum -a 256 "$f" > "$f.sha256"
+            fi
+          done
+
       - name: Import GPG key
         if: secrets.RELEASE_GPG_KEY != ''
         env:
           SIGNING_KEY: ${{ secrets.RELEASE_GPG_KEY }}
         run: echo "$SIGNING_KEY" | gpg --batch --import
-      - name: Sign artifacts
+
+      - name: Sign release files
         if: secrets.RELEASE_GPG_KEY != ''
         env:
           SIGNING_PASS: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
         shell: bash
         run: |
-          for f in drachma-${{ runner.os }}-${BUILD_TYPE}.*; do
-            gpg --batch --yes --pinentry-mode loopback --passphrase "$SIGNING_PASS" --detach-sign "$f"
-            shasum -a 256 "$f" > "$f.sha256"
+          cd artifacts
+          for f in *; do
+            if [[ -f "$f" && "$f" != *.asc && "$f" != *.sig ]]; then
+              gpg --batch --yes --pinentry-mode loopback --passphrase "$SIGNING_PASS" --detach-sign "$f"
+            fi
           done
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: drachma-${{ runner.os }}-release
+          path: artifacts/*
+
       - name: Publish GitHub Release assets
         if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: |
-            drachma-${{ runner.os }}-${BUILD_TYPE}.*
+          files: artifacts/*
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-alpha') || contains(github.ref_name, '-beta') }}
+          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

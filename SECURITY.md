@@ -13,16 +13,17 @@ We take security and consensus safety seriously. Please report suspected vulnera
 - Fix/mitigation plan for critical issues within **30 days** (may defer public details to protect users)
 
 ## Bug Bounty Program
-- **Status:** Active for consensus, networking, wallet, miners, and build/release pipelines.
+- **Status:** Active for consensus, networking, wallet, miners, and build/release pipelines (all tiers of the repo are in scope).
 - **Rewards:**
-  - Critical consensus faults (chain split, inflation) — up to **10,000 USD** equivalent in stablecoin.
-  - Remote DoS on default-config nodes — up to **2,000 USD**.
-  - Wallet key/seed exfiltration — up to **5,000 USD**.
-- **Eligibility:** First-come disclosure, must provide working proof-of-concept; exploits of outdated dependencies without impact are excluded.
+  - Critical consensus faults (chain split, inflation) — up to **15,000 USD** equivalent in stablecoin.
+  - Remote DoS on default-config nodes — up to **3,000 USD**.
+  - Wallet key/seed exfiltration or signing-key compromise — up to **6,000 USD**.
+- **Eligibility:** First-come disclosure with a working proof-of-concept; exploits of outdated dependencies without user impact are excluded.
 - **Process:**
-  1. Submit privately with "Bounty" in the subject.
-  2. Maintain embargo until coordinated release; payment follows patch availability and validation.
+  1. Submit privately with "Bounty" in the subject and include a suggested CVSS or severity rating.
+  2. Maintain embargo until coordinated release; payouts follow patch availability and maintainer validation.
   3. Optionally request public acknowledgment in release notes or remain anonymous.
+  4. Payments can be settled in USD stablecoin or BTC at the recipient's preference.
 
 ## Scope
 - Consensus logic, networking, wallet services, miners, build scripts, release artifacts, configuration defaults, and documentation that could mislead users in a way that impacts security.

@@ -270,6 +270,8 @@ void P2PNode::CompleteHandshake(const std::shared_ptr<PeerState>& peer, uint32_t
         peer->sentVerack = true;
     }
     peer->gotVersion = true;
+    std::vector<uint8_t> payload(nodeId.begin(), nodeId.end());
+    QueueMessage(*peer, Message{"version", payload});
 }
 
 void P2PNode::DropPeer(const std::string& id)
@@ -319,6 +321,8 @@ void P2PNode::LoadDNSSeeds()
             if (!host.empty() && port != 0) {
                 AddPeerAddress(host + ":" + std::to_string(port));
             }
+        for (const auto& child : pt.get_child("seeds")) {
+            AddPeerAddress(child.second.get_value<std::string>());
         }
     } catch (...) {
         // ignore missing seeds
@@ -340,6 +344,8 @@ void P2PNode::HandleBuiltin(const std::shared_ptr<PeerState>& peer, const Messag
             DropPeer(peer->info.id);
             return;
         }
+        peer->gotVersion = true;
+        QueueMessage(*peer, Message{"verack", {}});
     } else if (msg.command == "verack") {
         peer->sentVerack = true;
     } else if (msg.command == "inv") {
@@ -401,6 +407,31 @@ void P2PNode::SendGetData(const std::shared_ptr<PeerState>& peer, const std::vec
 void P2PNode::SendPayload(const std::shared_ptr<PeerState>& peer, const std::string& cmd, const std::vector<uint8_t>& payload)
 {
     QueueMessage(*peer, Message{cmd, payload});
+}
+
+        for (size_t i = 0; i + 32 <= msg.payload.size(); i += 32) {
+            uint256 h{};
+            std::copy(msg.payload.begin() + i, msg.payload.begin() + i + 32, h.begin());
+            if (m_seenInventory.insert(h).second) invs.push_back(h);
+        }
+        if (!invs.empty()) SendGetData(peer, invs);
+    }
+}
+
+void P2PNode::SendInv(const std::shared_ptr<PeerState>& peer, const std::vector<uint256>& invs)
+{
+    std::vector<uint8_t> payload;
+    payload.reserve(invs.size() * 32);
+    for (const auto& h : invs) payload.insert(payload.end(), h.begin(), h.end());
+    QueueMessage(*peer, Message{"inv", payload});
+}
+
+void P2PNode::SendGetData(const std::shared_ptr<PeerState>& peer, const std::vector<uint256>& hashes)
+{
+    std::vector<uint8_t> payload;
+    payload.reserve(hashes.size() * 32);
+    for (const auto& h : hashes) payload.insert(payload.end(), h.begin(), h.end());
+    QueueMessage(*peer, Message{"getdata", payload});
 }
 
 } // namespace net

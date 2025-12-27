@@ -50,6 +50,7 @@ public:
         });
 
         Register("getblock", [this, &index](const std::string& params) {
+        Register("getblock", [&index](const std::string& params) {
             auto hash = ParseHash(params);
             uint32_t height{0};
             if (!index.LookupBlock(hash, height)) throw std::runtime_error("unknown block");

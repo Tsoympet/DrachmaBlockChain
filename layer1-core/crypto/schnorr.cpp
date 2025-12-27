@@ -1,4 +1,5 @@
 #include "schnorr.h"
+#include <openssl/crypto.h>
 #include <openssl/ec.h>
 #include <openssl/obj_mac.h>
 #include <openssl/sha.h>
@@ -115,7 +116,7 @@ bool VerifySchnorr(
     std::array<uint8_t,32> xBytes{};
     BN_bn2binpad(xR, xBytes.data(), xBytes.size());
 
-    bool match = y_even && (std::equal(xBytes.begin(), xBytes.end(), rBytes.begin()));
+    bool match = y_even && (CRYPTO_memcmp(xBytes.data(), rBytes.data(), xBytes.size()) == 0);
 
     BN_free(r); BN_free(s); BN_free(e); BN_free(n);
     BN_free(xR); BN_free(yR);

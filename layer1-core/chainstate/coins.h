@@ -7,6 +7,14 @@
 #include <string>
 #include <unordered_map>
 #include <algorithm>
+#include <memory>
+
+#ifdef DRACHMA_HAVE_LEVELDB
+namespace leveldb {
+class DB;
+class WriteBatch;
+}
+#endif
 
 struct OutPointHash {
     std::size_t operator()(const OutPoint& o) const noexcept;
@@ -38,8 +46,16 @@ private:
     std::size_t maxCacheEntries;
     mutable std::mutex mu;
 
+#ifdef DRACHMA_HAVE_LEVELDB
+    std::unique_ptr<leveldb::DB> db;
+    bool useDb{false};
+#endif
+
     void Load();
     void Persist() const;
     void MaybeEvict() const;
+#ifdef DRACHMA_HAVE_LEVELDB
+    void PersistBatch(leveldb::WriteBatch& batch) const;
+#endif
 };
 

@@ -2,6 +2,7 @@
 #include "../pow/difficulty.h"
 #include "../merkle/merkle.h"
 #include "../script/interpreter.h"
+#include <openssl/crypto.h>
 #include <algorithm>
 #include <limits>
 #include <unordered_map>
@@ -220,7 +221,8 @@ bool ValidateBlock(const Block& block, const consensus::Params& params, int heig
         return false;
     if (!ValidateTransactions(block.transactions, params, height, lookup))
         return false;
-    if (ComputeMerkleRoot(block.transactions) != block.header.merkleRoot)
+    const auto merkle = ComputeMerkleRoot(block.transactions);
+    if (CRYPTO_memcmp(merkle.data(), block.header.merkleRoot.data(), merkle.size()) != 0)
         return false;
     return true;
 }

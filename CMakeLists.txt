@@ -11,6 +11,7 @@ option(DRACHMA_COVERAGE "Enable coverage instrumentation" OFF)
 
 find_package(OpenSSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(LevelDB QUIET)
 
 if(DRACHMA_COVERAGE)
     add_compile_options(--coverage)
@@ -29,6 +30,7 @@ add_library(drachma_layer1
     layer1-core/consensus/genesis.cpp
     layer1-core/chainstate/coins.cpp
     layer1-core/pow/difficulty.cpp
+    layer1-core/pow/difficulty_adjust.cpp
     layer1-core/pow/sha256d.cpp
     layer1-core/block/block.cpp
     layer1-core/storage/blockstore.cpp
@@ -45,6 +47,11 @@ target_include_directories(drachma_layer1
 target_link_libraries(drachma_layer1
     PUBLIC OpenSSL::Crypto
 )
+
+if(LevelDB_FOUND)
+    target_link_libraries(drachma_layer1 PUBLIC LevelDB::LevelDB)
+    target_compile_definitions(drachma_layer1 PUBLIC DRACHMA_HAVE_LEVELDB)
+endif()
 
 # Layer 2: services and orchestration
 add_library(drachma_layer2
@@ -127,6 +134,10 @@ if(DRACHMA_BUILD_TESTS)
     target_link_libraries(difficulty_gtest PRIVATE drachma_layer1 GTest::gtest_main)
     gtest_discover_tests(difficulty_gtest)
 
+    add_executable(difficulty_adjust_test tests/pow/difficulty_adjust_test.cpp)
+    target_link_libraries(difficulty_adjust_test PRIVATE drachma_layer1)
+    add_test(NAME difficulty_adjust_test COMMAND difficulty_adjust_test)
+
     add_executable(validation_tests tests/validation/validation_tests.cpp)
     target_link_libraries(validation_tests PRIVATE drachma_layer1)
     add_test(NAME validation_tests COMMAND validation_tests)
@@ -163,6 +174,10 @@ if(DRACHMA_BUILD_TESTS)
     target_link_libraries(anti_dos_tests PRIVATE drachma_layer1)
     add_test(NAME anti_dos_tests COMMAND anti_dos_tests)
 
+    add_executable(attacks_sim tests/attacks/attacks_sim.cpp)
+    target_link_libraries(attacks_sim PRIVATE drachma_layer1)
+    add_test(NAME attacks_sim COMMAND attacks_sim)
+
     add_executable(rpc_server_test tests/rpc/rpc_server_test.cpp)
     target_link_libraries(rpc_server_test PRIVATE drachma_layer2 GTest::gtest_main)
     gtest_discover_tests(rpc_server_test)
@@ -196,6 +211,11 @@ if(DRACHMA_BUILD_TESTS)
         target_link_libraries(fuzz_difficulty PRIVATE drachma_layer1)
         target_compile_options(fuzz_difficulty PRIVATE -fsanitize=fuzzer,address)
         target_link_options(fuzz_difficulty PRIVATE -fsanitize=fuzzer,address)
+
+        add_executable(fuzz_merkle tests/merkle/fuzz_merkle.cpp)
+        target_link_libraries(fuzz_merkle PRIVATE drachma_layer1)
+        target_compile_options(fuzz_merkle PRIVATE -fsanitize=fuzzer,address)
+        target_link_options(fuzz_merkle PRIVATE -fsanitize=fuzzer,address)
     else()
         add_executable(fuzz_schnorr tests/crypto/fuzz_schnorr.cpp)
         target_link_libraries(fuzz_schnorr PRIVATE drachma_layer1)
@@ -211,12 +231,18 @@ if(DRACHMA_BUILD_TESTS)
 
         add_executable(fuzz_difficulty tests/pow/fuzz_difficulty.cpp)
         target_link_libraries(fuzz_difficulty PRIVATE drachma_layer1)
+
+        add_executable(fuzz_merkle tests/merkle/fuzz_merkle.cpp)
+        target_link_libraries(fuzz_merkle PRIVATE drachma_layer1)
     endif()
     add_executable(fuzz_schnorr tests/crypto/fuzz_schnorr.cpp)
     target_link_libraries(fuzz_schnorr PRIVATE drachma_layer1)
 
     add_executable(fuzz_tagged_hash tests/crypto/fuzz_tagged_hash.cpp)
     target_link_libraries(fuzz_tagged_hash PRIVATE drachma_layer1)
+
+    add_executable(fuzz_merkle tests/merkle/fuzz_merkle.cpp)
+    target_link_libraries(fuzz_merkle PRIVATE drachma_layer1)
 endif()
 
 # Install rules

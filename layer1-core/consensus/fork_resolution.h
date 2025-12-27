@@ -4,7 +4,10 @@
 #include "../block/block.h"
 #include "../pow/difficulty.h"
 #include <boost/multiprecision/cpp_int.hpp>
+#include <ctime>
+#include <mutex>
 #include <optional>
+#include <string>
 #include <unordered_map>
 #include <vector>
 
@@ -32,6 +35,13 @@ struct BlockMeta {
     ChainWork chainWork{};
 };
 
+struct OrphanBlock {
+    BlockHeader header;
+    uint256 hash{};
+    uint256 parent{};
+    uint32_t height{0};
+};
+
 struct Uint256Hasher {
     std::size_t operator()(const uint256& h) const noexcept
     {
@@ -56,7 +66,14 @@ public:
     explicit ForkResolver(uint32_t finalizationDepth = 100, uint32_t reorgWorkMarginBps = 500);
 
     // Returns true if the incoming header became the new tip.
-    bool ConsiderHeader(const BlockHeader& header, const uint256& hash, const uint256& parentHash, uint32_t height, const Params& params);
+    bool ConsiderHeader(
+        const BlockHeader& header,
+        const uint256& hash,
+        const uint256& parentHash,
+        uint32_t height,
+        const Params& params,
+        uint32_t now = static_cast<uint32_t>(std::time(nullptr)),
+        uint32_t maxFutureDrift = 2 * 60 * 60);
 
     const BlockMeta* Tip() const { return m_bestTip ? &(*m_bestTip) : nullptr; }
     std::vector<uint256> ReorgPath(const uint256& newTip) const;
@@ -65,10 +82,16 @@ private:
     uint32_t m_finalizationDepth;
     uint32_t m_reorgMarginBps; // 10_000 = 100%
     std::unordered_map<uint256, BlockMeta, Uint256Hasher, Uint256Eq> m_index;
+    std::unordered_map<uint256, std::vector<OrphanBlock>, Uint256Hasher, Uint256Eq> m_orphans;
     std::optional<BlockMeta> m_bestTip;
+    std::unordered_map<uint256, std::string, Uint256Hasher, Uint256Eq> m_invalid;
+    mutable std::mutex m_mu;
 
     bool IsBetterChain(const BlockMeta& candidate) const;
     bool ViolatesCheckpoint(uint32_t height, const uint256& hash, const Params& params) const;
+    uint32_t ComputeMedianTimePast(const uint256& parent) const;
+    bool AttachAndUpdateTip(const BlockHeader& header, const uint256& hash, const uint256& parentHash, uint32_t height, const Params& params, uint32_t now, uint32_t maxFutureDrift);
+    void ProcessOrphans(const uint256& parentHash, const Params& params, uint32_t now, uint32_t maxFutureDrift);
 };
 
 } // namespace consensus

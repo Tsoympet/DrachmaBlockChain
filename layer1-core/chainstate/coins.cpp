@@ -2,6 +2,12 @@
 #include <fstream>
 #include <stdexcept>
 #include <algorithm>
+#include <cstring>
+
+#ifdef DRACHMA_HAVE_LEVELDB
+#include <leveldb/db.h>
+#include <leveldb/write_batch.h>
+#endif
 
 std::size_t OutPointHash::operator()(const OutPoint& o) const noexcept
 {
@@ -19,6 +25,16 @@ bool OutPointEq::operator()(const OutPoint& a, const OutPoint& b) const noexcept
 Chainstate::Chainstate(const std::string& path, std::size_t cacheCapacity)
     : storagePath(path), maxCacheEntries(cacheCapacity)
 {
+#ifdef DRACHMA_HAVE_LEVELDB
+    leveldb::Options opts;
+    opts.create_if_missing = true;
+    leveldb::DB* rawDb = nullptr;
+    auto status = leveldb::DB::Open(opts, storagePath + ".ldb", &rawDb);
+    if (status.ok()) {
+        db.reset(rawDb);
+        useDb = true;
+    }
+#endif
     Load();
 }
 
@@ -59,6 +75,23 @@ void Chainstate::AddUTXO(const OutPoint& out, const TxOut& txout)
     std::lock_guard<std::mutex> l(mu);
     utxos[out] = txout;
     cache[out] = txout;
+#ifdef DRACHMA_HAVE_LEVELDB
+    if (useDb) {
+        leveldb::WriteBatch batch;
+        // value layout: [value(8)][scriptPubKey]
+        std::string value;
+        value.resize(sizeof(txout.value));
+        std::memcpy(value.data(), &txout.value, sizeof(txout.value));
+        value.append(reinterpret_cast<const char*>(txout.scriptPubKey.data()), txout.scriptPubKey.size());
+
+        std::string key;
+        key.reserve(out.hash.size() + sizeof(out.index));
+        key.append(reinterpret_cast<const char*>(out.hash.data()), out.hash.size());
+        key.append(reinterpret_cast<const char*>(&out.index), sizeof(out.index));
+        batch.Put(key, value);
+        PersistBatch(batch);
+    }
+#endif
     MaybeEvict();
 }
 
@@ -69,6 +102,17 @@ void Chainstate::SpendUTXO(const OutPoint& out)
     if (it == utxos.end()) throw std::runtime_error("spend missing utxo");
     utxos.erase(it);
     cache.erase(out);
+#ifdef DRACHMA_HAVE_LEVELDB
+    if (useDb) {
+        leveldb::WriteBatch batch;
+        std::string key;
+        key.reserve(out.hash.size() + sizeof(out.index));
+        key.append(reinterpret_cast<const char*>(out.hash.data()), out.hash.size());
+        key.append(reinterpret_cast<const char*>(&out.index), sizeof(out.index));
+        batch.Delete(key);
+        PersistBatch(batch);
+    }
+#endif
 }
 
 void Chainstate::Flush() const { Persist(); }
@@ -82,6 +126,25 @@ std::size_t Chainstate::CachedEntries() const
 void Chainstate::Load()
 {
     std::lock_guard<std::mutex> l(mu);
+#ifdef DRACHMA_HAVE_LEVELDB
+    if (useDb) {
+        std::unique_ptr<leveldb::Iterator> it(db->NewIterator(leveldb::ReadOptions()));
+        for (it->SeekToFirst(); it->Valid(); it->Next()) {
+            const auto& key = it->key();
+            const auto& val = it->value();
+            OutPoint op{};
+            if (key.size() != op.hash.size() + sizeof(uint32_t) || val.size() < sizeof(uint64_t))
+                continue;
+            std::memcpy(op.hash.data(), key.data(), op.hash.size());
+            std::memcpy(&op.index, key.data() + op.hash.size(), sizeof(op.index));
+            TxOut txo{};
+            std::memcpy(&txo.value, val.data(), sizeof(txo.value));
+            txo.scriptPubKey.assign(val.data() + sizeof(txo.value), val.data() + val.size());
+            utxos.emplace(op, txo);
+        }
+        return;
+    }
+#endif
     std::ifstream in(storagePath, std::ios::binary);
     if (!in.good()) return;
     uint32_t count = 0;
@@ -104,6 +167,11 @@ void Chainstate::Load()
 void Chainstate::Persist() const
 {
     std::lock_guard<std::mutex> l(mu);
+#ifdef DRACHMA_HAVE_LEVELDB
+    if (useDb) {
+        return; // LevelDB writes are handled incrementally in Add/Spend
+    }
+#endif
     std::ofstream out(storagePath, std::ios::binary | std::ios::trunc);
     uint32_t count = static_cast<uint32_t>(utxos.size());
     out.write(reinterpret_cast<const char*>(&count), sizeof(count));
@@ -130,3 +198,16 @@ void Chainstate::MaybeEvict() const
         it = cache.erase(it);
     }
 }
+
+#ifdef DRACHMA_HAVE_LEVELDB
+void Chainstate::PersistBatch(leveldb::WriteBatch& batch) const
+{
+    if (!useDb)
+        return;
+    leveldb::WriteOptions opts;
+    opts.sync = true; // durability for mainnet safety
+    auto status = db->Write(opts, &batch);
+    if (!status.ok())
+        throw std::runtime_error("leveldb write failed: " + status.ToString());
+}
+#endif

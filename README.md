@@ -4,6 +4,8 @@
 [![GitHub Forks](https://img.shields.io/github/forks/Tsoympet/BlockChainDrachma?style=social)](https://github.com/Tsoympet/BlockChainDrachma/network/members)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![CI](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/ci.yml/badge.svg)](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/ci.yml)
+[![Static Badge](https://img.shields.io/badge/Discussions-join-blue.svg)](#community--support)
+[![Placeholder Badge](https://img.shields.io/badge/Placeholder-stars/forks-lightgrey.svg)](https://example.com)
 
 DRACHMA is a **Proof-of-Work monetary blockchain** designed for long-term stability, auditability, and minimal trust assumptions.
 
@@ -17,30 +19,70 @@ This repository contains the **reference implementation** of the DRACHMA network
 
 ---
 
-## Quick Start
+## Quick Start / Getting Started
 
-```bash
-git clone https://github.com/Tsoympet/BlockChainDrachma.git
-cd BlockChainDrachma
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build --parallel
-```
+1. **Install prerequisites:** CMake (>=3.18), a C++17 toolchain, OpenSSL, Boost, and system dependencies for your OS. For GPU miners install **CUDA** or **OpenCL** SDKs and matching drivers.
+2. **Clone and configure the build:**
+   ```bash
+   git clone https://github.com/Tsoympet/BlockChainDrachma.git
+   cd BlockChainDrachma
+   cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+   ```
+3. **Compile:**
+   ```bash
+   cmake --build build --parallel
+   ```
+4. **(Optional) Run tests:**
+   ```bash
+   ctest --test-dir build
+   ```
 
-- **Dependencies:** CMake (>=3.18), a C++17 toolchain, OpenSSL, Boost, and system libraries required by your platform. GPU miners additionally require **CUDA** or **OpenCL** SDKs.
-- **Run a node (example):**
+> Tip: See [`docs/building.md`](docs/building.md) and [`docs/mining-guide.md`](docs/mining-guide.md) for platform-specific details, GPU tuning, Docker usage, and troubleshooting.
+
+---
+
+## Running the Node, Miner, and Wallet
+
+- **Start a testnet node:**
   ```bash
-  ./build/layer1-core/drachmad --datadir ~/.drachma --testnet
+  ./build/layer1-core/drachmad --datadir ~/.drachma --network testnet --listen --rpcuser=user --rpcpassword=pass
   ```
-- **Run the desktop wallet (Layer 3):**
+- **Connect the desktop wallet (Layer 3 app):**
   ```bash
-  ./build/layer3-app/drachma-wallet
+  ./build/layer3-app/drachma-wallet --connect 127.0.0.1:9333
   ```
-- **Run a reference miner (CPU):**
+- **CPU mining to your node:**
   ```bash
-  ./build/miners/cpu-miner/drachma-cpuminer --rpc http://127.0.0.1:8332
+  ./build/miners/cpu-miner/drachma-cpuminer --rpc http://user:pass@127.0.0.1:8332 --threads 4
+  ```
+- **GPU mining (CUDA example):**
+  ```bash
+  ./build/miners/gpu-miner/drachma-cuda --url 127.0.0.1:9333 --user user --pass pass --intensity 22
+  ```
+- **Send a transaction (RPC):**
+  ```bash
+  curl --user user:pass --data-binary '{"method":"sendtoaddress","params":["<DRM-address>", 1.0]}' \
+    -H 'content-type: text/plain;' http://127.0.0.1:8332/
   ```
 
-> Tip: See [`docs/building.md`](docs/building.md) and [`docs/mining-guide.md`](docs/mining-guide.md) for platform-specific details, Docker usage, and troubleshooting.
+Commands are subject to change as the implementation matures; prefer scripts in `scripts/` for reproducible setups.
+
+---
+
+## Docker Support
+
+- **Build images:**
+  ```bash
+  docker build -t drachma/base -f Dockerfile .
+  ```
+- **Run services with docker-compose:**
+  ```bash
+  docker-compose up -d
+  ```
+  The compose file wires Layer 1, RPC services, and a reference miner for quick local testing.
+- **Override configs:** mount your own `testnet/` or `scripts/` configuration files via `-v` binds or compose overrides for reproducible environments.
+
+Docker artifacts live alongside the source (`Dockerfile`, `docker-compose.yml`) to keep container recipes auditable.
 
 ---
 
@@ -200,10 +242,10 @@ drachma-blockchain/
 - 🔄 Complete Layer 1 validation logic and state transitions
 - 🔄 Harden P2P networking, mempool policy, and wallet services
 - 🔄 Finalize reference miners with reproducible build scripts (CPU/GPU)
-- 🔄 Launch public testnet with monitoring dashboards and seed nodes
-- 🔄 Independent security review of consensus and networking code
+- 🔄 Launch public testnet with monitoring dashboards, seed nodes, and faucet
+- 🔄 Independent external security review of consensus and networking code
 - 🔄 Release candidate binaries and deterministic build reproducibility
-- 🛠️ Mainnet launch following testnet stability and audits
+- 🛠️ Mainnet launch following testnet stability, audits, and reproducible builds
 
 More detail is available in [`docs/roadmap.md`](docs/roadmap.md).
 
@@ -233,6 +275,11 @@ Implementation is intended to be added incrementally with full review of consens
 - Hard cap of **42,000,000 DRM**.
 - Block subsidy declines on a predictable schedule (see [`docs/technical-spec.md`](docs/technical-spec.md) for parameters) to encourage long-term participation.
 
+**How is the fair launch verifiable?**
+
+- Genesis parameters, launch scripts, and seed configuration live in `testnet/` and `docs/fair-launch.md` so anyone can reproduce the initial state.
+- No embedded checkpoints or privileged keys exist; all nodes follow the same rules from block one.
+
 **Is there a premine or privileged allocation?**
 
 - No. DRACHMA follows a **fair launch** model—every coin is mined under the same rules.
@@ -249,9 +296,9 @@ Implementation is intended to be added incrementally with full review of consens
 
 ## Community & Support
 
-- **Discord:** _coming soon_
-- **Telegram:** _coming soon_
-- **X (Twitter):** _coming soon_
+- **Discord:** [https://discord.gg/drachma-placeholder](https://discord.gg/drachma-placeholder)
+- **Telegram:** [https://t.me/drachma-placeholder](https://t.me/drachma-placeholder)
+- **X (Twitter):** [https://x.com/drachma-placeholder](https://x.com/drachma-placeholder)
 - **Discussions:** Use GitHub Discussions when enabled or open a well-scoped issue.
 
 For development coordination, please prefer issues/PRs and follow [`CONTRIBUTING.md`](CONTRIBUTING.md).

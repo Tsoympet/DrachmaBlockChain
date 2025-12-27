@@ -1,0 +1,16 @@
+version: '3.9'
+services:
+  drachma-node:
+    build: .
+    image: drachma/node:latest
+    container_name: drachma-node
+    restart: unless-stopped
+    volumes:
+      - drachma-data:/opt/drachma/.drachma
+    ports:
+      - "9333:9333"  # P2P
+      - "8332:8332"  # RPC
+    command: ["--network", "testnet", "--rpcuser", "user", "--rpcpassword", "pass", "--listen"]
+
+volumes:
+  drachma-data:

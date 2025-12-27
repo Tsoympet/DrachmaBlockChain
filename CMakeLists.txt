@@ -108,6 +108,7 @@ if(DRACHMA_BUILD_GUI)
         list(APPEND DRACHMA_QT_LIBS Qt5::Widgets Qt5::Network)
     endif()
 
+    qt5_add_resources(DRACHMA_QT_RESOURCES ${CMAKE_CURRENT_SOURCE_DIR}/layer3-app/resources/icons.qrc)
     add_executable(drachma_qt layer3-app/qt/main.cpp ${DRACHMA_QT_RESOURCES})
     target_include_directories(drachma_qt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/layer1-core ${CMAKE_CURRENT_SOURCE_DIR}/layer2-services)
     target_link_libraries(drachma_qt PRIVATE ${DRACHMA_QT_LIBS} OpenSSL::SSL OpenSSL::Crypto drachma_layer2)

@@ -6,4 +6,11 @@
   <path d="M64 94 L72 106 L56 106 Z" fill="#1f4f70"/>
   <path d="M34 64 L22 72 L22 56 Z" fill="#1f4f70"/>
   <circle cx="64" cy="64" r="16" fill="#c59d32" stroke="#1f1f1f" stroke-width="4"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" ry="16" fill="#0d1f1a" />
+  <g fill="#0be881" opacity="0.8">
+    <circle cx="64" cy="64" r="18" fill="#1e2f2a" />
+    <path d="M64 30 L64 16 M64 112 L64 98 M30 64 L16 64 M112 64 L98 64 M36 36 L26 26 M102 102 L92 92 M36 92 L26 102 M102 26 L92 36" stroke="#0be881" stroke-width="8" stroke-linecap="round" />
+  </g>
+  <text x="64" y="120" text-anchor="middle" font-family="Arial" font-size="18" fill="#9be7c4" font-weight="bold">Settings</text>
 </svg>

@@ -26,6 +26,7 @@
         <input id="block-id" type="text" placeholder="Height or hash" />
         <button id="lookup">Lookup</button>
       </div>
+      <ul id="block-txs"></ul>
       <pre id="block-json"></pre>
     </section>
     <section>
@@ -53,98 +54,6 @@
   <footer>
     <small>Powered by DRACHMA JSON-RPC. No cookies, no tracking.</small>
   </footer>
-  <script>
-    async function rpcCall(rpcUrl, method, params = []) {
-      const response = await fetch(rpcUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jsonrpc: '2.0', id: 'explorer', method, params })
-      });
-      const obj = await response.json();
-      if (obj.error) throw new Error(obj.error.message);
-      return obj.result;
-    }
-
-    async function refreshTip() {
-      const rpc = document.getElementById('rpc').value;
-      try {
-        const [height, hash, net] = await Promise.all([
-          rpcCall(rpc, 'getblockcount'),
-          rpcCall(rpc, 'getbestblockhash'),
-          rpcCall(rpc, 'getnetworkinfo').catch(() => ({ network: 'unknown' }))
-        ]);
-        const network = typeof net === 'object' ? net.network || 'unknown' : net;
-        document.getElementById('tip').textContent = `Height: ${height} / Hash: ${hash}`;
-        document.getElementById('network').textContent = `Network: ${network}`;
-      } catch (err) {
-        document.getElementById('tip').textContent = `Error: ${err.message}`;
-        document.getElementById('network').textContent = '';
-      }
-    }
-
-    async function lookupBlock() {
-      const rpc = document.getElementById('rpc').value;
-      const id = document.getElementById('block-id').value.trim();
-      if (!id) return;
-      try {
-        const blockHash = isNaN(Number(id)) ? id : await rpcCall(rpc, 'getblockhash', [Number(id)]);
-        const block = await rpcCall(rpc, 'getblock', [blockHash]);
-        document.getElementById('block-json').textContent = JSON.stringify(block, null, 2);
-      } catch (err) {
-        document.getElementById('block-json').textContent = `Error: ${err.message}`;
-      }
-    }
-
-    async function lookupTx() {
-      const rpc = document.getElementById('rpc').value;
-      const txid = document.getElementById('tx-id').value.trim();
-      if (!txid) return;
-      try {
-        const tx = await rpcCall(rpc, 'gettransaction', [txid]);
-        document.getElementById('tx-json').textContent = JSON.stringify(tx, null, 2);
-      } catch (err) {
-        document.getElementById('tx-json').textContent = `Error: ${err.message}`;
-      }
-    }
-
-    async function lookupAddress() {
-      const rpc = document.getElementById('rpc').value;
-      const address = document.getElementById('address').value.trim();
-      if (!address) return;
-      try {
-        const [balance, utxos] = await Promise.all([
-          rpcCall(rpc, 'getbalance', [address]),
-          rpcCall(rpc, 'listunspent', [address]).catch(() => [])
-        ]);
-        const lines = [`Balance: ${balance}`, `Spendable outputs: ${utxos.length}`];
-        if (utxos.length) {
-          lines.push('UTXOs:');
-          utxos.slice(0, 10).forEach((u) => lines.push(`${u.txid}:${u.vout} amount=${u.amount}`));
-          if (utxos.length > 10) lines.push('...');
-        }
-        document.getElementById('address-summary').textContent = lines.join('\n');
-      } catch (err) {
-        document.getElementById('address-summary').textContent = `Error: ${err.message}`;
-      }
-    }
-
-    async function refreshMempool() {
-      const rpc = document.getElementById('rpc').value;
-      try {
-        const txids = await rpcCall(rpc, 'getrawmempool');
-        document.getElementById('mempool').textContent = txids.join('\n');
-      } catch (err) {
-        document.getElementById('mempool').textContent = `Error: ${err.message}`;
-      }
-    }
-
-    document.getElementById('refresh').addEventListener('click', refreshTip);
-    document.getElementById('lookup').addEventListener('click', lookupBlock);
-    document.getElementById('tx-lookup').addEventListener('click', lookupTx);
-    document.getElementById('address-lookup').addEventListener('click', lookupAddress);
-    document.getElementById('mempool-refresh').addEventListener('click', refreshMempool);
-
-    refreshTip();
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>

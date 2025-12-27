@@ -67,6 +67,25 @@ pre, #address-summary {
   overflow: auto;
 }
 
+#block-txs {
+  list-style: none;
+  padding-left: 0;
+  margin: 0.25rem 0 0.5rem;
+  max-height: 120px;
+  overflow: auto;
+  font-family: "Courier New", monospace;
+  color: #c7e0ff;
+}
+
+#block-txs li {
+  padding: 0.15rem 0;
+  border-bottom: 1px solid #1f2733;
+}
+
+#block-txs li:last-child {
+  border-bottom: none;
+}
+
 footer {
   margin-top: 1.5rem;
   text-align: center;

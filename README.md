@@ -24,7 +24,7 @@ This repository contains the **reference implementation** of the DRACHMA network
 
 ## Releases
 
-Official binaries and source archives will be published on the GitHub Releases page. Each release will be tagged (vX.Y.Z) and include:
+Official binaries and source archives will be published on the GitHub Releases page. Each release will be tagged (vX.Y.Z); the next recommended cut is **`v0.1.0-rc`** to align with the release workflow and explorer shipped in this repository update. Every release will include:
 - Signed artifacts (release tag and archives signed with the maintainer key).
 - SHA-256 checksums for every downloadable file.
 - A generated SBOM and changelog highlighting consensus-impacting changes.
@@ -356,10 +356,13 @@ Implementation is intended to be added incrementally with full review of consens
 
 ## Community & Support
 
+- **Website:** [https://drachma.org](https://drachma.org) (roadmap, binaries, and trusted mirrors)
 - **GitHub Discussions:** [https://github.com/Tsoympet/BlockChainDrachma/discussions](https://github.com/Tsoympet/BlockChainDrachma/discussions)
 - **Matrix (bridged to IRC):** [https://matrix.to/#/#drachma:matrix.org](https://matrix.to/#/#drachma:matrix.org)
+- **Discord:** [https://discord.gg/drachma](https://discord.gg/drachma) (invite placeholder until public launch)
 - **Mailing list:** [mailto:announce@drachma.org](mailto:announce@drachma.org) for release/testnet notices
 - **Status page:** [https://status.drachma.org](https://status.drachma.org) for seed/faucet uptime during testnet
+- **X/Twitter:** [https://x.com/drachma_org](https://x.com/drachma_org) for short-form status updates
 
 Use Issues/PRs for development work and follow [`CONTRIBUTING.md`](CONTRIBUTING.md) for coding standards and review expectations.
 

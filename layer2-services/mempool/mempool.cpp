@@ -1,6 +1,7 @@
 #include "mempool.h"
 
 #include <algorithm>
+#include <cmath>
 #include <optional>
 
 namespace mempool {
@@ -141,8 +142,15 @@ uint64_t Mempool::EstimateFeeRate(size_t percentile) const
     feeRates.reserve(m_entries.size());
     for (const auto& kv : m_entries) feeRates.push_back(kv.second.feeRate);
     std::sort(feeRates.begin(), feeRates.end());
-    percentile = std::min(percentile, static_cast<size_t>(99));
-    size_t idx = feeRates.size() * percentile / 100;
+    percentile = std::clamp(percentile, static_cast<size_t>(1), static_cast<size_t>(99));
+    const double rank = (percentile / 100.0) * static_cast<double>(feeRates.size());
+    size_t idx = 0;
+    if (rank <= 1.0) {
+        idx = 0;
+    } else {
+        idx = static_cast<size_t>(std::ceil(rank)) - 1;
+    }
+    if (idx >= feeRates.size()) idx = feeRates.size() - 1;
     return feeRates[idx];
 }
 

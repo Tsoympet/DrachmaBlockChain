@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 #include <boost/beast/http.hpp>
 #include <boost/beast/core.hpp>
+#include <chrono>
+#include <thread>
 #include "../../layer2-services/rpc/rpcserver.h"
 #include "../../layer2-services/policy/policy.h"
 #include "../../layer2-services/mempool/mempool.h"
@@ -11,22 +13,30 @@ namespace http = boost::beast::http;
 
 static std::string RpcCall(boost::asio::io_context& io, uint16_t port, const std::string& body)
 {
-    boost::asio::ip::tcp::resolver resolver(io);
-    boost::beast::tcp_stream stream(io);
-    auto const results = resolver.resolve("127.0.0.1", std::to_string(port));
-    stream.connect(results);
+    boost::asio::io_context clientIo;
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        try {
+            boost::asio::ip::tcp::resolver resolver(clientIo);
+            boost::beast::tcp_stream stream(clientIo);
+            auto const results = resolver.resolve("127.0.0.1", std::to_string(port));
+            stream.connect(results);
 
-    http::request<http::string_body> req{http::verb::post, "/", 11};
-    req.set(http::field::host, "127.0.0.1");
-    req.set(http::field::authorization, "Basic user:pass");
-    req.body() = body;
-    req.prepare_payload();
+            http::request<http::string_body> req{http::verb::post, "/", 11};
+            req.set(http::field::host, "127.0.0.1");
+            req.set(http::field::authorization, "Basic dXNlcjpwYXNz");
+            req.body() = body;
+            req.prepare_payload();
 
-    http::write(stream, req);
-    boost::beast::flat_buffer buffer;
-    http::response<http::string_body> res;
-    http::read(stream, buffer, res);
-    return res.body();
+            http::write(stream, req);
+            boost::beast::flat_buffer buffer;
+            http::response<http::string_body> res;
+            http::read(stream, buffer, res);
+            return res.body();
+        } catch (...) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+        }
+    }
+    return "";
 }
 
 TEST(RPC, EndpointsRespond)
@@ -53,6 +63,8 @@ TEST(RPC, EndpointsRespond)
     server.Start();
 
     std::thread t([&io]() { io.run(); });
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
     std::string balance = RpcCall(io, 19600, "{\"method\":\"getbalance\",\"params\":null}");
     EXPECT_NE(balance.find("5000"), std::string::npos);

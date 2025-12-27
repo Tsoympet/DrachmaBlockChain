@@ -9,6 +9,7 @@ option(DRACHMA_BUILD_TESTS "Build Drachma test executables" ON)
 option(DRACHMA_BUILD_GUI "Build the Qt desktop wallet" OFF)
 
 find_package(OpenSSL REQUIRED)
+find_package(Boost REQUIRED COMPONENTS system)
 
 # Layer 1: consensus-critical primitives
 add_library(drachma_layer1
@@ -17,6 +18,7 @@ add_library(drachma_layer1
     layer1-core/script/interpreter.cpp
     layer1-core/merkle/merkle.cpp
     layer1-core/consensus/params.cpp
+    layer1-core/consensus/fork_resolution.cpp
     layer1-core/consensus/versioning/versionbits.cpp
     layer1-core/consensus/genesis.cpp
     layer1-core/chainstate/coins.cpp
@@ -42,6 +44,7 @@ add_library(drachma_layer2
     layer2-services/policy/policy.cpp
     layer2-services/net/p2p.cpp
     layer2-services/wallet/keystore/keystore.cpp
+    layer2-services/wallet/wallet.cpp
     layer2-services/index/txindex.cpp
     layer2-services/crosschain/bridge/bridge_manager.cpp
     layer2-services/crosschain/relayer/relayer.cpp
@@ -59,6 +62,7 @@ target_include_directories(drachma_layer2
 
 target_link_libraries(drachma_layer2
     PUBLIC drachma_layer1
+    PUBLIC Boost::system
 )
 
 # Miners
@@ -68,10 +72,10 @@ target_link_libraries(drachma_cpu_miner PRIVATE drachma_layer1)
 
 # Optional Qt GUI (off by default to avoid toolchain requirement in CI)
 if(DRACHMA_BUILD_GUI)
-    find_package(Qt5 COMPONENTS Widgets REQUIRED)
+    find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
     add_executable(drachma_qt layer3-app/qt/main.cpp)
     target_include_directories(drachma_qt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/layer1-core ${CMAKE_CURRENT_SOURCE_DIR}/layer2-services)
-    target_link_libraries(drachma_qt PRIVATE Qt5::Widgets drachma_layer2)
+    target_link_libraries(drachma_qt PRIVATE Qt5::Widgets Qt5::Network drachma_layer2)
 endif()
 
 # Tests
@@ -96,6 +100,16 @@ if(DRACHMA_BUILD_TESTS)
     add_executable(validation_tests tests/validation/validation_tests.cpp)
     target_link_libraries(validation_tests PRIVATE drachma_layer1)
     add_test(NAME validation_tests COMMAND validation_tests)
+
+    add_executable(fork_resolution_test tests/consensus/fork_resolution_test.cpp)
+    target_link_libraries(fork_resolution_test PRIVATE drachma_layer1)
+    add_test(NAME fork_resolution_test COMMAND fork_resolution_test)
+
+    add_executable(fuzz_schnorr tests/crypto/fuzz_schnorr.cpp)
+    target_link_libraries(fuzz_schnorr PRIVATE drachma_layer1)
+
+    add_executable(fuzz_tagged_hash tests/crypto/fuzz_tagged_hash.cpp)
+    target_link_libraries(fuzz_tagged_hash PRIVATE drachma_layer1)
 endif()
 
 # Install rules

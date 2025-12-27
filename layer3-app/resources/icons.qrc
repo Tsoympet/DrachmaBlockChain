@@ -1,76 +1,37 @@
 <RCC>
-    <qresource prefix="/icons">
-        <file>app_icon.svg</file>
-        <file>logo.svg</file>
-        <file>wallet.svg</file>
-        <file>send.svg</file>
-        <file>receive.svg</file>
-        <file>transactions.svg</file>
-        <file>mining.svg</file>
-        <file>network.svg</file>
-        <file>network-connected.svg</file>
-        <file>network-disconnected.svg</file>
-        <file>settings.svg</file>
-        <file>status-connected.svg</file>
-        <file>status-disconnected.svg</file>
-        <file>dark/app_icon.svg</file>
-        <file>dark/logo.svg</file>
-        <file>dark/wallet.svg</file>
-        <file>dark/send.svg</file>
-        <file>dark/receive.svg</file>
-        <file>dark/transactions.svg</file>
-        <file>dark/mining.svg</file>
-        <file>dark/network.svg</file>
-        <file>dark/network-connected.svg</file>
-        <file>dark/network-disconnected.svg</file>
-        <file>dark/settings.svg</file>
-        <file>dark/status-connected.svg</file>
-        <file>dark/status-disconnected.svg</file>
-        <file>icons/app_icon.svg</file>
-        <file>icons/logo.svg</file>
-        <file>icons/wallet.svg</file>
-        <file>icons/send.svg</file>
-        <file>icons/receive.svg</file>
-        <file>icons/transactions.svg</file>
-        <file>icons/mining.svg</file>
-        <file>icons/network.svg</file>
-        <file>icons/network-connected.svg</file>
-        <file>icons/network-disconnected.svg</file>
-        <file>icons/settings.svg</file>
-        <file>icons/status-connected.svg</file>
-        <file>icons/status-disconnected.svg</file>
-        <file>icons/dark/app_icon.svg</file>
-        <file>icons/dark/logo.svg</file>
-        <file>icons/dark/wallet.svg</file>
-        <file>icons/dark/send.svg</file>
-        <file>icons/dark/receive.svg</file>
-        <file>icons/dark/transactions.svg</file>
-        <file>icons/dark/mining.svg</file>
-        <file>icons/dark/network.svg</file>
-        <file>icons/dark/network-connected.svg</file>
-        <file>icons/dark/network-disconnected.svg</file>
-        <file>icons/dark/settings.svg</file>
-        <file>icons/dark/status-connected.svg</file>
-        <file>icons/dark/status-disconnected.svg</file>
+    <qresource prefix="/icons/light">
+        <file alias="app_icon.svg">icons/light/app_icon.svg</file>
+        <file alias="drachma_token.svg">icons/light/drachma_token.svg</file>
+        <file alias="logo.svg">icons/light/logo.svg</file>
+        <file alias="wallet.svg">icons/light/wallet.svg</file>
+        <file alias="send.svg">icons/light/send.svg</file>
+        <file alias="receive.svg">icons/light/receive.svg</file>
+        <file alias="transactions.svg">icons/light/transactions.svg</file>
+        <file alias="mining.svg">icons/light/mining.svg</file>
+        <file alias="network.svg">icons/light/network.svg</file>
+        <file alias="network-connected.svg">icons/light/network-connected.svg</file>
+        <file alias="network-disconnected.svg">icons/light/network-disconnected.svg</file>
+        <file alias="settings.svg">icons/light/settings.svg</file>
+        <file alias="status-connected.svg">icons/light/status-connected.svg</file>
+        <file alias="status-disconnected.svg">icons/light/status-disconnected.svg</file>
+    </qresource>
+    <qresource prefix="/icons/dark">
+        <file alias="app_icon.svg">icons/dark/app_icon.svg</file>
+        <file alias="drachma_token.svg">icons/dark/drachma_token.svg</file>
+        <file alias="logo.svg">icons/dark/logo.svg</file>
+        <file alias="wallet.svg">icons/dark/wallet.svg</file>
+        <file alias="send.svg">icons/dark/send.svg</file>
+        <file alias="receive.svg">icons/dark/receive.svg</file>
+        <file alias="transactions.svg">icons/dark/transactions.svg</file>
+        <file alias="mining.svg">icons/dark/mining.svg</file>
+        <file alias="network.svg">icons/dark/network.svg</file>
+        <file alias="network-connected.svg">icons/dark/network-connected.svg</file>
+        <file alias="network-disconnected.svg">icons/dark/network-disconnected.svg</file>
+        <file alias="settings.svg">icons/dark/settings.svg</file>
+        <file alias="status-connected.svg">icons/dark/status-connected.svg</file>
+        <file alias="status-disconnected.svg">icons/dark/status-disconnected.svg</file>
     </qresource>
     <qresource prefix="/resources">
         <file>splash.svg</file>
-    </qresource>
-        <file>icons/mining.svg</file>
-        <file>icons/settings.svg</file>
-        <file>icons/network.svg</file>
-        <file>icons/transactions.svg</file>
-        <file>icons/status-connected.svg</file>
-        <file>icons/status-disconnected.svg</file>
-        <file>icons/dark/app_icon.svg</file>
-        <file>icons/dark/wallet.svg</file>
-        <file>icons/dark/send.svg</file>
-        <file>icons/dark/receive.svg</file>
-        <file>icons/dark/mining.svg</file>
-        <file>icons/dark/settings.svg</file>
-        <file>icons/dark/network.svg</file>
-        <file>icons/dark/transactions.svg</file>
-        <file>icons/dark/status-connected.svg</file>
-        <file>icons/dark/status-disconnected.svg</file>
     </qresource>
 </RCC>

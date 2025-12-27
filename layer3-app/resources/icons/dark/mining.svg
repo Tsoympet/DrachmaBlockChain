@@ -1,9 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128">
-  <rect width="128" height="128" rx="16" fill="#f6f8fb"/>
-  <path d="M32 92 L58 50 L72 66 L96 38 L108 50 L82 92 Z" fill="#1f4f70" stroke="#1f1f1f" stroke-width="4"/>
-  <rect x="24" y="86" width="80" height="12" rx="6" fill="#c59d32"/>
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
-  <rect width="128" height="128" rx="16" ry="16" fill="#0d1f1a" />
-  <path d="M28 96 L64 32 L100 96 Z" fill="#1f2c2a" stroke="#0be881" stroke-width="6" stroke-linejoin="round" />
-  <text x="64" y="108" text-anchor="middle" font-family="Arial" font-size="20" fill="#9be7c4" font-weight="bold">Mining</text>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" role="img">
+  <rect x="3" y="3" width="18" height="18" rx="4" fill="#0f1219" stroke="#e6e8ed" stroke-width="1"/>
+  <path d="M8 8.5 15.5 16" stroke="#f6c342" stroke-width="1.2" stroke-linecap="round"/>
+  <path d="M13.2 8 17 6.8l-.2 3.9z" fill="#f6c342" stroke="#f7e9ac" stroke-width="0.9" stroke-linejoin="round"/>
+  <path d="M10.5 10.5 6.8 11.7l.2-3.9z" fill="#f6c342" stroke="#f7e9ac" stroke-width="0.9" stroke-linejoin="round"/>
+  <circle cx="15.8" cy="15.8" r="2.4" fill="#0b0d12" stroke="#f6c342" stroke-width="1"/>
+  <path d="M14.6 15.8h2.4" stroke="#f6c342" stroke-width="0.8" stroke-linecap="round"/>
 </svg>

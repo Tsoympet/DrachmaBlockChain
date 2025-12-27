@@ -1,7 +1,15 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 64" width="256" height="64">
-  <rect width="256" height="64" rx="12" fill="#f6f8fb"/>
-  <circle cx="32" cy="32" r="22" fill="#c59d32" stroke="#1f1f1f" stroke-width="4"/>
-  <path d="M32 14 L20 46 L26 46 L32 32 L38 46 L44 46 Z" fill="#1f1f1f"/>
-  <text x="70" y="40" font-family="'Segoe UI', 'Inter', sans-serif" font-size="26" fill="#1f4f70" font-weight="700">DRACHMA</text>
-  <text x="70" y="22" font-family="'Segoe UI', 'Inter', sans-serif" font-size="10" fill="#4f4f4f">BLOCKCHAIN WALLET</text>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 24" width="180" height="24" role="img">
+  <defs>
+    <linearGradient id="logoCoinDark" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffe07a"/>
+      <stop offset="50%" stop-color="#d9a021"/>
+      <stop offset="100%" stop-color="#8a5d00"/>
+    </linearGradient>
+  </defs>
+  <rect width="180" height="24" rx="4" fill="#0f0e0c" stroke="#3b3018" stroke-width="0.6"/>
+  <circle cx="12" cy="12" r="10" fill="url(#logoCoinDark)" stroke="#f3c65c" stroke-width="0.7"/>
+  <path d="M12 5.2 8.3 14h1.9l.7-1.8h2.2l.8 1.8h1.9L12 5.2zm.3 6.1h-1.3l.7-1.7z" fill="#0c0903"/>
+  <text x="30" y="10.5" font-family="'Noto Sans', 'Segoe UI', sans-serif" font-size="7" font-weight="700" fill="#f7f1df" letter-spacing="0.5">DRACHMA</text>
+  <text x="30" y="18" font-family="'Noto Sans', 'Segoe UI', sans-serif" font-size="4" fill="#e6c880">Blockchain Reserve Money</text>
 </svg>

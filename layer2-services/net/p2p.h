@@ -66,6 +66,8 @@ private:
     void SendInv(const std::shared_ptr<PeerState>& peer, const std::vector<uint256>& invs, uint8_t type);
     void SendGetData(const std::shared_ptr<PeerState>& peer, const std::vector<uint256>& hashes, uint8_t type);
     void SendPayload(const std::shared_ptr<PeerState>& peer, const std::string& cmd, const std::vector<uint8_t>& payload);
+    void SendInv(const std::shared_ptr<PeerState>& peer, const std::vector<uint256>& invs);
+    void SendGetData(const std::shared_ptr<PeerState>& peer, const std::vector<uint256>& hashes);
     void ScheduleHeartbeat();
 
     boost::asio::io_context& m_io;

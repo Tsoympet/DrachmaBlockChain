@@ -43,6 +43,24 @@ bool Mempool::Accept(const Transaction& tx, uint64_t fee)
         txCopy = tx;
     }
     if (callback) callback(txCopy);
+    std::lock_guard<std::mutex> g(m_mutex);
+    const auto ser = Serialize(tx);
+    const uint64_t feeRate = (ser.size() ? (fee * 1000 / ser.size()) : fee * 1000);
+    uint256 hash = tx.GetHash();
+    if (m_entries.count(hash)) return false;
+    if (!m_policy.IsFeeAcceptable(tx, fee)) return false;
+
+    for (const auto& in : tx.vin) {
+        if (m_spent.count(in.prevout)) return false; // double spend
+    }
+
+    if (m_entries.size() >= m_policy.MaxEntries()) EvictOne();
+
+    MempoolEntry entry{tx, fee, feeRate, std::chrono::steady_clock::now()};
+    m_arrival.push_back(hash);
+    m_byFeeRate.emplace(feeRate, hash);
+    m_entries.emplace(hash, std::move(entry));
+    for (const auto& in : tx.vin) m_spent.emplace(in.prevout, hash);
     return true;
 }
 

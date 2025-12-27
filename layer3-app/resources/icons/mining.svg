@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" ry="16" fill="#f9a825" opacity="0.2" />
+  <path d="M28 96 L64 32 L100 96 Z" fill="#fdd835" stroke="#f57f17" stroke-width="6" stroke-linejoin="round" />
+  <text x="64" y="108" text-anchor="middle" font-family="Arial" font-size="20" fill="#6d4c41" font-weight="bold">Mining</text>
+</svg>

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" ry="16" fill="#8e24aa" opacity="0.12" />
+  <polyline points="28,44 52,44 52,28 100,28 100,80 76,80 76,100 28,100" fill="none" stroke="#6a1b9a" stroke-width="8" stroke-linejoin="round" />
+  <circle cx="52" cy="44" r="6" fill="#6a1b9a" />
+  <circle cx="76" cy="80" r="6" fill="#6a1b9a" />
+  <text x="64" y="118" text-anchor="middle" font-family="Arial" font-size="18" fill="#4a148c" font-weight="bold">Tx</text>
+</svg>

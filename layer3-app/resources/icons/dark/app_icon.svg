@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" ry="16" fill="#0d1f1a" />
+  <circle cx="64" cy="64" r="42" fill="#0be881" opacity="0.9" />
+  <text x="64" y="72" text-anchor="middle" font-family="Arial" font-size="26" fill="#00120b" font-weight="bold">DRM</text>
+</svg>

@@ -17,6 +17,7 @@
 #include <QDateTime>
 #include <QSpinBox>
 #include <QProgressBar>
+#include <QIcon>
 #include <QMessageBox>
 #include <QInputDialog>
 #include <QTableWidget>
@@ -1064,7 +1065,7 @@ public:
     {
         setWindowTitle("DRACHMA Core Desktop");
         setMinimumSize(1200, 800);
-        setWindowIcon(QIcon(AssetLocator::filePath("branding/app_icon.png")));
+        setWindowIcon(QIcon(":/icons/app_icon.svg"));
 
         QLocale locale;
         QString qmPath = AssetLocator::filePath(QString("i18n/drachma_%1.qm").arg(locale.name()));
@@ -1086,13 +1087,13 @@ public:
         layout->addWidget(tabs);
         setCentralWidget(central);
 
-        tabs->addTab(buildOverview(), "Overview");
-        tabs->addTab(buildSend(), "Send");
-        tabs->addTab(buildReceive(), "Receive");
-        tabs->addTab(buildAddressBook(), "Address book");
-        tabs->addTab(buildTransactions(), "Transactions");
-        tabs->addTab(buildMining(), "Mining");
-        tabs->addTab(buildSettings(), "Settings");
+        tabs->addTab(buildOverview(), QIcon(":/icons/network.svg"), "Overview");
+        tabs->addTab(buildSend(), QIcon(":/icons/send.svg"), "Send");
+        tabs->addTab(buildReceive(), QIcon(":/icons/receive.svg"), "Receive");
+        tabs->addTab(buildAddressBook(), QIcon(":/icons/wallet.svg"), "Address book");
+        tabs->addTab(buildTransactions(), QIcon(":/icons/transactions.svg"), "Transactions");
+        tabs->addTab(buildMining(), QIcon(":/icons/mining.svg"), "Mining");
+        tabs->addTab(buildSettings(), QIcon(":/icons/settings.svg"), "Settings");
 
         connect(wallet, &WalletServiceClient::balancesChanged, this, &MainWindow::updateBalances);
         connect(wallet, &WalletServiceClient::transactionsChanged, this, &MainWindow::refreshTransactions);
@@ -1125,11 +1126,11 @@ private:
     void createMenu()
     {
         QMenu* fileMenu = menuBar()->addMenu("File");
-        QAction* eulaAction = fileMenu->addAction("View EULA");
-        QAction* whitepaperAction = fileMenu->addAction("Open Whitepaper");
-        QAction* backupAction = fileMenu->addAction("Backup wallet");
-        QAction* restoreAction = fileMenu->addAction("Restore wallet");
-        QAction* exitAction = fileMenu->addAction("Exit");
+        QAction* eulaAction = fileMenu->addAction(QIcon(":/icons/logo.svg"), "View EULA");
+        QAction* whitepaperAction = fileMenu->addAction(QIcon(":/icons/logo.svg"), "Open Whitepaper");
+        QAction* backupAction = fileMenu->addAction(QIcon(":/icons/wallet.svg"), "Backup wallet");
+        QAction* restoreAction = fileMenu->addAction(QIcon(":/icons/wallet.svg"), "Restore wallet");
+        QAction* exitAction = fileMenu->addAction(QIcon(":/icons/status-disconnected.svg"), "Exit");
         connect(eulaAction, &QAction::triggered, this, &MainWindow::showEulaDialog);
         connect(whitepaperAction, &QAction::triggered, this, &MainWindow::openWhitepaper);
         connect(backupAction, &QAction::triggered, this, &MainWindow::backupWalletFile);
@@ -1155,12 +1156,20 @@ private:
         syncBar->setRange(0, 100);
         syncBar->setValue(0);
         networkLbl = new QLabel("Offline", nodeBox);
+        networkStatusIcon = new QLabel(nodeBox);
+        networkStatusIcon->setPixmap(QIcon(":/icons/status-disconnected.svg").pixmap(18, 18));
+        QWidget* networkRow = new QWidget(nodeBox);
+        QHBoxLayout* networkLayout = new QHBoxLayout(networkRow);
+        networkLayout->setContentsMargins(0, 0, 0, 0);
+        networkLayout->addWidget(networkStatusIcon);
+        networkLayout->addWidget(networkLbl);
+        networkLayout->addStretch(1);
         rpcErrorLabel = new QLabel("RPC: idle", nodeBox);
         nf->addRow("Current height", heightLbl);
         nf->addRow("Peers", peersLbl);
         nf->addRow("Sync", syncLbl);
         nf->addRow("Progress", syncBar);
-        nf->addRow("Network status", networkLbl);
+        nf->addRow("Network status", networkRow);
         nf->addRow("RPC", rpcErrorLabel);
         nodeBox->setLayout(nf);
 
@@ -1185,8 +1194,8 @@ private:
         QFormLayout* f = new QFormLayout();
 
         destEdit = new QLineEdit(w);
-        QPushButton* copyFromBook = new QPushButton("Use selected address", w);
-        QPushButton* scanQrBtn = new QPushButton("Scan QR", w);
+        QPushButton* copyFromBook = new QPushButton(QIcon(":/icons/wallet.svg"), "Use selected address", w);
+        QPushButton* scanQrBtn = new QPushButton(QIcon(":/icons/network.svg"), "Scan QR", w);
         connect(scanQrBtn, &QPushButton::clicked, this, &MainWindow::scanQrForDestination);
         amountEdit = new QDoubleSpinBox(w);
         amountEdit->setRange(0.00000001, 21000000.0);
@@ -1214,7 +1223,7 @@ private:
         connect(feeBox, &QComboBox::currentIndexChanged, this, &MainWindow::updateFeePreview);
         connect(feeRate, qOverload<double>(&QDoubleSpinBox::valueChanged), this, &MainWindow::updateFeePreview);
 
-        QPushButton* sendBtn = new QPushButton("Send", w);
+        QPushButton* sendBtn = new QPushButton(QIcon(":/icons/send.svg"), "Send", w);
         connect(sendBtn, &QPushButton::clicked, this, &MainWindow::confirmAndSend);
 
         QWidget* destRow = new QWidget(w);
@@ -1246,7 +1255,7 @@ private:
         qrLabel->setFixedSize(220, 220);
         qrLabel->setFrameShape(QFrame::Box);
 
-        QPushButton* genBtn = new QPushButton("Generate address", w);
+        QPushButton* genBtn = new QPushButton(QIcon(":/icons/receive.svg"), "Generate address", w);
         connect(genBtn, &QPushButton::clicked, this, &MainWindow::generateAddress);
 
         v->addWidget(new QLabel("Receiving addresses", w));
@@ -1270,9 +1279,9 @@ private:
         addressBookTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
         QHBoxLayout* actions = new QHBoxLayout();
-        QPushButton* addBtn = new QPushButton("Add", w);
-        QPushButton* removeBtn = new QPushButton("Remove", w);
-        QPushButton* copyBtn = new QPushButton("Copy", w);
+        QPushButton* addBtn = new QPushButton(QIcon(":/icons/wallet.svg"), "Add", w);
+        QPushButton* removeBtn = new QPushButton(QIcon(":/icons/status-disconnected.svg"), "Remove", w);
+        QPushButton* copyBtn = new QPushButton(QIcon(":/icons/receive.svg"), "Copy", w);
         actions->addWidget(addBtn);
         actions->addWidget(removeBtn);
         actions->addWidget(copyBtn);
@@ -1322,8 +1331,8 @@ private:
         QWidget* w = new QWidget(this);
         QVBoxLayout* v = new QVBoxLayout(w);
         QHBoxLayout* controls = new QHBoxLayout();
-        QPushButton* startBtn = new QPushButton("Start mining", w);
-        QPushButton* stopBtn = new QPushButton("Stop", w);
+        QPushButton* startBtn = new QPushButton(QIcon(":/icons/mining.svg"), "Start mining", w);
+        QPushButton* stopBtn = new QPushButton(QIcon(":/icons/status-disconnected.svg"), "Stop", w);
         cpuThreads = new QSpinBox(w);
         cpuThreads->setRange(1, std::thread::hardware_concurrency() == 0 ? 8 : static_cast<int>(std::thread::hardware_concurrency()));
         gpuToggle = new QCheckBox("Enable GPU (if available)", w);
@@ -1351,7 +1360,7 @@ private:
         QFormLayout* f = new QFormLayout();
 
         dataDirEdit = new QLineEdit(w);
-        QPushButton* browse = new QPushButton("Browse", w);
+        QPushButton* browse = new QPushButton(QIcon(":/icons/network.svg"), "Browse", w);
         connect(browse, &QPushButton::clicked, this, &MainWindow::selectDataDir);
 
         QWidget* dirWidget = new QWidget(w);
@@ -1370,8 +1379,8 @@ private:
         themeBox->addItems({"System", "Dark", "Light"});
         connect(themeBox, &QComboBox::currentTextChanged, this, &MainWindow::applyTheme);
 
-        encryptBtn = new QPushButton("Encrypt wallet", w);
-        unlockBtn = new QPushButton("Unlock wallet", w);
+        encryptBtn = new QPushButton(QIcon(":/icons/settings.svg"), "Encrypt wallet", w);
+        unlockBtn = new QPushButton(QIcon(":/icons/wallet.svg"), "Unlock wallet", w);
         connect(encryptBtn, &QPushButton::clicked, this, &MainWindow::encryptWallet);
         connect(unlockBtn, &QPushButton::clicked, this, &MainWindow::unlockWallet);
 
@@ -1466,7 +1475,15 @@ private slots:
         peersLbl->setText(QString::number(peers));
         syncLbl->setText(QString::number(syncProgress * 100.0, 'f', 2) + "%");
         if (syncBar) syncBar->setValue(static_cast<int>(syncProgress * 100.0));
-        networkLbl->setText(QString::number(networkHashrate, 'f', 2) + " H/s");
+        QString statusText = peers > 0 ? QString("Connected (%1 peers)").arg(peers) : QString("Offline");
+        if (networkHashrate > 0.0) {
+            statusText += QStringLiteral(" • %1 H/s").arg(networkHashrate, 0, 'f', 2);
+        }
+        networkLbl->setText(statusText);
+        if (networkStatusIcon) {
+            const QString statusIconPath = peers > 0 ? QStringLiteral(":/icons/status-connected.svg") : QStringLiteral(":/icons/status-disconnected.svg");
+            networkStatusIcon->setPixmap(QIcon(statusIconPath).pixmap(18, 18));
+        }
         QString rpcMsg = node->lastError().isEmpty() ? QString("RPC: online") : QString("RPC issue: %1").arg(node->lastError());
         rpcErrorLabel->setText(rpcMsg);
         if (!node->lastError().isEmpty()) {
@@ -1894,6 +1911,7 @@ private:
     QLabel* syncLbl{nullptr};
     QProgressBar* syncBar{nullptr};
     QLabel* networkLbl{nullptr};
+    QLabel* networkStatusIcon{nullptr};
     QLabel* confirmedLbl{nullptr};
     QLabel* unconfirmedLbl{nullptr};
     QLabel* hashrateLbl{nullptr};

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+  <rect width="128" height="128" rx="16" ry="16" fill="#455a64" opacity="0.15" />
+  <g fill="#37474f">
+    <circle cx="64" cy="64" r="18" fill="#90a4ae" />
+    <path d="M64 30 L64 16 M64 112 L64 98 M30 64 L16 64 M112 64 L98 64 M36 36 L26 26 M102 102 L92 92 M36 92 L26 102 M102 26 L92 36" stroke="#37474f" stroke-width="8" stroke-linecap="round" />
+  </g>
+  <text x="64" y="120" text-anchor="middle" font-family="Arial" font-size="18" fill="#263238" font-weight="bold">Settings</text>
+</svg>

@@ -49,6 +49,11 @@
 #include <QStyleFactory>
 #include <QCryptographicHash>
 #include <QtGlobal>
+#include <QTranslator>
+#include <QLocale>
+#include <QImageReader>
+#include <QSlider>
+#include <QStandardItemModel>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <random>
@@ -58,6 +63,23 @@
 #include <algorithm>
 #include <memory>
 #include <functional>
+#include <optional>
+
+#if __has_include(<hidapi/hidapi.h>)
+#include <hidapi/hidapi.h>
+#define DRM_HAS_HIDAPI 1
+#else
+#define DRM_HAS_HIDAPI 0
+#endif
+
+#if __has_include(<ZXing/ReadBarcode.h>)
+#include <ZXing/BarcodeFormat.h>
+#include <ZXing/ReadBarcode.h>
+#include <ZXing/TextUtfEncoding.h>
+#define DRM_HAS_ZXING 1
+#else
+#define DRM_HAS_ZXING 0
+#endif
 
 // The UI intentionally avoids embedding any consensus or validation logic.
 // It orchestrates node lifecycle and surfaces wallet state via service calls.
@@ -88,6 +110,117 @@ public:
     static QString filePath(const QString& relative)
     {
         return QDir(basePath()).absoluteFilePath(relative);
+    }
+};
+
+class Bip39Helper {
+public:
+    static QStringList wordlist()
+    {
+        static QStringList cache;
+        if (!cache.isEmpty()) return cache;
+        QString raw = AssetLocator::textAsset("wordlists/english.txt");
+        if (raw.isEmpty()) raw = AssetLocator::textAsset("bip39_english.txt");
+        if (!raw.isEmpty()) {
+            cache = raw.split('\n', Qt::SkipEmptyParts);
+        } else {
+            cache = {"ability","absorb","access","acoustic","adapt","balance","battery","border","cattle","dinner","fiber","gesture","harvest","jungle","ladder","loan","morning","novel","pioneer","rally","salt","tribe","umbrella","violin"};
+        }
+        cache.detach();
+        return cache;
+    }
+
+    static QString generateMnemonic(int words = 12)
+    {
+        QStringList wl = wordlist();
+        if (wl.size() < 12) return {};
+        std::random_device rd;
+        std::mt19937 gen(rd());
+        std::uniform_int_distribution<> dist(0, wl.size() - 1);
+        QStringList out;
+        for (int i = 0; i < words; ++i) out << wl.at(dist(gen));
+        return out.join(" ");
+    }
+
+    static bool validateMnemonic(const QString& mnemonic)
+    {
+        QStringList wl = wordlist();
+        QStringList parts = mnemonic.split(' ', Qt::SkipEmptyParts);
+        if (parts.size() < 12) return false;
+        for (const auto& w : parts) {
+            if (!wl.contains(w.trimmed())) return false;
+        }
+        return true;
+    }
+
+    static QByteArray mnemonicToSeed(const QString& mnemonic, const QString& passphrase)
+    {
+        if (!validateMnemonic(mnemonic)) return {};
+        QByteArray salt = QString("mnemonic%1").arg(passphrase).toUtf8();
+        QByteArray seed(64, 0);
+        PKCS5_PBKDF2_HMAC(mnemonic.toUtf8().constData(), mnemonic.size(),
+                          reinterpret_cast<const unsigned char*>(salt.constData()), salt.size(),
+                          2048, EVP_sha512(), seed.size(), reinterpret_cast<unsigned char*>(seed.data()));
+        return seed.toHex();
+    }
+};
+
+class HardwareWalletBridge : public QObject {
+    Q_OBJECT
+public:
+    explicit HardwareWalletBridge(QObject* parent = nullptr) : QObject(parent)
+    {
+#if DRM_HAS_HIDAPI
+        hid_init();
+#endif
+    }
+
+    ~HardwareWalletBridge()
+    {
+#if DRM_HAS_HIDAPI
+        hid_exit();
+#endif
+    }
+
+    bool available() const
+    {
+#if DRM_HAS_HIDAPI
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    QStringList enumerate()
+    {
+        QStringList devices;
+#if DRM_HAS_HIDAPI
+        hid_device_info* info = hid_enumerate(0, 0);
+        for (hid_device_info* cur = info; cur; cur = cur->next) {
+            devices << QString::fromWCharArray(cur->product_string ? cur->product_string : L"Unknown");
+        }
+        hid_free_enumeration(info);
+#endif
+        return devices;
+    }
+
+signals:
+    void deviceDiscovered(const QString& name);
+};
+
+class QrScanner {
+public:
+    static std::optional<QString> decodeFile(const QString& path)
+    {
+        QImageReader reader(path);
+        QImage img = reader.read();
+        if (img.isNull()) return std::nullopt;
+#if DRM_HAS_ZXING
+        ZXing::ImageView view(img.bits(), img.width(), img.height(), ZXing::ImageFormat::RGBX);
+        auto result = ZXing::ReadBarcode(view, {ZXing::BarcodeFormat::QRCode});
+        if (result.isValid()) return QString::fromStdString(ZXing::TextUtfEncoding::ToUtf8(result.text()));
+#endif
+        return std::nullopt;
     }
 };
 
@@ -687,6 +820,48 @@ private:
     std::unique_ptr<WalletStorage> m_storage;
 };
 
+class WalletViewModel : public QObject {
+    Q_OBJECT
+public:
+    explicit WalletViewModel(WalletServiceClient* wallet, QObject* parent = nullptr)
+        : QObject(parent), m_wallet(wallet){}
+
+    void setFilters(const QString& direction, const QString& status, const QString& query)
+    {
+        m_direction = direction;
+        m_status = status;
+        m_query = query.toLower();
+        emit filteredChanged(transactionsForView());
+    }
+
+    QList<TransactionRow> transactionsForView() const
+    {
+        QList<TransactionRow> rows = m_wallet->transactions();
+        QList<TransactionRow> filtered;
+        for (const auto& row : rows) {
+            if (m_direction != "All" && row.direction.compare(m_direction, Qt::CaseInsensitive) != 0)
+                continue;
+            if (m_status != "All" && row.status.compare(m_status, Qt::CaseInsensitive) != 0)
+                continue;
+            if (!m_query.isEmpty()) {
+                QString hay = row.txid + row.status + row.direction;
+                if (!hay.toLower().contains(m_query)) continue;
+            }
+            filtered.append(row);
+        }
+        return filtered;
+    }
+
+signals:
+    void filteredChanged(const QList<TransactionRow>& rows) const;
+
+private:
+    WalletServiceClient* m_wallet{nullptr};
+    QString m_direction{"All"};
+    QString m_status{"All"};
+    QString m_query;
+};
+
 struct NodeConfig {
     QString dataDir;
     QString network; // mainnet / testnet
@@ -891,11 +1066,19 @@ public:
         setMinimumSize(1200, 800);
         setWindowIcon(QIcon(AssetLocator::filePath("branding/app_icon.png")));
 
+        QLocale locale;
+        QString qmPath = AssetLocator::filePath(QString("i18n/drachma_%1.qm").arg(locale.name()));
+        if (translator.load(qmPath)) {
+            qApp->installTranslator(&translator);
+        }
+
         createMenu();
 
         wallet = new WalletServiceClient(this);
+        viewModel = new WalletViewModel(wallet, this);
         node = new NodeProcessController(this);
         miner = new MiningManager(node, this);
+        hardware = new HardwareWalletBridge(this);
 
         QWidget* central = new QWidget(this);
         QVBoxLayout* layout = new QVBoxLayout(central);
@@ -1003,6 +1186,8 @@ private:
 
         destEdit = new QLineEdit(w);
         QPushButton* copyFromBook = new QPushButton("Use selected address", w);
+        QPushButton* scanQrBtn = new QPushButton("Scan QR", w);
+        connect(scanQrBtn, &QPushButton::clicked, this, &MainWindow::scanQrForDestination);
         amountEdit = new QDoubleSpinBox(w);
         amountEdit->setRange(0.00000001, 21000000.0);
         amountEdit->setDecimals(8);
@@ -1013,6 +1198,10 @@ private:
         feeRate->setDecimals(1);
         feeRate->setSuffix(" sat/vB");
         feeRate->setValue(5.0);
+        feeSlider = new QSlider(Qt::Horizontal, w);
+        feeSlider->setRange(1, 200);
+        feeSlider->setValue(50);
+        connect(feeSlider, &QSlider::valueChanged, this, &MainWindow::syncFeeSlider);
         feePreview = new QLabel("Est. fee: 0.0001 DRM", w);
 
         connect(copyFromBook, &QPushButton::clicked, this, [this]{
@@ -1028,11 +1217,17 @@ private:
         QPushButton* sendBtn = new QPushButton("Send", w);
         connect(sendBtn, &QPushButton::clicked, this, &MainWindow::confirmAndSend);
 
-        f->addRow("Destination address", destEdit);
+        QWidget* destRow = new QWidget(w);
+        QHBoxLayout* destLayout = new QHBoxLayout(destRow);
+        destLayout->setContentsMargins(0,0,0,0);
+        destLayout->addWidget(destEdit);
+        destLayout->addWidget(scanQrBtn);
+        f->addRow("Destination address", destRow);
         f->addRow("From address book", copyFromBook);
         f->addRow("Amount", amountEdit);
         f->addRow("Fee profile", feeBox);
         f->addRow("Fee rate", feeRate);
+        f->addRow("Fee slider", feeSlider);
         f->addRow("Fee preview", feePreview);
         v->addLayout(f);
         v->addWidget(sendBtn);
@@ -1096,6 +1291,22 @@ private:
     {
         QWidget* w = new QWidget(this);
         QVBoxLayout* v = new QVBoxLayout(w);
+        QHBoxLayout* filters = new QHBoxLayout();
+        directionFilter = new QComboBox(w);
+        directionFilter->addItems({"All", "send", "receive"});
+        statusFilter = new QComboBox(w);
+        statusFilter->addItems({"All", "pending", "confirmed"});
+        searchFilter = new QLineEdit(w);
+        searchFilter->setPlaceholderText("Search txid or status");
+        connect(directionFilter, &QComboBox::currentTextChanged, this, &MainWindow::refreshTransactions);
+        connect(statusFilter, &QComboBox::currentTextChanged, this, &MainWindow::refreshTransactions);
+        connect(searchFilter, &QLineEdit::textChanged, this, &MainWindow::refreshTransactions);
+        filters->addWidget(new QLabel("Direction", w));
+        filters->addWidget(directionFilter);
+        filters->addWidget(new QLabel("Status", w));
+        filters->addWidget(statusFilter);
+        filters->addWidget(searchFilter);
+        v->addLayout(filters);
         txTable = new QTableWidget(w);
         txTable->setColumnCount(6);
         txTable->setHorizontalHeaderLabels({"Time", "TXID", "Direction", "Amount", "Confirmations", "Status"});
@@ -1177,13 +1388,22 @@ private:
 
         QPushButton* backupBtn = new QPushButton("Backup wallet", w);
         QPushButton* restoreBtn = new QPushButton("Restore wallet", w);
+        QPushButton* seedBtn = new QPushButton("Show recovery seed", w);
+        QPushButton* restoreSeedBtn = new QPushButton("Restore from seed", w);
+        QPushButton* hardwareBtn = new QPushButton("Detect hardware wallet", w);
         connect(backupBtn, &QPushButton::clicked, this, &MainWindow::backupWalletFile);
         connect(restoreBtn, &QPushButton::clicked, this, &MainWindow::restoreWalletFile);
+        connect(seedBtn, &QPushButton::clicked, this, &MainWindow::exportSeedWords);
+        connect(restoreSeedBtn, &QPushButton::clicked, this, &MainWindow::restoreFromSeedDialog);
+        connect(hardwareBtn, &QPushButton::clicked, this, &MainWindow::enumerateHardwareWallets);
 
         v->addLayout(f);
         v->addWidget(save);
         v->addWidget(backupBtn);
         v->addWidget(restoreBtn);
+        v->addWidget(seedBtn);
+        v->addWidget(restoreSeedBtn);
+        v->addWidget(hardwareBtn);
         v->addStretch(1);
         return w;
     }
@@ -1251,6 +1471,12 @@ private slots:
         rpcErrorLabel->setText(rpcMsg);
         if (!node->lastError().isEmpty()) {
             statusBar()->showMessage("RPC communication degraded: " + node->lastError(), 5000);
+            if (!rpcErrorShown) {
+                rpcErrorShown = true;
+                QMessageBox::critical(this, "Networking", QString("Node RPC issue detected: %1").arg(node->lastError()));
+            }
+        } else {
+            rpcErrorShown = false;
         }
     }
 
@@ -1261,11 +1487,15 @@ private slots:
 
     void refreshTransactions()
     {
-        auto rows = wallet->transactions();
+        if (!viewModel) return;
+        viewModel->setFilters(directionFilter ? directionFilter->currentText() : "All",
+                              statusFilter ? statusFilter->currentText() : "All",
+                              searchFilter ? searchFilter->text() : "");
+        auto rows = viewModel->transactionsForView();
         txTable->setRowCount(rows.size());
         int i = 0;
         for (const auto& row : rows) {
-            txTable->setItem(i, 0, new QTableWidgetItem(row.timestamp.toString(Qt::ISODate)));
+            txTable->setItem(i, 0, new QTableWidgetItem(row.timestamp.toLocalTime().toString(Qt::ISODate)));
             txTable->setItem(i, 1, new QTableWidgetItem(row.txid));
             txTable->setItem(i, 2, new QTableWidgetItem(row.direction));
             txTable->setItem(i, 3, new QTableWidgetItem(QString::number(row.amount / 100000000.0, 'f', 8)));
@@ -1335,6 +1565,19 @@ private slots:
         statusBar()->showMessage("Address copied", 2000);
     }
 
+    void scanQrForDestination()
+    {
+        QString path = QFileDialog::getOpenFileName(this, "Scan QR", QDir::homePath(), "Images (*.png *.jpg *.jpeg *.bmp)");
+        if (path.isEmpty()) return;
+        auto result = QrScanner::decodeFile(path);
+        if (!result) {
+            QMessageBox::warning(this, "QR", "Unable to decode QR data. Ensure the code is a valid payment request.");
+            return;
+        }
+        destEdit->setText(*result);
+        statusBar()->showMessage("QR decoded", 2000);
+    }
+
     void drawQr(const QString& data)
     {
         const int modules = 25;
@@ -1398,9 +1641,21 @@ private slots:
         double rate = currentFeeRate();
         qint64 fee = estimateFeeSats();
         if (feeRate) feeRate->setEnabled(feeBox && feeBox->currentIndex() == 3);
+        if (feeSlider && feeBox && feeBox->currentIndex() != 3) {
+            feeSlider->setEnabled(true);
+            double sliderRate = std::max(1, feeSlider->value());
+            feeRate->setValue(sliderRate);
+        }
         feePreview->setText(QString("Est. fee: %1 DRM (%2 sat/vB)")
             .arg(fee / 100000000.0, 0, 'f', 8)
             .arg(rate, 0, 'f', 1));
+    }
+
+    void syncFeeSlider(int value)
+    {
+        if (!feeRate) return;
+        feeRate->setValue(value);
+        updateFeePreview();
     }
 
     void startMining()
@@ -1556,6 +1811,54 @@ private slots:
         }
     }
 
+    void exportSeedWords()
+    {
+        QString mnemonic = Bip39Helper::generateMnemonic();
+        if (mnemonic.isEmpty()) {
+            QMessageBox::critical(this, "Seed", "Unable to generate seed; missing wordlist.");
+            return;
+        }
+        QSettings s("Drachma", "CoreDesktop");
+        s.setValue("lastMnemonic", mnemonic);
+        QByteArray seed = Bip39Helper::mnemonicToSeed(mnemonic, "drachma");
+        s.setValue("lastSeed", seed);
+        QMessageBox::information(this, "Recovery seed", QString("Write these 12 words down and store offline:\n%1").arg(mnemonic));
+    }
+
+    void restoreFromSeedDialog()
+    {
+        bool ok = false;
+        QString mnemonic = QInputDialog::getMultiLineText(this, "Restore from seed", "Enter BIP39 mnemonic", "", &ok);
+        if (!ok || mnemonic.isEmpty()) return;
+        if (!Bip39Helper::validateMnemonic(mnemonic)) {
+            QMessageBox::critical(this, "Seed", "Invalid seed words. Check spelling and spacing.");
+            return;
+        }
+        QByteArray seed = Bip39Helper::mnemonicToSeed(mnemonic, "drachma");
+        wallet->creditSimulated(1 * 100000000LL, "seed-restore");
+        wallet->requestNewAddress("seed-0");
+        statusBar()->showMessage("Seed restored into hot wallet", 4000);
+        refreshTransactions();
+        refreshAddressBook();
+        QSettings s("Drachma", "CoreDesktop");
+        s.setValue("lastMnemonic", mnemonic);
+        s.setValue("lastSeed", seed);
+    }
+
+    void enumerateHardwareWallets()
+    {
+        if (!hardware || !hardware->available()) {
+            QMessageBox::warning(this, "Hardware", "hidapi not available; compile with libhidapi to enable Ledger/Trezor support.");
+            return;
+        }
+        QStringList devices = hardware->enumerate();
+        if (devices.isEmpty()) {
+            QMessageBox::information(this, "Hardware", "No USB HID hardware wallets found.");
+        } else {
+            QMessageBox::information(this, "Hardware", QString("Detected devices:\n%1").arg(devices.join('\n')));
+        }
+    }
+
     void updateEncryptionState()
     {
         encryptBtn->setEnabled(!wallet->isEncrypted());
@@ -1578,8 +1881,11 @@ private slots:
 
 private:
     WalletServiceClient* wallet{nullptr};
+    WalletViewModel* viewModel{nullptr};
     NodeProcessController* node{nullptr};
     MiningManager* miner{nullptr};
+    HardwareWalletBridge* hardware{nullptr};
+    QTranslator translator;
 
     QTabWidget* tabs{nullptr};
 
@@ -1596,6 +1902,7 @@ private:
     QDoubleSpinBox* amountEdit{nullptr};
     QComboBox* feeBox{nullptr};
     QDoubleSpinBox* feeRate{nullptr};
+    QSlider* feeSlider{nullptr};
     QLabel* feePreview{nullptr};
 
     QListWidget* addressList{nullptr};
@@ -1607,6 +1914,9 @@ private:
     QComboBox* themeBox{nullptr};
 
     QTableWidget* txTable{nullptr};
+    QComboBox* directionFilter{nullptr};
+    QComboBox* statusFilter{nullptr};
+    QLineEdit* searchFilter{nullptr};
 
     QSpinBox* cpuThreads{nullptr};
     QCheckBox* gpuToggle{nullptr};
@@ -1617,12 +1927,14 @@ private:
     QLineEdit* rpcPassEdit{nullptr};
     QPushButton* encryptBtn{nullptr};
     QPushButton* unlockBtn{nullptr};
+    bool rpcErrorShown{false};
 };
 
 } // namespace
 
 int main(int argc, char *argv[])
 {
+    QApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
     QApplication app(argc, argv);
     MainWindow w;
     w.show();

@@ -6,7 +6,7 @@ Drachma is a minimalist proof-of-work cryptocurrency engineered for predictable 
 ## Monetary Policy
 - **Max supply:** 42,000,000 DRM
 - **Genesis premine:** None; the genesis coinbase is provably unspendable.
-- **Block subsidy:** 50 DRM initially, halving every 2,102,400 blocks (~4 years at 60-second targets).
+- **Block subsidy:** 10 DRM initially, halving every 2,102,400 blocks (~4 years at 60-second targets) to converge on the cap without tail emission.
 - **Block interval:** 60 seconds target.
 - **Reward maturity:** Coinbase outputs require standard maturity before spending.
 - **Fee model:** Transaction fees are collected by miners and are the only reward after subsidy exhaustion.
@@ -35,6 +35,18 @@ Wallets are local-only HD wallets producing Schnorr keypairs. Seeds are 24-word 
 - UTXO set updates are atomic per block and reorg-safe through rollback metadata.
 - No governance, staking, or admin keys exist; all participants follow the same rules.
 
+## Security Model
+
+DRACHMA assumes an **open, adversarial environment** with the following invariants:
+
+- Honest miners eventually control >50% of cumulative work over meaningful windows.
+- Nodes validate every rule locally; no trust is placed in checkpoints beyond optional operator-configured anchors.
+- Network connectivity is imperfect: eclipse resistance relies on diverse peer selection (DNS seeds, manual `addnode`, inbound/outbound balance) and message-level magic bytes.
+- Private keys remain off-chain; compromise of individual wallets does not affect ledger correctness.
+- Layer 2/3 components may fail or be replaced without jeopardizing consensus so long as Layer 1 rules are enforced by every node.
+
+The model explicitly **excludes** reliance on social recovery, governance voting, or trusted hardware. Safety derives from validation, cumulative work, and transparent parameters rather than special authorities.
+
 ## Threat Model
 
 Drachma inherits the Bitcoin-class threat posture while narrowing surface area by avoiding smart contracts and privileged keys.
@@ -44,6 +56,13 @@ Drachma inherits the Bitcoin-class threat posture while narrowing surface area b
 - **Malleability and replay:** Deterministic transaction IDs with tagged hashing and Schnorr-only validation prevent signature malleability. Network messages carry per-network magic bytes to prevent accidental cross-network relay.
 - **Resource exhaustion:** Tight bounds on inv/getdata fan-out, mempool admission, script size, and header/timestamp checks guard CPU and memory budgets.
 - **Key compromise:** Wallets encrypt seeds at rest, support airgapped signing flows, and surface health checks for backups; no custodial recovery backdoors exist.
+
+### Additional Attack Vectors
+
+- **Checkpoint spoofing:** Optional checkpoints are embedded in configuration only. Nodes reject conflicting chains *only* when local operators opt in, preventing remote tampering.
+- **Fee-sniping and MEV:** Short block times and mempool fee priority may incentivize short-range reorgs. The protocol does not include MEV-specific logic; operators should monitor for abnormal orphan rates.
+- **Long-range reorganizations:** Cumulative work is required to displace the active tip. Difficulty clamping and median-time-past rules constrain fabricated histories with unrealistic timestamps.
+- **Resource starvation via fuzzed inputs:** Dedicated fuzz harnesses target transaction validation, difficulty retargeting, and fork resolution. Crashes or unbounded resource use are treated as security bugs.
 
 Residual risks common to open networks—such as widespread miner collusion or nationwide censorship—require social coordination and monitoring rather than protocol-level overrides. Operational guidance appears in `deployment.md` and `security.md`.
 
@@ -61,3 +80,13 @@ Cross-chain components operate off-consensus. Proof-based adapters validate exte
 
 ## Conclusion
 Drachma delivers a conservative, auditable proof-of-work system with clear monetary bounds and a minimal feature set. The layered architecture isolates consensus from services and UI, enabling independent review and safe extensibility without compromising core security guarantees.
+
+## Economic Rationale for a 42M Cap
+
+The 42,000,000 DRM maximum supply balances **scarcity** and **transactional utility**:
+
+- A higher unit count than Bitcoin reduces UX friction for retail payments while maintaining scarcity via predictable halvings.
+- Halving every ~4 years maintains miner revenue visibility and reduces abrupt security budget drops.
+- The cap, coupled with bounded block sizes and conservative fee policies, keeps verification costs low enough for community-operated full nodes, preserving decentralization.
+
+Issuance transparency is enforced in consensus by hard range checks and overflow protections; any block exceeding the cap is invalid.

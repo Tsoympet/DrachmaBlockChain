@@ -17,6 +17,7 @@ add_library(drachma_layer1
     layer1-core/script/interpreter.cpp
     layer1-core/merkle/merkle.cpp
     layer1-core/consensus/params.cpp
+    layer1-core/consensus/fork_resolution.cpp
     layer1-core/consensus/versioning/versionbits.cpp
     layer1-core/consensus/genesis.cpp
     layer1-core/chainstate/coins.cpp
@@ -96,6 +97,16 @@ if(DRACHMA_BUILD_TESTS)
     add_executable(validation_tests tests/validation/validation_tests.cpp)
     target_link_libraries(validation_tests PRIVATE drachma_layer1)
     add_test(NAME validation_tests COMMAND validation_tests)
+
+    add_executable(fork_resolution_test tests/consensus/fork_resolution_test.cpp)
+    target_link_libraries(fork_resolution_test PRIVATE drachma_layer1)
+    add_test(NAME fork_resolution_test COMMAND fork_resolution_test)
+
+    add_executable(fuzz_schnorr tests/crypto/fuzz_schnorr.cpp)
+    target_link_libraries(fuzz_schnorr PRIVATE drachma_layer1)
+
+    add_executable(fuzz_tagged_hash tests/crypto/fuzz_tagged_hash.cpp)
+    target_link_libraries(fuzz_tagged_hash PRIVATE drachma_layer1)
 endif()
 
 # Install rules

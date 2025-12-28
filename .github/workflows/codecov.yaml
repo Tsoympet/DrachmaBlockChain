@@ -1,7 +1,7 @@
 codecov:
+  token: 6d6a8b66-d336-4dc8-b013-01b62675dbad
   max_report_age: 1
   require_ci_to_pass: false
-  token: bacfe94a-4168-4328-88a6-9584a651cd1d
 
 comment:
   behavior: default

@@ -77,6 +77,11 @@ jobs:
           if-no-artifacts-found: error
 
       - name: Validate downloaded artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          if [[ ! -d artifacts ]]; then
         run: |
           set -euo pipefail
 
@@ -85,6 +90,16 @@ jobs:
             exit 1
           fi
 
+          mapfile -t artifact_dirs < <(find artifacts -maxdepth 1 -mindepth 1 -type d -print)
+          if [[ ${#artifact_dirs[@]} -eq 0 ]]; then
+            echo "No artifact directories found under artifacts/."
+            exit 1
+          fi
+
+          echo "Downloaded artifact directories:"
+          printf ' - %s\n' "${artifact_dirs[@]}"
+
+          if [[ -z "$(find artifacts -type f -print -quit)" ]]; then
           echo "Downloaded artifact directories:"
           find artifacts -maxdepth 1 -mindepth 1 -type d -print | sed 's/^/ - /'
 

@@ -9,6 +9,7 @@
 #include <immintrin.h>
 #include <iostream>
 #include <mutex>
+#include <limits>
 #include <numeric>
 #include <optional>
 #include <random>
@@ -93,6 +94,8 @@ struct MinerConfig {
     std::string worker;
     bool preferStratumV2{false};
     std::string rpcAuthToken;
+    bool rollTime{true};
+    bool enableExtranonce{true};
 };
 
 uint32_t ClampBits(uint32_t bits, uint32_t minBits)
@@ -243,6 +246,8 @@ MinerConfig ParseArgs(int argc, char** argv)
         else if (arg == "--worker" && i + 1 < argc) cfg.worker = argv[++i];
         else if (arg == "--stratum-v2") cfg.preferStratumV2 = true;
         else if (arg == "--rpc-auth-token" && i + 1 < argc) cfg.rpcAuthToken = argv[++i];
+        else if (arg == "--no-time-roll") cfg.rollTime = false;
+        else if (arg == "--no-extranonce") cfg.enableExtranonce = false;
     }
     if (cfg.threads == 0) cfg.threads = 1;
     return cfg;
@@ -313,9 +318,8 @@ bool MineJob(const MinerJob& baseJob, const MinerConfig& cfg, StratumPool* pool)
 {
     const auto& params = consensus::Main();
     std::atomic<bool> found{false};
-    uint32_t nonceSeed = RandomizeNonceSeed() ^ baseJob.header.nonce;
-    std::atomic<uint32_t> nonceCounter{nonceSeed};
-    MidstateWorkspace ws = BuildWorkspace(baseJob.header);
+    uint64_t seed64 = static_cast<uint64_t>(RandomizeNonceSeed()) << 32;
+    std::atomic<uint64_t> nonceCounter{seed64};
     std::mutex submitMutex;
 
     uint32_t stride = cfg.intensity ? cfg.intensity : 1024;
@@ -325,8 +329,23 @@ bool MineJob(const MinerJob& baseJob, const MinerConfig& cfg, StratumPool* pool)
 
     auto worker = [&](int idx) {
         MinerJob job = baseJob;
+        uint64_t lastExtra = std::numeric_limits<uint64_t>::max();
+        MidstateWorkspace ws = BuildWorkspace(job.header);
         while (!found.load(std::memory_order_relaxed)) {
-            uint32_t startNonce = nonceCounter.fetch_add(stride, std::memory_order_relaxed);
+            uint64_t ticket = nonceCounter.fetch_add(stride, std::memory_order_relaxed);
+            uint32_t startNonce = static_cast<uint32_t>(ticket);
+            uint32_t extra = static_cast<uint32_t>(ticket >> 32);
+            if (extra != lastExtra) {
+                job = baseJob;
+                if (cfg.rollTime) {
+                    job.header.time = baseJob.header.time + extra;
+                }
+                if (cfg.enableExtranonce) {
+                    job.header.nonce ^= extra;
+                }
+                ws = BuildWorkspace(job.header);
+                lastExtra = extra;
+            }
             __builtin_prefetch(&startNonce, 0, 3);
 #pragma GCC unroll 8
             for (uint32_t n = 0; n < stride && !found.load(std::memory_order_relaxed); ++n) {

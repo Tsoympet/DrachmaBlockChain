@@ -1,27 +1,99 @@
 #include "wallet.h"
 
+#include "../../layer1-core/crypto/schnorr.h"
+
 #include <algorithm>
+#include <memory>
+#include <openssl/ec.h>
 #include <openssl/hmac.h>
+#include <openssl/obj_mac.h>
+#include <openssl/ripemd.h>
 #include <openssl/sha.h>
+#include <optional>
 #include <stdexcept>
 
 namespace wallet {
+namespace {
 
-static PubKey Compress(const std::array<uint8_t, 32>& x)
+using ec_group_ptr = std::unique_ptr<EC_GROUP, decltype(&EC_GROUP_free)>;
+using ec_point_ptr = std::unique_ptr<EC_POINT, decltype(&EC_POINT_free)>;
+using bn_ptr = std::unique_ptr<BIGNUM, decltype(&BN_clear_free)>;
+using bn_ctx_ptr = std::unique_ptr<BN_CTX, decltype(&BN_CTX_free)>;
+
+ec_group_ptr make_group()
 {
+    return ec_group_ptr(EC_GROUP_new_by_curve_name(NID_secp256k1), &EC_GROUP_free);
+}
+
+bool valid_secret(const BIGNUM* k, const BIGNUM* order)
+{
+    return k && order && BN_is_zero(k) == 0 && BN_is_negative(k) == 0 && BN_cmp(k, order) < 0;
+}
+
+bn_ptr bn_from_bytes(const uint8_t* data, size_t len)
+{
+    return bn_ptr(BN_bin2bn(data, static_cast<int>(len), nullptr), &BN_clear_free);
+}
+
+bool bn_to_32(const BIGNUM* bn, uint8_t out[32])
+{
+    return BN_bn2binpad(bn, out, 32) == 32;
+}
+
+PubKey derive_pubkey(const PrivKey& priv)
+{
+    ec_group_ptr group = make_group();
+    bn_ctx_ptr ctx(BN_CTX_new(), &BN_CTX_free);
+    if (!group || !ctx) {
+        throw std::runtime_error("failed to allocate EC context");
+    }
+    bn_ptr scalar = bn_from_bytes(priv.data(), priv.size());
+    if (!scalar) {
+        throw std::runtime_error("invalid private key");
+    }
+    ec_point_ptr point(EC_POINT_new(group.get()), &EC_POINT_free);
+    if (!point) {
+        throw std::runtime_error("failed to allocate point");
+    }
+    if (EC_POINT_mul(group.get(), point.get(), scalar.get(), nullptr, nullptr, ctx.get()) != 1) {
+        throw std::runtime_error("EC_POINT_mul failed");
+    }
     PubKey out{};
-    out[0] = 0x02;
-    std::copy(x.begin(), x.end(), out.begin() + 1);
+    size_t written = EC_POINT_point2oct(group.get(), point.get(), POINT_CONVERSION_COMPRESSED, out.data(), out.size(), ctx.get());
+    if (written != out.size()) {
+        throw std::runtime_error("pubkey serialization failed");
+    }
     return out;
 }
+
+uint32_t fingerprint(const PubKey& pub)
+{
+    uint8_t sha_out[SHA256_DIGEST_LENGTH]{};
+    SHA256(pub.data(), pub.size(), sha_out);
+    uint8_t ripe_out[RIPEMD160_DIGEST_LENGTH]{};
+    RIPEMD160(sha_out, SHA256_DIGEST_LENGTH, ripe_out);
+    uint32_t fp = 0;
+    for (int i = 0; i < 4; ++i) {
+        fp = (fp << 8) | ripe_out[i];
+    }
+    return fp;
+}
+
+KeyId make_key_id(const PrivKey& priv)
+{
+    KeyId id{};
+    SHA256(priv.data(), priv.size(), id.data());
+    return id;
+}
+
+} // namespace
 
 WalletBackend::WalletBackend(KeyStore store)
     : m_store(std::move(store)) {}
 
 KeyId WalletBackend::ImportKey(const PrivKey& priv)
 {
-    KeyId id{};
-    SHA256(priv.data(), priv.size(), id.data());
+    KeyId id = make_key_id(priv);
     m_store.Import(id, priv);
     return id;
 }
@@ -81,9 +153,7 @@ std::vector<UTXO> WalletBackend::SelectCoins(uint64_t amount) const
 
 PubKey WalletBackend::DerivePub(const PrivKey& priv) const
 {
-    std::array<uint8_t, 32> hashed{};
-    SHA256(priv.data(), priv.size(), hashed.data());
-    return Compress(hashed);
+    return derive_pubkey(priv);
 }
 
 std::vector<uint8_t> WalletBackend::SignDigest(const PrivKey& key, const Transaction& tx, size_t inputIndex) const
@@ -136,33 +206,107 @@ Transaction WalletBackend::CreateSpend(const std::vector<TxOut>& outputs, const 
     return tx;
 }
 
-void WalletBackend::SetHDSeed(const std::array<uint8_t, 32>& seed)
+void WalletBackend::SetHDSeed(const std::vector<uint8_t>& seed)
 {
+    if (seed.empty()) throw std::runtime_error("seed must not be empty");
     unsigned int len = 0;
     std::array<uint8_t, 64> I{};
-    HMAC(EVP_sha512(), "DRACHMA seed", 11, seed.data(), seed.size(), I.data(), &len);
+    HMAC(EVP_sha512(), "Bitcoin seed", 12, seed.data(), seed.size(), I.data(), &len);
+
+    bn_ctx_ptr ctx(BN_CTX_new(), &BN_CTX_free);
+    ec_group_ptr group = make_group();
+    bn_ptr order(BN_new(), &BN_clear_free);
+    if (!ctx || !group || !order || EC_GROUP_get_order(group.get(), order.get(), ctx.get()) != 1) {
+        throw std::runtime_error("failed to load secp256k1 order");
+    }
+
+    bn_ptr il = bn_from_bytes(I.data(), 32);
+    if (!il || !valid_secret(il.get(), order.get())) {
+        throw std::runtime_error("invalid master key material");
+    }
+
     std::copy(I.begin(), I.begin() + 32, m_master.priv.begin());
     std::copy(I.begin() + 32, I.begin() + 64, m_master.chainCode.begin());
-    m_master.pub = DerivePub(m_master.priv);
+    m_master.pub = derive_pubkey(m_master.priv);
     m_master.depth = 0;
     m_master.childNumber = 0;
+    m_master.parentFingerprint = 0;
     m_hasSeed = true;
+
+    ImportKey(m_master.priv);
 }
 
-HDNode WalletBackend::DeriveChild(uint32_t index)
+HDNode WalletBackend::DeriveChild(const HDNode& node, uint32_t index, bool hardened)
 {
     if (!m_hasSeed) throw std::runtime_error("missing seed");
-    std::array<uint8_t, 4> idxBytes{static_cast<uint8_t>(index >> 24), static_cast<uint8_t>(index >> 16), static_cast<uint8_t>(index >> 8), static_cast<uint8_t>(index)};
+    uint32_t child_index = hardened ? (index | 0x80000000u) : index;
+
+    bn_ctx_ptr ctx(BN_CTX_new(), &BN_CTX_free);
+    ec_group_ptr group = make_group();
+    bn_ptr order(BN_new(), &BN_clear_free);
+    if (!ctx || !group || !order || EC_GROUP_get_order(group.get(), order.get(), ctx.get()) != 1) {
+        throw std::runtime_error("failed to load secp256k1 order");
+    }
+
+    HDNode child{};
+    child.depth = node.depth + 1;
+    child.childNumber = child_index;
+    child.parentFingerprint = fingerprint(node.pub);
+
+    std::array<uint8_t, 37> data{};
+    if (hardened) {
+        data[0] = 0x00;
+        std::copy(node.priv.begin(), node.priv.end(), data.begin() + 1);
+    } else {
+        std::copy(node.pub.begin(), node.pub.end(), data.begin());
+    }
+    data[33] = static_cast<uint8_t>(child_index >> 24);
+    data[34] = static_cast<uint8_t>(child_index >> 16);
+    data[35] = static_cast<uint8_t>(child_index >> 8);
+    data[36] = static_cast<uint8_t>(child_index);
+
+    std::array<uint8_t, 64> I{};
     unsigned int len = 0;
-    std::array<uint8_t, 64> out{};
-    HMAC(EVP_sha512(), m_master.chainCode.data(), m_master.chainCode.size(), idxBytes.data(), idxBytes.size(), out.data(), &len);
-    HDNode child;
-    std::copy(out.begin(), out.begin() + 32, child.priv.begin());
-    std::copy(out.begin() + 32, out.begin() + 64, child.chainCode.begin());
-    child.depth = m_master.depth + 1;
-    child.childNumber = index;
-    child.pub = DerivePub(child.priv);
+    HMAC(EVP_sha512(), node.chainCode.data(), node.chainCode.size(), data.data(), data.size(), I.data(), &len);
+
+    bn_ptr il = bn_from_bytes(I.data(), 32);
+    bn_ptr parent_k = bn_from_bytes(node.priv.data(), node.priv.size());
+    if (!il || !parent_k || BN_mod_add(il.get(), il.get(), parent_k.get(), order.get(), ctx.get()) != 1) {
+        throw std::runtime_error("failed deriving child scalar");
+    }
+    if (!valid_secret(il.get(), order.get())) {
+        return DeriveChild(node, index + 1, hardened); // skip invalid child per BIP-32
+    }
+    if (!bn_to_32(il.get(), child.priv.data())) {
+        throw std::runtime_error("failed serializing child priv");
+    }
+    std::copy(I.begin() + 32, I.begin() + 64, child.chainCode.begin());
+    child.pub = derive_pubkey(child.priv);
+
+    ImportKey(child.priv);
     return child;
+}
+
+HDNode WalletBackend::DeriveBip44(uint32_t account, uint32_t change, uint32_t address_index)
+{
+    const uint32_t purpose = 44u | 0x80000000u;
+    const uint32_t coin_type = 0u | 0x80000000u; // DRACHMA reuses Bitcoin-like mainnet coin type 0 for now
+    HDNode account_node = DeriveChild(m_master, purpose, true);
+    account_node = DeriveChild(account_node, coin_type, true);
+    account_node = DeriveChild(account_node, account | 0x80000000u, true);
+    HDNode change_node = DeriveChild(account_node, change, false);
+    return DeriveChild(change_node, address_index, false);
+}
+
+PubKey WalletBackend::GenerateAddress(uint32_t account, uint32_t change, uint32_t address_index)
+{
+    HDNode leaf = DeriveBip44(account, change, address_index);
+    return leaf.pub;
+}
+
+bool WalletBackend::SchnorrSign(const HDNode& node, const std::array<uint8_t, 32>& msg_hash, std::array<uint8_t, 64>& sig_out) const
+{
+    return schnorr_sign(node.priv.data(), msg_hash.data(), sig_out.data());
 }
 
 std::vector<uint8_t> WalletBackend::BuildMultisigScript(const std::vector<PubKey>& pubs, uint8_t m) const
@@ -229,4 +373,3 @@ void WalletBackend::RemoveCoins(const std::vector<OutPoint>& used)
 }
 
 } // namespace wallet
-

@@ -21,6 +21,7 @@ struct HDNode {
     uint32_t depth{0};
     uint32_t childNumber{0};
     std::array<uint8_t, 32> chainCode{};
+    uint32_t parentFingerprint{0};
 };
 
 class WalletBackend {
@@ -36,8 +37,11 @@ public:
     Transaction CreateSpend(const std::vector<TxOut>& outputs, const KeyId& from, uint64_t fee);
 
     // HD + multisig helpers
-    void SetHDSeed(const std::array<uint8_t, 32>& seed);
-    HDNode DeriveChild(uint32_t index);
+    void SetHDSeed(const std::vector<uint8_t>& seed);
+    HDNode DeriveChild(const HDNode& node, uint32_t index, bool hardened);
+    HDNode DeriveBip44(uint32_t account, uint32_t change, uint32_t address_index);
+    PubKey GenerateAddress(uint32_t account, uint32_t change, uint32_t address_index);
+    bool SchnorrSign(const HDNode& node, const std::array<uint8_t, 32>& msg_hash, std::array<uint8_t, 64>& sig_out) const;
     std::vector<uint8_t> BuildMultisigScript(const std::vector<PubKey>& pubs, uint8_t m) const;
     Transaction CreateMultisigSpend(const std::vector<TxOut>& outputs, const std::vector<OutPoint>& coins, const std::vector<PrivKey>& keys, uint8_t threshold, uint64_t fee);
 

@@ -23,7 +23,14 @@ Include impact, reproduction steps or PoC (logs/seeds), affected commits/tags, e
 Consensus code, networking/P2P surfaces, wallet key handling, miners, build/release pipelines, and default configurations are all in scope. Third-party forks or external pools are out of scope.
 
 ## Security Resources
-- [Security Audit Guide](docs/audit-guide.md)
-- [Threat Model](docs/threat-model.md)
+- [Security Audit Guide](docs/audit_guide.md)
+- [Threat Model](docs/threat_model.md)
+- [Fuzzing Playbook](docs/audit_guide.md#fuzzing-and-dynamic-analysis)
+
+### Fuzzing Results
+- Run libFuzzer targets with AddressSanitizer/UndefinedBehaviorSanitizer enabled; capture crash logs, minimized reproducers, and coverage summaries.
+- Store the latest coverage artifact (e.g., `llvm-cov show` HTML) with the release candidate build; include commands used to generate it.
+- File reproducible crashes as private security issues until triaged; link sanitizer output, offending corpus entries, and symbolized stack traces.
+- Track outstanding fuzzing issues in release checklists and block releases for unfixed consensus or parser-impacting defects.
 
 Thank you for helping keep DRACHMA users safe.

@@ -37,6 +37,11 @@ jobs:
     env:
       VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version_tag || github.ref_name }}
       CCACHE_DIR: ${{ github.workspace }}/.ccache
+      VERSION: ${{ github.ref_name }}
+      CCACHE_DIR: ${{ github.workspace }}/.ccache
+      GPG_KEY: ${{ secrets.GPG_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      HAS_GPG_KEY: ${{ secrets.GPG_KEY != '' }}
 
     steps:
       - name: Checkout
@@ -179,6 +184,22 @@ jobs:
             sha256sum * > checksums.txt
           fi
 
+      - name: Import GPG key (optional)
+        if: env.HAS_GPG_KEY == 'true'
+        shell: bash
+        run: |
+          echo "$GPG_KEY" | gpg --batch --yes --import
+
+      - name: Sign artifacts (optional)
+        if: env.HAS_GPG_KEY == 'true'
+        shell: bash
+        run: |
+          cd dist/${{ matrix.os }}
+          for f in *; do
+            [ -f "$f" ] || continue
+            gpg --batch --yes --passphrase "$GPG_PASSPHRASE" --output "$f.sig" --detach-sign "$f"
+          done
+
       - name: Generate SBOM
         shell: bash
         run: |
@@ -202,6 +223,14 @@ jobs:
     runs-on: ubuntu-latest
     env:
       VERSION: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.version_tag || github.ref_name }}
+      GPG_KEY: ${{ secrets.GPG_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      HAS_GPG_KEY: ${{ secrets.GPG_KEY != '' }}
+    if: github.event_name != 'workflow_dispatch' || github.event.inputs.publish_release == 'true'
+      VERSION: ${{ github.ref_name }}
+      GPG_KEY: ${{ secrets.GPG_KEY }}
+      GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+      HAS_GPG_KEY: ${{ secrets.GPG_KEY != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -220,6 +249,10 @@ jobs:
             echo "Release ${VERSION}" > release_notes.md
             echo "See CHANGELOG.md for details." >> release_notes.md
           fi
+
+      - name: Import GPG key (optional)
+        if: env.HAS_GPG_KEY == 'true'
+        run: echo "$GPG_KEY" | gpg --batch --yes --import
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1

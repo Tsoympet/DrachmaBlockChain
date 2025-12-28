@@ -1,6 +1,4 @@
-#include "sha256d.h"
-#include "../consensus/params.h"
-#include "../crypto/tagged_hash.h"
+#include "difficulty.h"
 #include <algorithm>
 #include <stdexcept>
 #include <boost/multiprecision/cpp_int.hpp>

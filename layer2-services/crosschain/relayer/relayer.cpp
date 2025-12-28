@@ -1,11 +1,13 @@
 #include "relayer.h"
 
+#include <boost/beast/core/flat_buffer.hpp>
 #include <boost/beast/http.hpp>
 #include <boost/beast/version.hpp>
 #include <boost/asio/connect.hpp>
 #include <boost/asio/ip/tcp.hpp>
 #include <chrono>
 #include <iostream>
+#include <vector>
 
 using tcp = boost::asio::ip::tcp;
 namespace http = boost::beast::http;
@@ -74,7 +76,8 @@ void Relayer::Tick()
         lock.timeoutHeight = 0;
 
         if (m_bridge.DetectInboundLock(chain, {*proof}, lock)) {
-            net::Message msg{"xchain", proof->header};
+            std::vector<uint8_t> header(proof->header.begin(), proof->header.end());
+            net::Message msg{"xchain", std::move(header)};
             m_p2p.Broadcast(msg);
             ++m_metrics.detected;
         }

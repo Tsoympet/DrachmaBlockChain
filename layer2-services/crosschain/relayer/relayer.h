@@ -15,6 +15,15 @@ namespace crosschain {
 
 struct RelayerMetrics {
     std::atomic<uint64_t> detected{0};
+
+    RelayerMetrics() = default;
+    RelayerMetrics(const RelayerMetrics& other)
+        : detected(other.detected.load(std::memory_order_relaxed)) {}
+    RelayerMetrics& operator=(const RelayerMetrics& other)
+    {
+        detected.store(other.detected.load(std::memory_order_relaxed), std::memory_order_relaxed);
+        return *this;
+    }
 };
 
 class Relayer {

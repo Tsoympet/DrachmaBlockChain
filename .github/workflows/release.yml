@@ -4,98 +4,246 @@ on:
   push:
     tags:
       - 'v*'
-  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+env:
+  BUILD_TYPE: Release
+  QT_VERSION: 6.6.2
 
 jobs:
-  build-and-release:
-    name: Build and sign (${{ matrix.os }})
+  build:
+    name: Build and package (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
     env:
-      BUILD_TYPE: Release
-      BUILD_DIR: build
-      ARTIFACT_BASENAME: drachma-${{ runner.os }}-${{ github.ref_name || 'nightly' }}
+      VERSION: ${{ github.ref_name }}
+      CCACHE_DIR: ${{ runner.temp }}/ccache
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up MSVC
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential ninja-build cmake pkg-config \
+            qtbase6-dev qttools6-dev-tools qt6-base-dev qt6-tools-dev-tools qt6-l10n-tools qt6-svg-dev \
+            libx11-xcb-dev patchelf libgl1-mesa-dev gpg \
+            libfuse2 wget
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew update
+          brew install cmake ninja qt@6 coreutils gpg syft
+          echo "/opt/homebrew/opt/qt@6/bin" >> $GITHUB_PATH
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          choco install -y cmake --installargs 'ADD_CMAKE_TO_PATH=1'
+          choco install -y ninja gnupg syft
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          version: ${{ env.QT_VERSION }}
+          cached: true
+          tools: 'tools_qtcreator'
+
+      - name: Configure (node & miners)
+        shell: bash
+        run: |
+          cmake -S . -B build -G "Ninja" -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+
+      - name: Build (node & miners)
+        shell: bash
+        run: cmake --build build --config ${BUILD_TYPE}
+
+      - name: Configure wallet (Qt GUI)
+        shell: bash
+        run: |
+          cmake -S layer3-app -B build-wallet -G "Ninja" -DCMAKE_BUILD_TYPE=${BUILD_TYPE}
+
+      - name: Build wallet (Qt GUI)
+        shell: bash
+        run: cmake --build build-wallet --config ${BUILD_TYPE}
+
+      - name: Prepare dist directories
+        shell: bash
+        run: |
+          mkdir -p dist/${{ matrix.os }}
+          echo "VERSION=${VERSION}" > dist/${{ matrix.os }}/version.txt
+
+      - name: Package Linux artifacts
+        if: runner.os == 'Linux'
+        shell: bash
+        run: |
+          NODE_BIN="build/src/drachmad"
+          MINER_BIN="build/miners/miner"
+          WALLET_BIN="build-wallet/src/drachma-wallet"
+          chmod +x "$NODE_BIN" "$WALLET_BIN" || true
+
+          # tarball for node + miners
+          mkdir -p package/linux/bin
+          cp "$NODE_BIN" package/linux/bin/ || true
+          if [ -d build/miners ]; then
+            cp build/miners/* package/linux/bin/ || true
+          fi
+          tar -czf dist/${{ matrix.os }}/drachma-${VERSION}-linux-x64.tar.gz -C package/linux .
+
+          # AppImage for wallet
+          wget -q https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage -O linuxdeploy
+          chmod +x linuxdeploy
+          APPDIR=$(pwd)/AppDir
+          rm -rf "$APPDIR"
+          mkdir -p "$APPDIR"
+          ./linuxdeploy --appdir "$APPDIR" --executable "$WALLET_BIN" --output appimage
+          mv *.AppImage dist/${{ matrix.os }}/drachma-wallet-${VERSION}-linux-x64.AppImage
+
+      - name: Package Windows artifacts
+        if: runner.os == 'Windows'
+        shell: bash
+        run: |
+          NODE_BIN="build/src/${BUILD_TYPE}/drachmad.exe"
+          MINER_DIR="build/miners/${BUILD_TYPE}"
+          WALLET_BIN="build-wallet/src/${BUILD_TYPE}/drachma-wallet.exe"
+
+          mkdir -p dist/${{ matrix.os }}/bundle
+          cp "$NODE_BIN" dist/${{ matrix.os }}/drachma-${VERSION}-windows-x64.exe
+
+          # Wallet deployment
+          windeployqt "$WALLET_BIN" --release --qmldir layer3-app
+          cp "$WALLET_BIN" dist/${{ matrix.os }}/bundle/
+          (cd dist/${{ matrix.os }}/bundle && zip -r ../drachma-wallet-${VERSION}-windows-x64.zip .)
+
+          # Simple installer placeholder
+          cp dist/${{ matrix.os }}/drachma-wallet-${VERSION}-windows-x64.zip dist/${{ matrix.os }}/drachma-wallet-${VERSION}-windows-x64.exe
+
+          if [ -d "$MINER_DIR" ]; then
+            cp "$MINER_DIR"/* dist/${{ matrix.os }}/ || true
+          fi
+
+      - name: Package macOS artifacts
+        if: runner.os == 'macOS'
+        shell: bash
+        run: |
+          NODE_BIN="build/src/drachmad"
+          WALLET_BIN="build-wallet/src/drachma-wallet"
+          chmod +x "$NODE_BIN" "$WALLET_BIN" || true
+
+          mkdir -p dist/${{ matrix.os }}
+          cp "$NODE_BIN" dist/${{ matrix.os }}/drachma-${VERSION}-macos-x64
+
+          macdeployqt "$WALLET_BIN" -dmg
+          mv build-wallet/src/*.dmg dist/${{ matrix.os }}/drachma-wallet-${VERSION}-macos.dmg
+
+      - name: Generate SHA256 checksums
+        shell: bash
+        run: |
+          cd dist/${{ matrix.os }}
+          if [ "$RUNNER_OS" = "Windows" ]; then
+            for f in *; do
+              if [ -f "$f" ]; then
+                certutil -hashfile "$f" SHA256 | sed -n '2p' | tr -d '\r' | awk "{print \$1 \"  \" ARGV[1]}" ARGV[1]="$f" >> checksums.txt
+              fi
+            done
+          else
+            sha256sum * > checksums.txt
+          fi
+
+      - name: Import GPG key (optional)
+        if: secrets.GPG_KEY != ''
+        shell: bash
+        env:
+          GPG_KEY: ${{ secrets.GPG_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          echo "$GPG_KEY" | gpg --batch --yes --import
+
+      - name: Sign artifacts (optional)
+        if: secrets.GPG_KEY != ''
+        shell: bash
+        env:
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          cd dist/${{ matrix.os }}
+          for f in *; do
+            [ -f "$f" ] || continue
+            gpg --batch --yes --passphrase "$GPG_PASSPHRASE" --output "$f.sig" --detach-sign "$f"
+          done
+
+      - name: Generate SBOM
+        shell: bash
+        run: |
+          if command -v syft >/dev/null 2>&1; then
+            syft packages dist/${{ matrix.os }} -o spdx-json > dist/${{ matrix.os }}/sbom-${{ matrix.os }}.spdx.json
+          else
+            curl -sSfL https://github.com/anchore/syft/releases/download/v1.0.0/syft_1.0.0_$(uname -s)_$(uname -m).tar.gz | tar -xz syft
+            ./syft packages dist/${{ matrix.os }} -o spdx-json > dist/${{ matrix.os }}/sbom-${{ matrix.os }}.spdx.json
+          fi
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.os }}
+          path: dist/${{ matrix.os }}
+
+  publish:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.ref_name }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up CMake
-        uses: jwlawson/actions-setup-cmake@v1
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: dist
 
-      - name: Install dependencies (Linux)
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y ninja-build libssl-dev libboost-all-dev
-
-      - name: Install dependencies (macOS)
-        if: runner.os == 'macOS'
-        run: brew install ninja boost openssl@3
-
-      - name: Install dependencies (Windows)
-        if: runner.os == 'Windows'
-        shell: pwsh
+      - name: Compose release notes
         run: |
-          choco install ninja
-          choco install gnupg
-
-      - name: Configure
-        run: cmake -S . -B ${BUILD_DIR} -G Ninja -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DDRACHMA_BUILD_GUI=ON -DDRACHMA_BUILD_TESTS=OFF
-
-      - name: Build
-        run: cmake --build ${BUILD_DIR} --config ${BUILD_TYPE} --parallel
-
-      - name: Archive binaries
-        shell: bash
-        run: |
-          mkdir -p artifacts
-          if [[ "${{ runner.os }}" == "Windows" ]]; then
-            7z a "artifacts/${ARTIFACT_BASENAME}.zip" "${BUILD_DIR}/*"
+          VERSION_PATTERN="^## ${VERSION}"
+          if grep -qE "$VERSION_PATTERN" CHANGELOG.md; then
+            sed -n "/${VERSION_PATTERN}/,/^## /p" CHANGELOG.md | sed '$d' > release_notes.md
           else
-            tar -czf "artifacts/${ARTIFACT_BASENAME}.tar.gz" -C "${BUILD_DIR}" .
+            echo "Release ${VERSION}" > release_notes.md
+            echo "See CHANGELOG.md for details." >> release_notes.md
           fi
 
-      - name: Generate checksums
-        shell: bash
-        run: |
-          cd artifacts
-          for f in *; do
-            if [[ -f "$f" ]]; then
-              shasum -a 256 "$f" > "$f.sha256"
-            fi
-          done
-
-      - name: Import GPG key
-        if: secrets.RELEASE_GPG_KEY != ''
+      - name: Import GPG key (optional)
+        if: secrets.GPG_KEY != ''
         env:
-          SIGNING_KEY: ${{ secrets.RELEASE_GPG_KEY }}
-        run: echo "$SIGNING_KEY" | gpg --batch --import
+          GPG_KEY: ${{ secrets.GPG_KEY }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: echo "$GPG_KEY" | gpg --batch --yes --import
 
-      - name: Sign release files
-        if: secrets.RELEASE_GPG_KEY != ''
-        env:
-          SIGNING_PASS: ${{ secrets.RELEASE_GPG_PASSPHRASE }}
-        shell: bash
-        run: |
-          cd artifacts
-          for f in *; do
-            if [[ -f "$f" && "$f" != *.asc && "$f" != *.sig ]]; then
-              gpg --batch --yes --pinentry-mode loopback --passphrase "$SIGNING_PASS" --detach-sign "$f"
-            fi
-          done
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
         with:
-          name: drachma-${{ runner.os }}-release
-          path: artifacts/*
-
-      - name: Publish GitHub Release assets
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: artifacts/*
+          tag_name: ${{ github.ref_name }}
+          name: Drachma ${{ github.ref_name }}
+          body_path: release_notes.md
+          files: dist/**
           draft: false
-          prerelease: ${{ contains(github.ref_name, '-rc') || contains(github.ref_name, '-beta') || contains(github.ref_name, '-alpha') }}
+          prerelease: ${{ contains(github.ref_name, 'rc') || contains(github.ref_name, 'testnet') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

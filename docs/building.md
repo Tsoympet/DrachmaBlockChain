@@ -1,124 +1,159 @@
 # Building DRACHMA
 
-This guide describes how to build the DRACHMA reference stack across platforms. DRACHMA uses CMake and a C++17 toolchain; deterministic builds are encouraged for releases.
+This guide walks through building the DRACHMA reference implementation (core node `drachmad`, desktop wallet `drachma-wallet`, and reference miners) on Linux, Windows, and macOS. Commands favor a Release build similar to the artifacts published on the GitHub Releases page.
 
 ## Prerequisites
 
-### Toolchain
-- **CMake:** >= 3.22
-- **C++ Compiler:** GCC >= 11 or Clang >= 13 with full C++17 support
-- **Python:** >= 3.9 for scripts and tests
-- **Git:** for source retrieval
+### Core toolchain
+- **CMake:** 3.22 or newer
+- **C++17 compiler:** GCC ≥ 11, Clang ≥ 13, or MSVC 2022
+- **Python:** 3.9+ for scripts/tests
+- **Git:** to clone and fetch tags
 
-### Libraries
-- **OpenSSL** (crypto, RPC/TLS)
-- **Boost** (filesystem, program_options, asio, serialization)
-- **SQLite** (wallet/indexing) and/or **LevelDB** (chainstate) depending on build options
-- **Zlib** (compression for network and storage)
-- **cURL** (optional, for some service integrations)
+### Required libraries
+- **OpenSSL** (TLS/RPC)
+- **Boost** (filesystem, program_options, asio)
+- **SQLite / LevelDB** (depending on wallet/indexing options)
+- **zlib** (compression)
+- **cURL** (optional service integrations)
 
 ### GPU (optional)
-- **CUDA Toolkit** >= 11.7 for NVIDIA miners
-- **OpenCL SDK** (vendor specific) for AMD/Intel miners
-- Matching vendor drivers with development headers.
+- **CUDA Toolkit** ≥ 11.7 for NVIDIA miners
+- **OpenCL SDK** for AMD/Intel miners
+- Matching vendor drivers and ICD loaders
 
-### Platform-specific packages
-- **Debian/Ubuntu:** `sudo apt install build-essential cmake pkg-config libssl-dev libboost-all-dev libsqlite3-dev libleveldb-dev libz-dev python3 python3-pip ocl-icd-opencl-dev`
-- **Fedora/RHEL:** `sudo dnf install gcc gcc-c++ cmake openssl-devel boost-devel sqlite-devel leveldb-devel zlib-devel python3 ocl-icd-devel`
-- **macOS (Homebrew):** `brew install cmake openssl boost sqlite leveldb zlib python` (set `OPENSSL_ROOT_DIR` if needed)
-- **Windows (MSVC + vcpkg):** Install Visual Studio 2022, CMake, and acquire dependencies via `vcpkg install openssl boost sqlite3 leveldb zlib`.
-
-## Configure and Build
-
-1. Clone repository and initialize submodules if present:
-   ```bash
-   git clone https://github.com/Tsoympet/BlockChainDrachma.git
-   cd BlockChainDrachma
-   git submodule update --init --recursive
-   ```
-2. Configure with CMake:
-   ```bash
-   cmake -S . -B build \
-     -DCMAKE_BUILD_TYPE=Release \
-     -DDRACHMA_BUILD_TESTS=ON \
-     -DDRACHMA_BUILD_GUI=ON \
-     -DENABLE_WALLET=ON \
-     -DENABLE_GPU_MINERS=ON
-   ```
-   Toggle options as needed (see below).
-3. Build:
-   ```bash
-   cmake --build build --parallel
-   ```
-4. Run tests (if enabled):
-   ```bash
-   ctest --test-dir build --output-on-failure
-   ```
-
-Artifacts follow the repository layout under `build/` (e.g., `build/layer1-core/`, `build/layer2-services/`, `build/layer3-app/`, `build/miners/`).
-
-## Notable CMake Options
-
-- `CMAKE_BUILD_TYPE` = `Release` | `Debug` | `RelWithDebInfo`
-- `DRACHMA_BUILD_TESTS` (ON/OFF): build unit/integration tests
-- `DRACHMA_BUILD_GUI` (ON/OFF): build desktop client under `layer3-app`
-- `ENABLE_WALLET` (ON/OFF): wallet/key management services
-- `ENABLE_GPU_MINERS` (ON/OFF): CUDA/OpenCL miners
-- `DRACHMA_BUILD_FUZZ` (ON/OFF): build fuzzing harnesses (developers only)
-- `CUDA_TOOLKIT_ROOT_DIR` / `OpenCL_INCLUDE_DIR` / `OpenCL_LIBRARY`: override GPU paths
-- `USE_SYSTEM_LIBS` (ON/OFF): prefer system dependencies over vendored
-
-Pass options via `-D<OPTION>=<VALUE>` during configuration.
-
-## Cross-Platform Notes
-
-- **Linux:** Preferred for production nodes. Ensure `ulimit -n` is sufficient for P2P peers. Use `libstdc++` matching compiler version.
-- **macOS:** Specify OpenSSL path: `-DOPENSSL_ROOT_DIR=$(brew --prefix openssl)` when CMake cannot locate it.
-- **Windows:** Configure from a “x64 Native Tools” shell. Use Ninja (`-G Ninja`) for faster builds. Set `-DOPENSSL_ROOT_DIR` to your vcpkg install path. Disable GPU miners if CUDA/OpenCL SDKs are absent.
-- **Containers:** The provided `Dockerfile` and `docker-compose.yml` offer reproducible environments for CI and testing.
-
-## Mainnet Build Profile
-
-For production nodes and release artifacts:
-
-- Configure in release mode with deterministic flags where available:
+### Platform packages
+- **Ubuntu/Debian:**
   ```bash
-  cmake -S . -B build \
-    -DCMAKE_BUILD_TYPE=Release \
-    -DDRACHMA_BUILD_TESTS=OFF \
-    -DDRACHMA_BUILD_GUI=OFF \
-    -DDRACHMA_BUILD_FUZZ=OFF \
-    -DENABLE_WALLET=ON \
-    -DENABLE_GPU_MINERS=OFF
+  sudo apt update
+  sudo apt install build-essential cmake pkg-config git \
+    libssl-dev libboost-all-dev libsqlite3-dev libleveldb-dev libz-dev \
+    python3 python3-pip ocl-icd-opencl-dev
   ```
-- Prefer system packages vetted by your distro; pin versions in CI to reproduce hashes.
-- Use `-DCMAKE_INSTALL_PREFIX=/opt/drachma` and `cmake --install build` for managed deployments.
-- Sign resulting binaries and publish SHA-256 checksums. Verify signatures before promotion to production hosts.
+- **Fedora/RHEL:**
+  ```bash
+  sudo dnf install gcc gcc-c++ cmake openssl-devel boost-devel \
+    sqlite-devel leveldb-devel zlib-devel python3 ocl-icd-devel git
+  ```
+- **macOS (Homebrew):**
+  ```bash
+  brew install cmake openssl boost sqlite leveldb zlib python git
+  ```
+  If OpenSSL is not found by CMake, add `-DOPENSSL_ROOT_DIR=$(brew --prefix openssl)`.
+- **Windows (MSVC + vcpkg):**
+  - Install **Visual Studio 2022** with C++ workload and **CMake**.
+  - Install dependencies with vcpkg (from a Developer PowerShell):
+    ```powershell
+    vcpkg install openssl boost sqlite3 leveldb zlib
+    ```
+  - Pass `-DCMAKE_TOOLCHAIN_FILE="<vcpkg-root>/scripts/buildsystems/vcpkg.cmake"` to CMake.
 
-### Release verification
-- Document the exact commit/tag, toolchain versions, and CMake cache in release notes.
-- Publish `sha256sum` outputs for binaries and installers; require operators to compare before installation.
-- Cross-check deterministic builds between at least two maintainers before tagging a release candidate.
+## Directory layout
+- `CMakeLists.txt` (root): builds **drachmad** and **miners**
+- `layer3-app/CMakeLists.txt`: builds **drachma-wallet** (Qt desktop wallet)
 
-## GPU Build Tips
+## Build the core node and miners (all platforms)
+```bash
+git clone https://github.com/Tsoympet/BlockChainDrachma.git
+cd BlockChainDrachma
 
-- For CUDA, ensure `nvcc --version` matches the driver; set `-DCMAKE_CUDA_ARCHITECTURES` for target GPUs.
-- For OpenCL, install vendor SDK and ICD loader; verify with `clinfo`.
-- Disable GPU miners on systems without compatible hardware to shorten build times.
+# Configure
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 
-## Troubleshooting
+# Build daemons and miners
+cmake --build build --parallel
+```
+Binaries appear under `build/layer1-core/` (node) and `build/miners/`.
 
-- **Missing headers/libraries:** Inspect `CMakeError.log` under `build/CMakeFiles/`. Provide explicit paths via `-D<VAR>=...`.
-- **Stale caches:** Remove the build directory when switching compilers or major options: `rm -rf build`.
-- **Linker errors on macOS:** Add `-DCMAKE_OSX_DEPLOYMENT_TARGET=12.0` or adjust to your SDK.
-- **GPU issues:** Ensure driver/toolkit versions match; export `CUDA_HOME` or set `OpenCL` variables. Try `-DENABLE_GPU_MINERS=OFF` to isolate.
-- **Reproducible builds:** Pin compiler versions, use container images, and avoid unpinned package upgrades.
+## Build the Qt desktop wallet
+```bash
+cd BlockChainDrachma
+cmake -S layer3-app -B build-wallet -DCMAKE_BUILD_TYPE=Release
+cmake --build build-wallet --parallel
+```
+The wallet binary lives under `build-wallet/` (for example `build-wallet/drachma-wallet`).
 
-## Build Targets
+## Platform-specific notes and deployment helpers
 
-- **Layer 1 Core Daemon:** `layer1-core/drachmad`
-- **Services Daemon:** `layer2-services/drachma-services`
-- **Desktop App:** `layer3-app/drachma-wallet`
-- **Reference Miners:** `miners/drachma-miner-cpu`, `miners/drachma-miner-gpu`
+### Linux
+- Ensure `ulimit -n` is large enough for many peers.
+- For the wallet, generate a relocatable bundle or AppImage using **linuxdeploy**:
+  ```bash
+  # Install linuxdeploy (example; choose the latest release)
+  wget https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+  chmod +x linuxdeploy-x86_64.AppImage
 
-Install paths can be set via `-DCMAKE_INSTALL_PREFIX` followed by `cmake --install build`.
+  # Bundle the Qt wallet into an AppImage
+  ./linuxdeploy-x86_64.AppImage \
+    --appdir AppDir \
+    -e build-wallet/drachma-wallet \
+    -d layer3-app/resources/drachma-wallet.desktop \
+    -i layer3-app/resources/icons/drachma.png \
+    --output appimage
+  ```
+- Tarball example for node + miners:
+  ```bash
+  tar -C build -czf drachma-vX.Y.Z-linux-x64.tar.gz layer1-core layer2-services miners
+  ```
+
+### Windows
+- Configure from a **x64 Native Tools** shell. Prefer Ninja for speed: `-G Ninja`.
+- After building the wallet, stage Qt dependencies with **windeployqt** (Qt 6 path may vary):
+  ```powershell
+  $qtDir = "C:\Qt\6.6.3\msvc2019_64\bin"
+  & "$qtDir\windeployqt.exe" --release --qmldir layer3-app \
+      build-wallet\drachma-wallet.exe
+  ```
+- Package the node and wallet separately (zip/installer). A simple zip example:
+  ```powershell
+  Compress-Archive -Path build\layer1-core\drachmad.exe,build\miners\* -DestinationPath drachma-vX.Y.Z-windows-x64.zip
+  Compress-Archive -Path build-wallet\* -DestinationPath drachma-wallet-vX.Y.Z-windows-x64.zip
+  ```
+
+### macOS
+- Use the latest Xcode command-line tools. Set `CMAKE_OSX_DEPLOYMENT_TARGET=12.0` if needed.
+- Deploy Qt frameworks with **macdeployqt**:
+  ```bash
+  /Applications/Qt/6.6.3/macos/bin/macdeployqt \
+    build-wallet/drachma-wallet.app -dmg
+  ```
+  This produces `drachma-wallet.dmg` alongside the `.app` bundle.
+- Package the node binary separately:
+  ```bash
+  tar -C build/layer1-core -czf drachma-vX.Y.Z-macos-x64.tar.gz drachmad
+  ```
+
+## Running what you built
+- **Run a testnet node:**
+  ```bash
+  ./build/layer1-core/drachmad --network testnet --datadir ~/.drachma-testnet --listen --rpcuser=user --rpcpassword=pass
+  ```
+- **Launch the wallet (connect to local node):**
+  ```bash
+  ./build-wallet/drachma-wallet --connect 127.0.0.1:9333
+  ```
+- **CPU miner example:**
+  ```bash
+  ./build/miners/cpu-miner/drachma-cpuminer --rpc http://user:pass@127.0.0.1:8332 --threads 4
+  ```
+- **GPU miner example (CUDA):**
+  ```bash
+  ./build/miners/gpu-miner/drachma-cuda --url 127.0.0.1:9333 --user user --pass pass --intensity 22
+  ```
+
+## Reproducibility tips
+- Build from a tagged release and record the tag/commit, compiler, and dependency versions.
+- Prefer pinned package versions or containerized builds (see `Dockerfile`, `docker-compose.yml`).
+- Publish SHA-256 checksums for any distributed archives and verify them before running.
+- Cross-check release builds between maintainers whenever possible.
+
+## Common CMake options
+- `CMAKE_BUILD_TYPE` = `Release` | `Debug` | `RelWithDebInfo`
+- `DRACHMA_BUILD_TESTS` (ON/OFF): build tests
+- `DRACHMA_BUILD_GUI` (ON/OFF): build the Qt desktop wallet
+- `ENABLE_WALLET` (ON/OFF): wallet/key services
+- `ENABLE_GPU_MINERS` (ON/OFF): CUDA/OpenCL miners
+- `CMAKE_TOOLCHAIN_FILE`: point to vcpkg or custom toolchains
+- `CUDA_TOOLKIT_ROOT_DIR`, `OpenCL_INCLUDE_DIR`, `OpenCL_LIBRARY`: override GPU SDK paths
+
+Pass options via `-D<OPTION>=<VALUE>` during configuration. Remove the `build` directory when switching toolchains or major options to avoid stale caches.

@@ -1,4 +1,5 @@
 #include "schnorr.h"
+#include "tagged_hash.h"
 
 #include <openssl/crypto.h>
 #include <openssl/ec.h>
@@ -10,6 +11,7 @@
 #include <array>
 #include <cstring>
 #include <memory>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -88,6 +90,95 @@ static ec_point_ptr compute_public_point(const EC_GROUP* group,
         return ec_point_ptr(nullptr, &EC_POINT_free);
     }
     return point;
+}
+
+// Load compressed public key into EC_POINT.
+static ec_point_ptr load_public_point(const EC_GROUP* group,
+                                      const uint8_t* compressed,
+                                      BN_CTX* ctx) {
+    if (!group || !compressed || !ctx) {
+        return ec_point_ptr(nullptr, &EC_POINT_free);
+    }
+    ec_point_ptr point(EC_POINT_new(group), &EC_POINT_free);
+    if (!point) {
+        return point;
+    }
+    if (EC_POINT_oct2point(group, point.get(), compressed, 33, ctx) != 1) {
+        return ec_point_ptr(nullptr, &EC_POINT_free);
+    }
+    if (EC_POINT_is_on_curve(group, point.get(), ctx) != 1) {
+        return ec_point_ptr(nullptr, &EC_POINT_free);
+    }
+    return point;
+}
+
+// Get x and y coordinates of a point.
+static bool get_affine_coordinates(const EC_GROUP* group,
+                                   const EC_POINT* point,
+                                   BIGNUM* x,
+                                   BIGNUM* y,
+                                   BN_CTX* ctx) {
+    return group && point && x && y && ctx &&
+           (EC_POINT_get_affine_coordinates_GFp(group, point, x, y, ctx) == 1);
+}
+
+// Helper to check if BIGNUM in [1, order-1].
+static bool is_valid_secret(const BIGNUM* k, const BIGNUM* order) {
+    return k && order && BN_is_zero(k) == 0 && BN_is_negative(k) == 0 &&
+           (BN_cmp(k, order) < 0);
+}
+
+// Secure random 32 bytes.
+static bool fill_random(uint8_t* out32) {
+    return out32 && RAND_bytes(out32, 32) == 1;
+}
+
+// Compute nonce per BIP-340 using auxiliary randomness.
+static bn_ptr compute_bip340_nonce(const BIGNUM* seckey,
+                                   const std::array<uint8_t, 32>& pubkey_x,
+                                   const uint8_t* msg_hash32,
+                                   const BIGNUM* order) {
+    uint8_t aux_rand[32]{};
+    if (!fill_random(aux_rand)) {
+        return bn_ptr(nullptr, &BN_clear_free);
+    }
+
+    // t = seckey XOR SHA256_tag("BIP0340/aux", aux_rand)
+    std::vector<uint8_t> aux_in(aux_rand, aux_rand + 32);
+    const auto aux_hash = tagged_hash("BIP0340/aux", std::span<const uint8_t>(aux_in.data(), aux_in.size()));
+    std::array<uint8_t, 32> t{};
+    std::array<uint8_t, 32> seckey_bytes{};
+    BN_bn2binpad(seckey, seckey_bytes.data(), 32);
+    for (size_t i = 0; i < 32; ++i) {
+        t[i] = seckey_bytes[i] ^ aux_hash[i];
+    }
+
+    // k0 = SHA256_tag("BIP0340/nonce", t || pubkey_x || msg_hash)
+    std::vector<uint8_t> nonce_preimage;
+    nonce_preimage.reserve(32 + pubkey_x.size() + 32);
+    nonce_preimage.insert(nonce_preimage.end(), t.begin(), t.end());
+    nonce_preimage.insert(nonce_preimage.end(), pubkey_x.begin(), pubkey_x.end());
+    nonce_preimage.insert(nonce_preimage.end(), msg_hash32, msg_hash32 + 32);
+    const auto nonce_hash = tagged_hash("BIP0340/nonce", std::span<const uint8_t>(nonce_preimage.data(), nonce_preimage.size()));
+
+    bn_ptr k(bn_from_bytes(nonce_hash.data(), nonce_hash.size()));
+    if (!k) {
+        return bn_ptr(nullptr, &BN_clear_free);
+    }
+    // k = k0 mod n
+    bn_ctx_ptr ctx(BN_CTX_new(), &BN_CTX_free);
+    if (!ctx) {
+        return bn_ptr(nullptr, &BN_clear_free);
+    }
+    if (BN_mod(k.get(), k.get(), order, ctx.get()) != 1) {
+        return bn_ptr(nullptr, &BN_clear_free);
+    }
+    if (BN_is_zero(k.get())) {
+        return bn_ptr(nullptr, &BN_clear_free);
+    }
+    return k;
+}
+
 }
 
 // Load compressed public key into EC_POINT.
@@ -230,6 +321,21 @@ bool schnorr_sign(const uint8_t* private_key,
         if (get_affine_coordinates(group.get(), pub_point.get(), px.get(), py.get(), ctx.get()) != 1) {
             return false;
         }
+        EC_POINT_invert(group.get(), pub_point.get(), ctx.get());
+        if (get_affine_coordinates(group.get(), pub_point.get(), px.get(), py.get(), ctx.get()) != 1) {
+            return false;
+        }
+    }
+
+    std::array<uint8_t, 32> pub_x_bytes{};
+    if (!bn_to_fixed_32(px.get(), pub_x_bytes.data())) {
+        return false;
+    }
+
+    // Compute deterministic nonce.
+    bn_ptr k = compute_bip340_nonce(seckey.get(), pub_x_bytes, msg_hash_32, order.get());
+    if (!k) {
+        return false;
     }
 
     std::array<uint8_t, 32> pub_x_bytes{};
@@ -278,6 +384,7 @@ bool schnorr_sign(const uint8_t* private_key,
     challenge_preimage.insert(challenge_preimage.end(), r_bytes.begin(), r_bytes.end());
     challenge_preimage.insert(challenge_preimage.end(), pub_x_bytes.begin(), pub_x_bytes.end());
     challenge_preimage.insert(challenge_preimage.end(), msg_hash_32, msg_hash_32 + 32);
+    const auto challenge_hash = tagged_hash("BIP0340/challenge", std::span<const uint8_t>(challenge_preimage.data(), challenge_preimage.size()));
     const auto challenge_hash = sha256_tagged("BIP0340/challenge", challenge_preimage);
     bn_ptr e(bn_from_bytes(challenge_hash.data(), challenge_hash.size()));
     if (!e) {
@@ -383,6 +490,7 @@ bool schnorr_verify(const uint8_t* public_key_33_compressed,
     challenge_preimage.insert(challenge_preimage.end(), r_bytes.begin(), r_bytes.end());
     challenge_preimage.insert(challenge_preimage.end(), pub_x_bytes.begin(), pub_x_bytes.end());
     challenge_preimage.insert(challenge_preimage.end(), msg_hash_32, msg_hash_32 + 32);
+    const auto challenge_hash = tagged_hash("BIP0340/challenge", std::span<const uint8_t>(challenge_preimage.data(), challenge_preimage.size()));
     const auto challenge_hash = sha256_tagged("BIP0340/challenge", challenge_preimage);
     bn_ptr e(bn_from_bytes(challenge_hash.data(), challenge_hash.size()));
     if (!e) {

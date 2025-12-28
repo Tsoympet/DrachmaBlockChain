@@ -9,6 +9,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <cstring>
+#include <openssl/sha.h>
 
 #include "rpcserver.h"
 
@@ -121,6 +122,67 @@ void RPCServer::AttachCoreHandlers(mempool::Mempool& pool, wallet::WalletBackend
 
     Register("sendrawtransaction", [this](const std::string& params) {
         return GetHandler("sendtx")(params);
+    });
+}
+
+void RPCServer::AttachBridgeHandlers(crosschain::BridgeManager& bridge)
+{
+    Register("createbridgelock", [&bridge, this](const std::string& params) {
+        std::stringstream ss(TrimQuotes(params));
+        std::string chain, txid, destination, secretHex, privHex;
+        uint64_t amount{0};
+        uint64_t timeout{0};
+        std::getline(ss, chain, ',');
+        std::getline(ss, txid, ',');
+        std::getline(ss, destination, ',');
+        ss >> amount;
+        ss.ignore(1);
+        std::getline(ss, secretHex, ',');
+        ss >> timeout;
+        ss.ignore(1);
+        std::getline(ss, privHex, ',');
+
+        auto secret = ParseHex(secretHex);
+        std::array<uint8_t, 32> secretHash{};
+        SHA256_CTX ctx;
+        SHA256_Init(&ctx);
+        SHA256_Update(&ctx, secret.data(), secret.size());
+        SHA256_Final(secretHash.data(), &ctx);
+
+        std::array<uint8_t, 32> priv{};
+        auto privVec = ParseHex(privHex);
+        std::copy_n(privVec.begin(), std::min<size_t>(privVec.size(), 32), priv.begin());
+
+        std::vector<uint8_t> sig;
+        auto lock = bridge.InitiateOutboundLock(chain, txid, destination, amount, secretHash, timeout, priv, sig);
+        std::stringstream out;
+        out << "{\"lockId\":\"" << lock.id << "\",\"signature\":\"" << HexEncode(sig) << "\"}";
+        return out.str();
+    });
+
+    Register("claimbridge", [&bridge, this](const std::string& params) {
+        std::stringstream ss(TrimQuotes(params));
+        std::string lockId, secretHex;
+        uint64_t height{0};
+        std::getline(ss, lockId, ',');
+        std::getline(ss, secretHex, ',');
+        ss >> height;
+        auto secret = ParseHex(secretHex);
+        std::vector<uint8_t> sig;
+        bool ok = bridge.Claim(lockId, secret, height, sig);
+        std::stringstream out;
+        out << "{\"claimed\":" << (ok ? "true" : "false") << ",\"signature\":\"" << HexEncode(sig) << "\"}";
+        return out.str();
+    });
+
+    Register("refundbridge", [&bridge](const std::string& params) {
+        std::stringstream ss(TrimQuotes(params));
+        std::string lockId;
+        uint64_t height{0};
+        std::getline(ss, lockId, ',');
+        ss >> height;
+        bool ok = bridge.Refund(lockId, height);
+        return std::string("{\"refunded\":") + (ok ? "true" : "false") + "}";
     });
 }
 

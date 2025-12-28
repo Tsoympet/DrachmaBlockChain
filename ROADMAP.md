@@ -43,6 +43,11 @@ A phased plan for delivering the DRACHMA blockchain with transparency and predic
 - Provide 24/7 observability dashboards and incident contacts during launch window.
 - Transition to long-term maintenance cadence and public release notes.
 
+## 2026 Q3-Q4 — Sidechain Smart Contracts & Desktop Integration
+- Ship merge-mined sidechain support with reduced-opcode EVM, Schnorr signatures, and wDRM gas.
+- Deliver desktop GUI features: smart contract interaction, NFT gallery, and embedded dApp browser (optional and disabled by default).
+- Harden two-way peg operations and publish SDKs/examples for dApp builders.
+
 ## Post-Launch (Ongoing)
 - Maintain a regular documentation cadence and responsible disclosure workflow.
 - Track operational metrics (orphan rate, mempool pressure, fee market health) and propose non-consensus mitigations as needed.

@@ -78,6 +78,23 @@ target_link_libraries(drachma_layer1
 
 target_compile_definitions(drachma_layer1 PUBLIC DRACHMA_HAVE_LEVELDB)
 
+add_library(drachma_sidechain_evm
+    sidechain/evm/evm.cpp
+    sidechain/contracts/precompiles/nft.cpp
+    sidechain/bridge/peg_tx.cpp
+)
+
+target_include_directories(drachma_sidechain_evm
+    PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/sidechain
+        ${CMAKE_CURRENT_SOURCE_DIR}/layer1-core
+)
+
+target_link_libraries(drachma_sidechain_evm
+    PUBLIC drachma_layer1
+    PUBLIC OpenSSL::Crypto
+)
+
 # Layer 2: services and orchestration
 add_library(drachma_layer2
     layer2-services/policy/policy.cpp
@@ -141,22 +158,29 @@ endif()
 
 # Optional Qt GUI (off by default to avoid toolchain requirement in CI)
 if(DRACHMA_BUILD_GUI)
-    find_package(Qt6 COMPONENTS Widgets Network QUIET)
+    set(CMAKE_AUTOMOC ON)
+    find_package(Qt6 COMPONENTS Widgets Network WebEngineWidgets QUIET)
     find_package(OpenSSL REQUIRED)
 
     set(DRACHMA_QT_RESOURCES)
     set(DRACHMA_QT_LIBS)
+    set(DRACHMA_QT_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/layer3-app/qt/main.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/layer3-app/qt/sidechainview.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/layer3-app/qt/contractcaller.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/layer3-app/qt/nftgallery.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/layer3-app/qt/dappbrowser.cpp)
     set(DRACHMA_QT_QRC ${CMAKE_CURRENT_SOURCE_DIR}/layer3-app/resources/icons.qrc)
     if(Qt6_FOUND)
         qt_add_resources(DRACHMA_QT_RESOURCES ${DRACHMA_QT_QRC})
-        list(APPEND DRACHMA_QT_LIBS Qt6::Widgets Qt6::Network)
+        list(APPEND DRACHMA_QT_LIBS Qt6::Widgets Qt6::Network Qt6::WebEngineWidgets)
     else()
-        find_package(Qt5 COMPONENTS Widgets Network REQUIRED)
+        find_package(Qt5 COMPONENTS Widgets Network WebEngineWidgets REQUIRED)
         qt5_add_resources(DRACHMA_QT_RESOURCES ${DRACHMA_QT_QRC})
-        list(APPEND DRACHMA_QT_LIBS Qt5::Widgets Qt5::Network)
+        list(APPEND DRACHMA_QT_LIBS Qt5::Widgets Qt5::Network Qt5::WebEngineWidgets)
     endif()
 
-    add_executable(drachma_qt layer3-app/qt/main.cpp ${DRACHMA_QT_RESOURCES})
+    add_executable(drachma_qt ${DRACHMA_QT_SOURCES} ${DRACHMA_QT_RESOURCES})
     target_include_directories(drachma_qt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/layer1-core ${CMAKE_CURRENT_SOURCE_DIR}/layer2-services)
     target_link_libraries(drachma_qt PRIVATE ${DRACHMA_QT_LIBS} OpenSSL::SSL OpenSSL::Crypto drachma_layer2)
 endif()
@@ -274,6 +298,18 @@ if(DRACHMA_BUILD_TESTS)
     add_executable(crosschain_bridge_gtest tests/crosschain/bridge_flow_gtest.cpp)
     target_link_libraries(crosschain_bridge_gtest PRIVATE drachma_layer2 GTest::gtest_main)
     gtest_discover_tests(crosschain_bridge_gtest)
+
+    add_executable(sidechain_evm_test tests/sidechain/evm_test.cpp)
+    target_link_libraries(sidechain_evm_test PRIVATE drachma_sidechain_evm GTest::gtest_main)
+    gtest_discover_tests(sidechain_evm_test)
+
+    add_executable(nft_precompile_test tests/sidechain/nft_precompile_test.cpp)
+    target_link_libraries(nft_precompile_test PRIVATE drachma_sidechain_evm GTest::gtest_main)
+    gtest_discover_tests(nft_precompile_test)
+
+    add_executable(peg_bridge_test tests/sidechain/peg_bridge_test.cpp)
+    target_link_libraries(peg_bridge_test PRIVATE drachma_sidechain_evm GTest::gtest_main)
+    gtest_discover_tests(peg_bridge_test)
 
     function(drachma_add_fuzz_target target source)
         add_executable(${target} ${source})

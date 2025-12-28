@@ -47,6 +47,7 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
+#include <QWebEngineView>
 #include <QStyleFactory>
 #include <QCryptographicHash>
 #include <QtGlobal>
@@ -65,6 +66,8 @@
 #include <memory>
 #include <functional>
 #include <optional>
+
+#include "sidechainview.h"
 
 #if __has_include(<hidapi/hidapi.h>)
 #include <hidapi/hidapi.h>
@@ -1094,6 +1097,8 @@ public:
         tabs->addTab(buildAddressBook(), themedIcon("wallet.svg"), "Address book");
         tabs->addTab(buildTransactions(), themedIcon("transactions.svg"), "Transactions");
         tabs->addTab(buildMining(), themedIcon("mining.svg"), "Mining");
+        sidechainTab = buildSidechain();
+        tabs->addTab(sidechainTab, themedIcon("network.svg"), "Sidechain");
         tabs->addTab(buildSettings(), themedIcon("settings.svg"), "Settings");
 
         connect(wallet, &WalletServiceClient::balancesChanged, this, &MainWindow::updateBalances);
@@ -1104,6 +1109,16 @@ public:
         connect(node, &NodeProcessController::nodeStarted, this, [this]{ statusBar()->showMessage("Node started"); });
         connect(node, &NodeProcessController::nodeStopped, this, [this]{ statusBar()->showMessage("Node stopped"); });
         connect(miner, &MiningManager::hashrateUpdated, this, &MainWindow::updateHashrate);
+        sidechainStatusLbl = new QLabel("Sidechain: disabled", this);
+        sidechainPeersLbl = new QLabel("SC peers: 0", this);
+        sidechainStatusBar = new QProgressBar(this);
+        sidechainStatusBar->setRange(0, 100);
+        sidechainStatusBar->setFixedWidth(120);
+        statusBar()->addPermanentWidget(sidechainStatusLbl);
+        statusBar()->addPermanentWidget(sidechainPeersLbl);
+        statusBar()->addPermanentWidget(sidechainStatusBar);
+        connect(&sidechainTicker, &QTimer::timeout, this, &MainWindow::simulateSidechainStatus);
+        sidechainTicker.start(5000);
         updateEncryptionState();
 
         // Load persisted settings and start the node.
@@ -1412,6 +1427,34 @@ private:
         return w;
     }
 
+    QWidget* buildSidechain()
+    {
+        QWidget* w = new QWidget(this);
+        QVBoxLayout* v = new QVBoxLayout(w);
+        sidechainView = new SidechainView(w);
+        v->addWidget(sidechainView);
+        connect(sidechainView, &SidechainView::request_lock_to_sidechain, this, [this]{
+            QMessageBox::information(this, "Bridge", "Lock DRM → wDRM flow will use the peg bridge when available.");
+        });
+        connect(sidechainView, &SidechainView::request_burn_from_sidechain, this, [this]{
+            QMessageBox::information(this, "Bridge", "Burn wDRM → unlock DRM will submit a peg proof to mainnet.");
+        });
+        connect(sidechainView, &SidechainView::request_contract_call, this, [this](const QString& address, const QString& abi, bool write){
+            QString mode = write ? "transaction" : "call";
+            QMessageBox::information(this, "Smart contract", QString("Prepared %1 to %2 with ABI length %3 bytes.").arg(mode, address).arg(abi.size()));
+        });
+        connect(sidechainView, &SidechainView::request_nft_transfer, this, [this](const QString& token_id, const QString& to){
+            QMessageBox::information(this, "NFT", QString("Transfer token %1 to %2").arg(token_id, to));
+        });
+        connect(sidechainView, &SidechainView::request_nft_mint, this, [this]{
+            QMessageBox::information(this, "NFT", "Mint request prepared for configured contract.");
+        });
+        connect(sidechainView, &SidechainView::request_open_dapp, this, [this](const QUrl& url){
+            statusBar()->showMessage(QString("Opening dApp %1").arg(url.toString()), 2000);
+        });
+        return w;
+    }
+
     QWidget* buildSettings()
     {
         QWidget* w = new QWidget(this);
@@ -1434,6 +1477,13 @@ private:
         rpcPassEdit = new QLineEdit(w);
         rpcPassEdit->setEchoMode(QLineEdit::Password);
 
+        sidechainEnable = new QCheckBox("Enable merge-mined sidechain (optional)", w);
+        sidechainEnable->setToolTip("Toggle the optional PoW sidechain with smart contracts, NFTs, and dApps.");
+        sidechainRpc = new QLineEdit(w);
+        sidechainRpc->setPlaceholderText("http://localhost:8545");
+        dappGateway = new QLineEdit(w);
+        dappGateway->setPlaceholderText("http://localhost:8080");
+
         themeBox = new QComboBox(w);
         themeBox->addItems({"System", "Dark", "Light"});
         connect(themeBox, &QComboBox::currentTextChanged, this, &MainWindow::applyTheme);
@@ -1447,6 +1497,9 @@ private:
         f->addRow("Network", networkBox);
         f->addRow("RPC username", rpcUserEdit);
         f->addRow("RPC password", rpcPassEdit);
+        f->addRow("Sidechain support", sidechainEnable);
+        f->addRow("Sidechain RPC", sidechainRpc);
+        f->addRow("Default dApp gateway", dappGateway);
         f->addRow("Theme", themeBox);
         f->addRow("Wallet encryption", encryptBtn);
         f->addRow("Wallet unlock", unlockBtn);
@@ -1758,10 +1811,17 @@ private slots:
         s.setValue("network", networkBox->currentText());
         s.setValue("rpcUser", rpcUserEdit->text());
         s.setValue("rpcPass", rpcPassEdit->text());
+        s.setValue("sidechainEnabled", sidechainEnable->isChecked());
+        s.setValue("sidechainRpc", sidechainRpc->text());
+        s.setValue("dappGateway", dappGateway->text());
         s.setValue("theme", themeBox->currentText());
         statusBar()->showMessage("Settings saved", 3000);
         startNodeFromSettings();
         applyTheme(themeBox->currentText());
+        toggleSidechainTab(sidechainEnable->isChecked());
+        if (sidechainEnable->isChecked() && sidechainView) {
+            sidechainView->set_sidechain_status("Connecting", sidechainStatusBar ? sidechainStatusBar->value() : 0, 0);
+        }
     }
 
     void loadSettings()
@@ -1772,13 +1832,35 @@ private slots:
         networkBox->setCurrentText(s.value("network", "testnet").toString());
         rpcUserEdit->setText(s.value("rpcUser", "user").toString());
         rpcPassEdit->setText(s.value("rpcPass", "pass").toString());
+        sidechainEnable->setChecked(s.value("sidechainEnabled", false).toBool());
+        sidechainRpc->setText(s.value("sidechainRpc", "http://localhost:8545").toString());
+        dappGateway->setText(s.value("dappGateway", "http://localhost:8080").toString());
         themeBox->setCurrentText(s.value("theme", "System").toString());
+        toggleSidechainTab(sidechainEnable->isChecked());
     }
 
     void applyThemeFromSettings()
     {
         QSettings s("Drachma", "CoreDesktop");
         applyTheme(s.value("theme", "System").toString());
+    }
+
+    void toggleSidechainTab(bool enabled)
+    {
+        if (!sidechainTab || !tabs) return;
+        int idx = tabs->indexOf(sidechainTab);
+        if (idx >= 0) {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
+            tabs->setTabVisible(idx, enabled);
+#else
+            sidechainTab->setVisible(enabled);
+#endif
+            if (!enabled && tabs->currentIndex() == idx) {
+                tabs->setCurrentIndex(0);
+            }
+        }
+        if (sidechainStatusLbl) sidechainStatusLbl->setText(enabled ? "Sidechain: enabled" : "Sidechain: disabled");
+        if (sidechainStatusBar) sidechainStatusBar->setValue(enabled ? sidechainStatusBar->value() : 0);
     }
 
     void startNodeFromSettings()
@@ -1832,6 +1914,17 @@ private slots:
             useDarkIcons = isSystemPaletteDark();
         }
         refreshIcons();
+    }
+
+    void simulateSidechainStatus()
+    {
+        if (!sidechainEnable || !sidechainEnable->isChecked()) return;
+        static int progress = 20;
+        progress = (progress + 7) % 100;
+        if (sidechainStatusLbl) sidechainStatusLbl->setText("Sidechain: syncing");
+        if (sidechainStatusBar) sidechainStatusBar->setValue(progress);
+        if (sidechainPeersLbl) sidechainPeersLbl->setText(QString("SC peers: %1").arg(3 + (progress % 3)));
+        if (sidechainView) sidechainView->set_sidechain_status("Syncing", progress, 3 + (progress % 3));
     }
 
     void encryptWallet()
@@ -1986,6 +2079,15 @@ private:
     QLabel* unconfirmedLbl{nullptr};
     QLabel* hashrateLbl{nullptr};
 
+    SidechainView* sidechainView{nullptr};
+    QWidget* sidechainTab{nullptr};
+    QCheckBox* sidechainEnable{nullptr};
+    QLineEdit* sidechainRpc{nullptr};
+    QLineEdit* dappGateway{nullptr};
+    QLabel* sidechainStatusLbl{nullptr};
+    QProgressBar* sidechainStatusBar{nullptr};
+    QLabel* sidechainPeersLbl{nullptr};
+
     QLineEdit* destEdit{nullptr};
     QPushButton* copyFromBook{nullptr};
     QPushButton* scanQrBtn{nullptr};
@@ -2016,6 +2118,8 @@ private:
     QCheckBox* gpuToggle{nullptr};
     QPushButton* startMiningBtn{nullptr};
     QPushButton* stopMiningBtn{nullptr};
+
+    QTimer sidechainTicker;
 
     QLineEdit* dataDirEdit{nullptr};
     QComboBox* networkBox{nullptr};

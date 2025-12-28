@@ -47,6 +47,8 @@ Consensus, cryptography, and wallet key-handling changes require extra scrutiny:
 - **Concurrency:** Minimize shared mutable state. Favor RAII for locks; avoid holding locks across network or disk operations when possible. Document lock ordering to prevent deadlocks.
 - **Dependencies:** Minimize new dependencies. Any new third-party library requires justification, license compatibility, and deterministic builds.
 - **Documentation:** Public APIs and consensus-relevant functions should include comments describing assumptions, preconditions, and failure modes.
+- **Sidechain:** Keep smart contract/NFT/dApp logic isolated to the sidechain module; mainnet must remain minimal. Bridge flows require anti-replay and timeout handling.
+- **Qt Desktop:** Target Qt6 with Qt5 fallback; enable `QWebEngine` for the dApp browser. Maintain separation between widgets, data models, and service calls; add tooltips/help text for new UI controls.
 
 ## Testing
 

@@ -97,6 +97,18 @@ Always verify signatures and checksums before running binaries.
 
 Commands are subject to change as the implementation matures; prefer scripts in `scripts/` for reproducible setups.
 
+## Smart Contracts, NFTs & dApps (optional sidechain)
+
+DRACHMA keeps the base layer minimal. A merge-mined PoW sidechain adds a **modified Ethereum-style EVM** with reduced opcodes, Schnorr signatures, and wDRM gas. The desktop wallet now exposes this optional stack via the **Sidechain** tab:
+
+- **Balances:** view mainnet DRM and sidechain wDRM separately.
+- **Bridge:** lock DRM to mint wDRM; burn wDRM to unlock DRM using the peg bridge.
+- **Smart contracts:** paste ABI JSON or use ERC-20/721 presets, then call or send transactions to contracts.
+- **NFTs:** browse owned tokens, transfer them, and mint if a contract allows it.
+- **dApps:** launch a built-in WebEngine browser pointed at a local or configurable gateway (default `http://localhost:8080`).
+
+Sidechain support can be disabled entirely in **Settings → Sidechain support**. When disabled, the tab hides and the mainnet wallet remains unchanged.
+
 ### Live Testnet
 
 The public testnet is online for wallet testing, mining experiments, and RPC integrations.

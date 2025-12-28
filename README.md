@@ -1,6 +1,7 @@
 # DRACHMA Blockchain (DRM)
 
 [![CI](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/ci.yml/badge.svg)](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/ci.yml)
+[![Release](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/release.yml/badge.svg)](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/release.yml)
 [![codecov](https://codecov.io/gh/Tsoympet/BlockChainDrachma/graph/badge.svg?token=pbNZjIpSXO)](https://codecov.io/gh/Tsoympet/BlockChainDrachma)
 [![Codecov Sunburst](https://codecov.io/gh/Tsoympet/BlockChainDrachma/graphs/sunburst.svg?token=pbNZjIpSXO)](https://codecov.io/gh/Tsoympet/BlockChainDrachma)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
@@ -31,6 +32,19 @@ Official binaries and source archives will be published on the GitHub Releases p
 - A generated SBOM and changelog highlighting consensus-impacting changes.
 
 Always verify signatures and checksums before running binaries.
+
+---
+
+## Downloads & Installation
+
+- **Latest downloads:** [GitHub Releases](https://github.com/Tsoympet/BlockChainDrachma/releases) (tar.gz/AppImage for Linux, `.zip`/`.exe` for Windows, `.dmg` for macOS).
+- **Build from source:** See [`docs/building.md`](docs/building.md) for platform-specific setup and Qt deployment tips.
+- **Docker quickstart:**
+  ```bash
+  docker-compose up -d
+  docker-compose logs -f drachma-seed-a
+  ```
+  Use `Dockerfile` for a single-node image or the compose stack for a multi-node testnet with monitoring.
 
 ---
 

@@ -15,6 +15,7 @@
 #include "../wallet/wallet.h"
 #include "../../layer1-core/block/block.h"
 #include "../../layer1-core/tx/transaction.h"
+#include "../crosschain/bridge/bridge_manager.h"
 
 namespace rpc {
 
@@ -27,6 +28,7 @@ public:
     void SetBlockStorePath(std::string path);
 
     void AttachCoreHandlers(mempool::Mempool& pool, wallet::WalletBackend& wallet, txindex::TxIndex& index, net::P2PNode& p2p);
+    void AttachBridgeHandlers(crosschain::BridgeManager& bridge);
 
     void Register(const std::string& method, Handler handler);
 

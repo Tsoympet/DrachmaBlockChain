@@ -11,6 +11,7 @@ option(DRACHMA_COVERAGE "Enable coverage instrumentation" OFF)
 
 find_package(OpenSSL REQUIRED)
 find_package(Boost REQUIRED COMPONENTS system)
+find_package(CUDAToolkit QUIET)
 
 find_path(LEVELDB_INCLUDE_DIR leveldb/db.h)
 find_library(LEVELDB_LIBRARY leveldb)
@@ -107,6 +108,15 @@ if(CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64|AMD64")
   target_compile_options(drachma_cpu_miner PRIVATE -msse4.1 -mavx2)
 endif()
 target_link_libraries(drachma_cpu_miner PRIVATE drachma_layer1 Boost::system)
+
+if(CUDAToolkit_FOUND)
+    enable_language(CUDA)
+    add_executable(drachma_cuda_miner
+        miners/gpu-cuda/kernel.cu
+        miners/gpu-cuda/host.cpp)
+    target_link_libraries(drachma_cuda_miner PRIVATE CUDA::cudart)
+    set_target_properties(drachma_cuda_miner PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
+endif()
 
 # Optional Qt GUI (off by default to avoid toolchain requirement in CI)
 if(DRACHMA_BUILD_GUI)
@@ -239,6 +249,10 @@ if(DRACHMA_BUILD_TESTS)
     add_executable(regtest_private_chain_test tests/integration/regtest_private_chain_test.cpp)
     target_link_libraries(regtest_private_chain_test PRIVATE drachma_layer1 GTest::gtest_main)
     gtest_discover_tests(regtest_private_chain_test)
+
+    add_executable(crosschain_bridge_gtest tests/crosschain/bridge_flow_gtest.cpp)
+    target_link_libraries(crosschain_bridge_gtest PRIVATE drachma_layer2 GTest::gtest_main)
+    gtest_discover_tests(crosschain_bridge_gtest)
 
     function(drachma_add_fuzz_target target source)
         add_executable(${target} ${source})

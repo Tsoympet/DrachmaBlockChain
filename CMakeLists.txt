@@ -80,6 +80,7 @@ target_compile_definitions(drachma_layer1 PUBLIC DRACHMA_HAVE_LEVELDB)
 
 add_library(drachma_sidechain_evm
     sidechain/evm/evm.cpp
+    sidechain/contracts/precompiles/nft.cpp
 )
 
 target_include_directories(drachma_sidechain_evm
@@ -293,6 +294,10 @@ if(DRACHMA_BUILD_TESTS)
     add_executable(sidechain_evm_test tests/sidechain/evm_test.cpp)
     target_link_libraries(sidechain_evm_test PRIVATE drachma_sidechain_evm GTest::gtest_main)
     gtest_discover_tests(sidechain_evm_test)
+
+    add_executable(nft_precompile_test tests/sidechain/nft_precompile_test.cpp)
+    target_link_libraries(nft_precompile_test PRIVATE drachma_sidechain_evm GTest::gtest_main)
+    gtest_discover_tests(nft_precompile_test)
 
     function(drachma_add_fuzz_target target source)
         add_executable(${target} ${source})

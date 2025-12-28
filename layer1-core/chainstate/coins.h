@@ -1,76 +1,41 @@
 #pragma once
-
-#include "../tx/transaction.h"
-#include <cstddef>
-#include <mutex>
-#include <optional>
-#include <string>
 #include <unordered_map>
-#include <algorithm>
-#include <memory>
-#include <vector>
+#include <string>
+#include <cstdint>
+#include "utxo.h"
+#include "undo.h"
+#include "../tx/transaction.h"
 
-#ifdef DRACHMA_HAVE_LEVELDB
-#include <leveldb/db.h>
-#include <leveldb/write_batch.h>
-#endif
-
-struct OutPointHash {
-    std::size_t operator()(const OutPoint& o) const noexcept;
-};
-struct OutPointEq {
-    bool operator()(const OutPoint& a, const OutPoint& b) const noexcept;
-};
-
-// Persistent chainstate with a bounded UTXO cache for fast lookups during
-// block/transaction validation.
-class Chainstate {
+class CoinsView {
 public:
-    explicit Chainstate(const std::string& path, std::size_t cacheCapacity = 64 * 1024);
-
-    bool HaveUTXO(const OutPoint& out) const;
-    std::optional<TxOut> TryGetUTXO(const OutPoint& out) const;
-    TxOut GetUTXO(const OutPoint& out) const;
-
-    void AddUTXO(const OutPoint& out, const TxOut& txout);
-    void SpendUTXO(const OutPoint& out);
-    void Flush() const;
-
-    // Simple transactional API used by block validation to stage updates before
-    // finalizing a new tip. Rollback restores the in-memory view without
-    // touching persistent storage.
-    void BeginTransaction();
-    void Commit();
-    void Rollback();
-
-    std::size_t CachedEntries() const;
+    bool HaveUTXO(const OutPointKey& key) const;
+    const UTXO& GetUTXO(const OutPointKey& key) const;
+    void AddUTXO(const OutPointKey& key, const UTXO& utxo);
+    void RemoveUTXO(const OutPointKey& key);
 
 private:
-    std::string storagePath;
-    mutable std::unordered_map<OutPoint, TxOut, OutPointHash, OutPointEq> utxos;
-    mutable std::unordered_map<OutPoint, TxOut, OutPointHash, OutPointEq> cache;
-    std::size_t maxCacheEntries;
-    mutable std::mutex mu;
-    bool inTransaction{false};
-    struct ChangeLog {
-        OutPoint out;
-        bool hadOld{false};
-        TxOut oldValue{};
-        bool hadNew{false};
-        TxOut newValue{};
-    };
-    std::vector<ChangeLog> pending;
+    std::unordered_map<OutPointKey, UTXO> mapUTXO;
+};
 
-#ifdef DRACHMA_HAVE_LEVELDB
-    std::unique_ptr<leveldb::DB> db;
-    bool useDb{false};
-#endif
+class Chainstate {
+public:
+    Chainstate();
 
-    void Load();
-    void Persist() const;
-    void MaybeEvict() const;
-#ifdef DRACHMA_HAVE_LEVELDB
-    void PersistBatch(leveldb::WriteBatch& batch) const;
-#endif
+    bool ApplyTransaction(const Transaction& tx,
+                          uint32_t height,
+                          BlockUndo& undo,
+                          std::string& error);
+
+    void ApplyBlock(const std::vector<Transaction>& txs,
+                    uint32_t height,
+                    BlockUndo& undo);
+
+    void DisconnectBlock(const BlockUndo& undo);
+
+    const CoinsView& View() const { return coins; }
+
+private:
+    CoinsView coins;
+    static constexpr uint32_t COINBASE_MATURITY = 100;
 };
 

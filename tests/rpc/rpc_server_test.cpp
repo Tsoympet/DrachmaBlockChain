@@ -56,15 +56,18 @@ static std::string Hex(const std::vector<uint8_t>& bytes)
 
 static std::string ConstThenReturnHex(int32_t imm)
 {
-    // OpCode::ConstI32 (1) + OpCode::ReturnTop (5)
-    std::vector<uint8_t> code = {
-        static_cast<uint8_t>(sidechain::wasm::OpCode::ConstI32),
-        static_cast<uint8_t>(imm & 0xff),
-        static_cast<uint8_t>((imm >> 8) & 0xff),
-        static_cast<uint8_t>((imm >> 16) & 0xff),
-        static_cast<uint8_t>((imm >> 24) & 0xff),
-        static_cast<uint8_t>(sidechain::wasm::OpCode::ReturnTop),
-        0x00, 0x00, 0x00, 0x00};
+    // OpCode::ConstI32 followed by OpCode::ReturnTop; each opcode reserves a 4-byte immediate slot.
+    std::vector<uint8_t> code;
+    auto append_le32 = [&](int32_t v) {
+        code.push_back(static_cast<uint8_t>(v & 0xff));
+        code.push_back(static_cast<uint8_t>((v >> 8) & 0xff));
+        code.push_back(static_cast<uint8_t>((v >> 16) & 0xff));
+        code.push_back(static_cast<uint8_t>((v >> 24) & 0xff));
+    };
+    code.push_back(static_cast<uint8_t>(sidechain::wasm::OpCode::ConstI32));
+    append_le32(imm);
+    code.push_back(static_cast<uint8_t>(sidechain::wasm::OpCode::ReturnTop));
+    append_le32(0); // unused immediate slot for ReturnTop
     return Hex(code);
 }
 

@@ -31,12 +31,12 @@ Status: Draft specification for implementation sequencing.
 - Minimum stake age: 1 day.
 
 ## Transaction & UTXO Model
-- Single UTXO set with an **asset identifier** on each UTXO.
+- Single UTXO set with an **asset identifier** on each UTXO. Proposed IDs: `0=TLN`, `1=DRM`, `2=OBL`.
 - Each transaction may spend/create UTXOs of one asset type only (no mixed-asset tx).
-- Standard scripts/addresses remain; asset ID is enforced at validation.
+- Standard scripts/addresses remain; asset ID is enforced at validation and serialized in tx inputs/outputs.
 
 ## Activation & Network
-- Activation via **new genesis / hard fork** at designated height (to be set with testnet regenesis first).
+- Activation via **new genesis / hard fork** at designated height (set a testnet regenesis height first, then mainnet).
 - Keep existing SHA-256d, networking, and mempool policies unless a consensus rule requires tightening.
 - Update seeds/configs for the forked network (testnet first).
 
@@ -46,8 +46,8 @@ Status: Draft specification for implementation sequencing.
 - Miners: PoW mining remains for TLN; staking flow for DRM/OBL blocks with asset-specific rewards.
 
 ## Next Steps (sequence)
-1. Finalize numeric constants (Obolos curve parameters, activation height(s), stake age/grace).  
-2. Implement consensus: asset-tagged UTXOs, single-asset tx rule, PoS logic for DRM/OBL, fork activation.  
-3. Extend RPC/wallet/miner surfaces for asset selection and staking.  
+1. Finalize numeric constants: Obolos curve parameters, activation height(s), stake age/grace, asset ID registry.  
+2. Implement consensus: asset-tagged UTXOs (0/1/2), single-asset tx rule, PoS logic for DRM/OBL, fork activation.  
+3. Extend RPC/wallet/miner surfaces for asset selection and staking; wire serialization for asset IDs.  
 4. Regenerate testnet configs/seeds and add targeted tests for multi-asset validation.  
 5. Dress rehearsal on testnet before mainnet activation.

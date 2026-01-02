@@ -1,4 +1,4 @@
-#include "sidechain/bridge/peg_tx.h"
+#include "peg_tx.h"
 
 #include <openssl/sha.h>
 
@@ -125,4 +125,3 @@ bool peg_bridge::is_processed(const std::string& tx_id) const {
 }
 
 }  // namespace sidechain::bridge
-

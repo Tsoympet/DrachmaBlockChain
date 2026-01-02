@@ -24,7 +24,13 @@ static Params mainParams {
     {},                // checkpoints
     DEFAULT_THRESHOLD,
     DEFAULT_WINDOW,
-    { VBDeployment{28, -1, -1} }
+    { VBDeployment{28, -1, -1} },
+    true,              // fHybridPoS
+    100000,            // nPoSActivationHeight (draft)
+    500,               // nPoSMinStakeDepth
+    90,                // nPoSTargetSpacing (seconds)
+    1,                 // PoS reward numerator
+    2                  // PoS reward denominator (50% of PoW)
 };
 
 static Params testParams {
@@ -41,7 +47,13 @@ static Params testParams {
     {},
     DEFAULT_THRESHOLD,
     DEFAULT_WINDOW,
-    { VBDeployment{28, -1, -1} }
+    { VBDeployment{28, -1, -1} },
+    true,
+    1000,
+    50,
+    90,
+    1,
+    2
 };
 
 const Params& Main()    { return mainParams; }

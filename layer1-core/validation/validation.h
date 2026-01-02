@@ -28,6 +28,6 @@ struct BlockValidationOptions {
     uint64_t limiterWeight = 1;
 };
 
-bool ValidateBlockHeader(const BlockHeader& header, const consensus::Params& params, const BlockValidationOptions& opts = {});
-bool ValidateTransactions(const std::vector<Transaction>& txs, const consensus::Params& params, int height, const UTXOLookup& lookup = {});
+bool ValidateBlockHeader(const BlockHeader& header, const consensus::Params& params, const BlockValidationOptions& opts = {}, bool skipPowCheck = false);
+bool ValidateTransactions(const std::vector<Transaction>& txs, const consensus::Params& params, int height, const UTXOLookup& lookup = {}, bool posMode = false, uint32_t posBits = 0, uint32_t posTime = 0);
 bool ValidateBlock(const Block& block, const consensus::Params& params, int height, const UTXOLookup& lookup = {}, const BlockValidationOptions& opts = {});

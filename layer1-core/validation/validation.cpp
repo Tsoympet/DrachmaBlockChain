@@ -49,13 +49,15 @@ bool IsCoinbase(const Transaction& tx)
 
 } // namespace
 
-bool ValidateBlockHeader(const BlockHeader& header, const consensus::Params& params, const BlockValidationOptions& opts)
+bool ValidateBlockHeader(const BlockHeader& header, const consensus::Params& params, const BlockValidationOptions& opts, bool skipPowCheck)
 {
     if (opts.limiter && !opts.limiter->Consume(opts.limiterWeight))
         return false;
 
-    if (!powalgo::CheckProofOfWork(BlockHash(header), header.bits, params))
-        return false;
+    if (!skipPowCheck) {
+        if (!powalgo::CheckProofOfWork(BlockHash(header), header.bits, params))
+            return false;
+    }
 
     // Enforce sane timestamp ordering relative to median past and against the
     // wall clock with modest drift tolerance. medianTimePast must be supplied
@@ -105,7 +107,7 @@ private:
 
 } // namespace
 
-bool ValidateTransactions(const std::vector<Transaction>& txs, const consensus::Params& params, int height, const UTXOLookup& lookup)
+bool ValidateTransactions(const std::vector<Transaction>& txs, const consensus::Params& params, int height, const UTXOLookup& lookup, bool posMode, uint32_t posBits, uint32_t posTime)
 {
     if (txs.empty()) return false;
 
@@ -113,119 +115,269 @@ bool ValidateTransactions(const std::vector<Transaction>& txs, const consensus::
     constexpr size_t MAX_BLOCK_WEIGHT = 4000000; // approximate weight limit
     constexpr uint64_t DUST_THRESHOLD = 546; // satoshi-equivalent dust floor
 
-    // Coinbase must be first and unique
-    if (!IsCoinbase(txs.front()))
-        return false;
-
-    if (txs.front().vout.empty())
-        return false;
-
-    // Enforce reasonable scriptSig length on coinbase (2-100 bytes)
-    const auto& coinbaseSig = txs.front().vin.front().scriptSig;
-    if (coinbaseSig.size() < 2 || coinbaseSig.size() > 100)
-        return false;
-
-    uint64_t coinbaseOutTotal = 0;
-    for (const auto& out : txs.front().vout) {
-        uint64_t next = 0;
-        if (!SafeAdd(coinbaseOutTotal, out.value, next))
-            return false;
-        coinbaseOutTotal = next;
-        if (!consensus::MoneyRange(out.value, params) || !consensus::MoneyRange(coinbaseOutTotal, params))
-            return false;
-        if (out.scriptPubKey.size() != 32)
-            return false; // enforce schnorr-only pubkeys
-    }
-
     std::unordered_set<OutPoint, OutPointHasher, OutPointEq> seenPrevouts;
     seenPrevouts.reserve(txs.size() * 2);
-    uint64_t totalFees = 0;
     size_t runningWeight = 0;
-
     CachedLookup cachedLookup(lookup, 1024);
 
-    for (size_t i = 0; i < txs.size(); ++i) {
+    if (!posMode) {
+        // Coinbase must be first and unique
+        if (!IsCoinbase(txs.front()))
+            return false;
+
+        if (txs.front().vout.empty())
+            return false;
+
+        // Enforce reasonable scriptSig length on coinbase (2-100 bytes)
+        const auto& coinbaseSig = txs.front().vin.front().scriptSig;
+        if (coinbaseSig.size() < 2 || coinbaseSig.size() > 100)
+            return false;
+
+        uint64_t coinbaseOutTotal = 0;
+        for (const auto& out : txs.front().vout) {
+            uint64_t next = 0;
+            if (!SafeAdd(coinbaseOutTotal, out.value, next))
+                return false;
+            coinbaseOutTotal = next;
+            if (!consensus::MoneyRange(out.value, params) || !consensus::MoneyRange(coinbaseOutTotal, params))
+                return false;
+            if (out.scriptPubKey.size() != 32)
+                return false; // enforce schnorr-only pubkeys
+        }
+
+        uint64_t totalFees = 0;
+
+        for (size_t i = 0; i < txs.size(); ++i) {
+            const auto& tx = txs[i];
+
+            const size_t txSize = Serialize(tx).size();
+            if (txSize == 0 || txSize > MAX_TX_SIZE)
+                return false;
+            runningWeight += txSize * 4; // legacy weight approximation
+            if (runningWeight > MAX_BLOCK_WEIGHT)
+                return false;
+
+            uint64_t totalOut = 0;
+            for (const auto& out : tx.vout) {
+                uint64_t next = 0;
+                if (!SafeAdd(totalOut, out.value, next))
+                    return false;
+                totalOut = next;
+                if (!consensus::MoneyRange(out.value, params) || !consensus::MoneyRange(totalOut, params))
+                    return false;
+                if (out.scriptPubKey.size() != 32)
+                    return false; // enforce schnorr-only pubkeys
+                if (out.value < DUST_THRESHOLD)
+                    return false;
+            }
+
+            if (i == 0) {
+                continue;
+            }
+
+            if (IsCoinbase(tx))
+                return false; // only the first tx may be coinbase
+
+            if (!lookup)
+                return false; // cannot validate spends without a UTXO provider
+
+            if (tx.vin.empty() || tx.vout.empty())
+                return false;
+
+            uint64_t totalIn = 0;
+            for (size_t inIdx = 0; inIdx < tx.vin.size(); ++inIdx) {
+                const auto& in = tx.vin[inIdx];
+                if (IsNullOutPoint(in.prevout))
+                    return false;
+                if (in.scriptSig.empty())
+                    return false;
+                if (in.scriptSig.size() > 1650)
+                    return false; // oversized scripts risk DoS
+
+                if (!seenPrevouts.insert(in.prevout).second)
+                    return false; // duplicate spend within block
+
+                auto utxo = cachedLookup(in.prevout);
+                if (!utxo)
+                    return false;
+
+                if (!VerifyScript(tx, inIdx, *utxo))
+                    return false;
+
+                uint64_t next = 0;
+                if (!SafeAdd(totalIn, utxo->value, next))
+                    return false;
+                totalIn = next;
+                if (!consensus::MoneyRange(totalIn, params))
+                    return false;
+            }
+
+            if (totalOut > totalIn)
+                return false; // overspends
+
+            uint64_t fee = totalIn - totalOut;
+            uint64_t nextFees = 0;
+            if (!SafeAdd(totalFees, fee, nextFees))
+                return false;
+            totalFees = nextFees;
+            if (!consensus::MoneyRange(totalFees, params))
+                return false;
+        }
+
+        uint64_t maxCoinbase = consensus::GetBlockSubsidy(height, params);
+        if (!SafeAdd(maxCoinbase, totalFees, maxCoinbase))
+            return false;
+
+        if (coinbaseOutTotal > maxCoinbase)
+            return false;
+
+        return true;
+    }
+
+    // PoS path
+    if (IsCoinbase(txs.front()))
+        return false;
+    if (!lookup)
+        return false;
+
+    const Transaction& stakeTx = txs.front();
+    if (stakeTx.vin.size() != 1 || stakeTx.vout.size() < 2)
+        return false;
+    if (stakeTx.vout.front().value != 0)
+        return false;
+
+    const TxIn& stakeIn = stakeTx.vin.front();
+    if (IsNullOutPoint(stakeIn.prevout))
+        return false;
+    if (stakeIn.scriptSig.empty() || stakeIn.scriptSig.size() > 1650)
+        return false;
+
+    auto stakedUtxo = cachedLookup(stakeIn.prevout);
+    if (!stakedUtxo)
+        return false;
+    if (stakedUtxo->scriptPubKey.size() != 32)
+        return false;
+
+    auto append32 = [](std::vector<uint8_t>& dst, const uint256& h) {
+        dst.insert(dst.end(), h.begin(), h.end());
+    };
+    std::vector<uint8_t> kernel;
+    kernel.reserve(32 + 4 + 4 + stakedUtxo->scriptPubKey.size());
+    append32(kernel, stakeIn.prevout.hash);
+    kernel.push_back(static_cast<uint8_t>(stakeIn.prevout.index & 0xff));
+    kernel.push_back(static_cast<uint8_t>((stakeIn.prevout.index >> 8) & 0xff));
+    kernel.push_back(static_cast<uint8_t>((stakeIn.prevout.index >> 16) & 0xff));
+    kernel.push_back(static_cast<uint8_t>((stakeIn.prevout.index >> 24) & 0xff));
+    kernel.push_back(static_cast<uint8_t>(posTime & 0xff));
+    kernel.push_back(static_cast<uint8_t>((posTime >> 8) & 0xff));
+    kernel.push_back(static_cast<uint8_t>((posTime >> 16) & 0xff));
+    kernel.push_back(static_cast<uint8_t>((posTime >> 24) & 0xff));
+    kernel.insert(kernel.end(), stakedUtxo->scriptPubKey.begin(), stakedUtxo->scriptPubKey.end());
+
+    uint256 kernelHash = tagged_hash("STAKE", kernel.data(), kernel.size());
+    if (!powalgo::CheckProofOfWork(kernelHash, posBits, params))
+        return false;
+
+    uint64_t totalInputs = 0;
+    uint64_t totalOutputs = 0;
+
+    auto addSafe = [&](uint64_t a, uint64_t b, uint64_t& out) {
+        if (!SafeAdd(a, b, out))
+            return false;
+        return true;
+    };
+
+    uint64_t nextVal = 0;
+    if (!addSafe(totalInputs, stakedUtxo->value, nextVal))
+        return false;
+    totalInputs = nextVal;
+    if (!consensus::MoneyRange(totalInputs, params))
+        return false;
+
+    for (const auto& out : stakeTx.vout) {
+        uint64_t nxt = 0;
+        if (!addSafe(totalOutputs, out.value, nxt))
+            return false;
+        totalOutputs = nxt;
+        if (!consensus::MoneyRange(out.value, params) || !consensus::MoneyRange(totalOutputs, params))
+            return false;
+        if (out.scriptPubKey.size() != 32)
+            return false;
+        if (&out != &stakeTx.vout.front() && out.value < DUST_THRESHOLD)
+            return false;
+    }
+
+    for (size_t i = 1; i < txs.size(); ++i) {
         const auto& tx = txs[i];
+        if (IsCoinbase(tx))
+            return false;
 
         const size_t txSize = Serialize(tx).size();
         if (txSize == 0 || txSize > MAX_TX_SIZE)
             return false;
-        runningWeight += txSize * 4; // legacy weight approximation
+        runningWeight += txSize * 4;
         if (runningWeight > MAX_BLOCK_WEIGHT)
             return false;
-
-        uint64_t totalOut = 0;
-        for (const auto& out : tx.vout) {
-            uint64_t next = 0;
-            if (!SafeAdd(totalOut, out.value, next))
-                return false;
-            totalOut = next;
-            if (!consensus::MoneyRange(out.value, params) || !consensus::MoneyRange(totalOut, params))
-                return false;
-            if (out.scriptPubKey.size() != 32)
-                return false; // enforce schnorr-only pubkeys
-            if (out.value < DUST_THRESHOLD)
-                return false;
-        }
-
-        if (i == 0) {
-            continue;
-        }
-
-        if (IsCoinbase(tx))
-            return false; // only the first tx may be coinbase
-
-        if (!lookup)
-            return false; // cannot validate spends without a UTXO provider
 
         if (tx.vin.empty() || tx.vout.empty())
             return false;
 
-        uint64_t totalIn = 0;
+        uint64_t txInSum = 0;
+        uint64_t txOutSum = 0;
+
+        for (const auto& out : tx.vout) {
+            uint64_t nxt = 0;
+            if (!addSafe(txOutSum, out.value, nxt))
+                return false;
+            txOutSum = nxt;
+            if (!consensus::MoneyRange(out.value, params) || !consensus::MoneyRange(txOutSum, params))
+                return false;
+            if (out.scriptPubKey.size() != 32)
+                return false;
+            if (out.value < DUST_THRESHOLD)
+                return false;
+        }
+
         for (size_t inIdx = 0; inIdx < tx.vin.size(); ++inIdx) {
             const auto& in = tx.vin[inIdx];
             if (IsNullOutPoint(in.prevout))
                 return false;
-            if (in.scriptSig.empty())
+            if (in.scriptSig.empty() || in.scriptSig.size() > 1650)
                 return false;
-            if (in.scriptSig.size() > 1650)
-                return false; // oversized scripts risk DoS
-
             if (!seenPrevouts.insert(in.prevout).second)
-                return false; // duplicate spend within block
-
+                return false;
             auto utxo = cachedLookup(in.prevout);
             if (!utxo)
                 return false;
-
+            uint64_t nxt = 0;
+            if (!addSafe(txInSum, utxo->value, nxt))
+                return false;
+            txInSum = nxt;
+            if (!consensus::MoneyRange(utxo->value, params) || !consensus::MoneyRange(txInSum, params))
+                return false;
             if (!VerifyScript(tx, inIdx, *utxo))
-                return false;
-
-            uint64_t next = 0;
-            if (!SafeAdd(totalIn, utxo->value, next))
-                return false;
-            totalIn = next;
-            if (!consensus::MoneyRange(totalIn, params))
                 return false;
         }
 
-        if (totalOut > totalIn)
-            return false; // overspends
-
-        uint64_t fee = totalIn - totalOut;
-        uint64_t nextFees = 0;
-        if (!SafeAdd(totalFees, fee, nextFees))
+        if (txInSum < txOutSum)
             return false;
-        totalFees = nextFees;
-        if (!consensus::MoneyRange(totalFees, params))
+
+        uint64_t nxt = 0;
+        if (!addSafe(totalInputs, txInSum, nxt))
+            return false;
+        totalInputs = nxt;
+        if (!addSafe(totalOutputs, txOutSum, nxt))
+            return false;
+        totalOutputs = nxt;
+        if (!consensus::MoneyRange(totalInputs, params) || !consensus::MoneyRange(totalOutputs, params))
             return false;
     }
 
-    uint64_t maxCoinbase = consensus::GetBlockSubsidy(height, params);
-    if (!SafeAdd(maxCoinbase, totalFees, maxCoinbase))
+    uint64_t subsidy = consensus::GetBlockSubsidy(height, params);
+    subsidy = subsidy * params.nPoSRewardRatioNum / params.nPoSRewardRatioDen;
+    if (totalOutputs < totalInputs)
         return false;
-
-    if (coinbaseOutTotal > maxCoinbase)
+    if (totalOutputs - totalInputs > subsidy)
         return false;
 
     return true;
@@ -233,9 +385,17 @@ bool ValidateTransactions(const std::vector<Transaction>& txs, const consensus::
 
 bool ValidateBlock(const Block& block, const consensus::Params& params, int height, const UTXOLookup& lookup, const BlockValidationOptions& opts)
 {
-    if (!ValidateBlockHeader(block.header, params, opts))
+    const bool posAllowed = params.fHybridPoS && height >= static_cast<int>(params.nPoSActivationHeight);
+    const bool isPoS = posAllowed && !block.transactions.empty() && !IsCoinbase(block.transactions.front());
+
+    if (isPoS) {
+        if ((block.header.time % 2) != 0)
+            return false;
+    }
+
+    if (!ValidateBlockHeader(block.header, params, opts, isPoS))
         return false;
-    if (!ValidateTransactions(block.transactions, params, height, lookup))
+    if (!ValidateTransactions(block.transactions, params, height, lookup, isPoS, block.header.bits, block.header.time))
         return false;
     const auto merkle = ComputeMerkleRoot(block.transactions);
     if (CRYPTO_memcmp(merkle.data(), block.header.merkleRoot.data(), merkle.size()) != 0)

@@ -2,6 +2,7 @@
 #include <array>
 #include <cstdint>
 #include <map>
+#include <limits>
 #include <string>
 #include "../block/block.h"
 
@@ -45,6 +46,14 @@ struct Params {
     uint32_t nRuleChangeActivationThreshold;
     uint32_t nMinerConfirmationWindow;
     std::array<VBDeployment, MAX_VERSION_BITS_DEPLOYMENTS> vDeployments;
+
+    // Hybrid PoW/PoS controls
+    bool fHybridPoS{false};
+    uint32_t nPoSActivationHeight{std::numeric_limits<uint32_t>::max()};
+    uint32_t nPoSMinStakeDepth{0};
+    uint32_t nPoSTargetSpacing{0};
+    uint32_t nPoSRewardRatioNum{1};
+    uint32_t nPoSRewardRatioDen{2};
 };
 
 const Params& Main();

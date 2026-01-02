@@ -9,7 +9,8 @@ int main()
     std::vector<uint32_t> times;
     std::vector<uint32_t> bits;
     uint32_t now = params.nGenesisTime;
-    for (size_t i = 0; i < 10; ++i) {
+    const size_t window = params.nDifficultyAdjustmentInterval;
+    for (size_t i = 0; i < window; ++i) {
         now += params.nPowTargetSpacing + (i % 2); // slight jitter
         times.push_back(now);
         bits.push_back(params.nGenesisBits);

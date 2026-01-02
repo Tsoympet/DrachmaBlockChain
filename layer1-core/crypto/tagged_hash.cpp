@@ -48,8 +48,8 @@ uint256 tagged_hash(const std::string& tag, const uint8_t* data, size_t size) {
         return result;
     }
 
-    const bool updated = SHA256_Update(&ctx, tag_digest, sizeof(tag_digest)) == 1 &&
-                         SHA256_Update(&ctx, tag_digest, sizeof(tag_digest)) == 1 &&
+    const bool updated = SHA256_Update(&ctx, tag_digest.data(), sizeof(tag_digest)) == 1 &&
+                         SHA256_Update(&ctx, tag_digest.data(), sizeof(tag_digest)) == 1 &&
                          (size == 0 || SHA256_Update(&ctx, data, size) == 1);
 
     if (!updated || SHA256_Final(result.data(), &ctx) != 1) {

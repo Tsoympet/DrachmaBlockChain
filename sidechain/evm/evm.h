@@ -30,6 +30,5 @@ struct evm_result {
     std::string error;
 };
 
-// Execute modified EVM bytecode with constrained opcode set.
+// EVM execution is disabled; the WASM sidechain is mandatory.
 evm_result execute(const evm_code& bytecode, const evm_state& state, uint64_t gas_limit);
-

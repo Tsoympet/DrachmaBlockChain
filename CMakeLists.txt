@@ -132,13 +132,14 @@ target_include_directories(drachma_layer2
 
 target_link_libraries(drachma_layer2
     PUBLIC drachma_layer1
+    PUBLIC drachma_sidechain_wasm
     PUBLIC Boost::system
 )
 target_link_libraries(drachma_layer2 PUBLIC LevelDB::LevelDB)
 
 # Core daemon and CLI
 add_executable(drachmad layer1-core/drachmad.cpp)
-target_link_libraries(drachmad PRIVATE drachma_layer2 Boost::system)
+target_link_libraries(drachmad PRIVATE drachma_layer2 Boost::system drachma_sidechain_wasm)
 set_target_properties(drachmad PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/layer1-core OUTPUT_NAME "drachmad")
 
 add_executable(drachma_cli layer1-core/drachma_cli.cpp)
@@ -217,6 +218,7 @@ if(DRACHMA_BUILD_TESTS)
     FetchContent_Declare(
         googletest
         URL https://github.com/google/googletest/archive/refs/tags/v1.14.0.zip
+        DOWNLOAD_EXTRACT_TIMESTAMP TRUE
     )
     set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
     FetchContent_MakeAvailable(googletest)

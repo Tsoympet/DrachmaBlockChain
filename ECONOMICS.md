@@ -45,4 +45,4 @@ graph LR
 - Block rewards are the sole issuance mechanism; there are no stealth mints, developer rewards, or advisor grants embedded in the protocol.
 - Difficulty adjustment and validation rules are enforced at launch to prevent timestamp or reward manipulation.
 - Wallets and explorers will clearly display circulating supply and remaining issuance to maintain user trust.
-- The optional merge-mined sidechain does not expand total supply; its gas and contract fees are paid in bridged wrapped DRM (wDRM) minted and burned through the peg.
+- The mandatory merge-mined WASM sidechain does not expand total supply; gas is paid directly in native assets (TLN for NFTs, DRM for contracts, OBL for dApps). No wrapped assets are minted.

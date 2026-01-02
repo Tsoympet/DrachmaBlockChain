@@ -17,6 +17,9 @@
 #include "../layer2-services/rpc/rpcserver.h"
 #include "../layer2-services/index/txindex.h"
 #include "../layer2-services/wallet/wallet.h"
+#include "../sidechain/wasm/runtime/engine.h"
+#include "../sidechain/state/state_store.h"
+#include "../sidechain/rpc/wasm_rpc.h"
 
 namespace {
 
@@ -126,9 +129,14 @@ int main(int argc, char* argv[])
     net::P2PNode p2p(io, cfg.p2pport);
     p2p.SetLocalHeight(static_cast<uint32_t>(index.BlockCount()));
 
+    sidechain::wasm::ExecutionEngine wasmEngine;
+    sidechain::state::StateStore sidechainState;
+    sidechain::rpc::WasmRpcService wasmService(wasmEngine, sidechainState);
+
     rpc::RPCServer rpc(io, cfg.rpcuser, cfg.rpcpassword, cfg.rpcport);
     rpc.SetBlockStorePath(cfg.datadir + "/blocks.dat");
     rpc.AttachCoreHandlers(pool, wallet, index, p2p);
+    rpc.AttachSidechainHandlers(wasmService);
 
     if (cfg.listen) {
         p2p.Start();

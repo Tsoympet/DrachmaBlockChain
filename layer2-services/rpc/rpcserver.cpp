@@ -15,10 +15,76 @@
 #include "rpcserver.h"
 #include "../../layer1-core/consensus/params.h"
 #include "../../layer1-core/tx/transaction.h"
+#include "../../sidechain/wasm/runtime/types.h"
 
 namespace http = boost::beast::http;
 
 namespace rpc {
+
+namespace {
+std::unordered_map<std::string, std::string> ParseKeyValues(const std::string& raw)
+{
+    std::unordered_map<std::string, std::string> kv;
+    std::string cleaned = raw;
+    cleaned.erase(std::remove(cleaned.begin(), cleaned.end(), '"'), cleaned.end());
+    std::stringstream ss(cleaned);
+    std::string part;
+    while (std::getline(ss, part, ';')) {
+        auto pos = part.find('=');
+        if (pos == std::string::npos) continue;
+        auto key = part.substr(0, pos);
+        auto value = part.substr(pos + 1);
+        if (!key.empty()) kv[key] = value;
+    }
+    return kv;
+}
+
+std::vector<sidechain::wasm::Instruction> DecodeInstructions(const std::string& hex)
+{
+    std::vector<sidechain::wasm::Instruction> out;
+    auto cleaned = hex;
+    cleaned.erase(std::remove(cleaned.begin(), cleaned.end(), '"'), cleaned.end());
+    std::vector<uint8_t> bytes;
+    for (size_t i = 0; i + 2 <= cleaned.size(); i += 2) {
+        uint8_t byte = std::stoi(cleaned.substr(i, 2), nullptr, 16);
+        bytes.push_back(byte);
+    }
+    if (bytes.empty()) return out;
+    for (size_t i = 0; i + 5 <= bytes.size(); i += 5) {
+        sidechain::wasm::Instruction ins;
+        ins.op = static_cast<sidechain::wasm::OpCode>(bytes[i]);
+        int32_t imm = 0;
+        std::memcpy(&imm, bytes.data() + i + 1, sizeof(imm));
+        ins.immediate = imm;
+        out.push_back(ins);
+    }
+    return out;
+}
+
+std::string FormatExecResult(const sidechain::wasm::ExecutionResult& res)
+{
+    static const char* hex_table = "0123456789abcdef";
+    auto encodeHex = [&](const std::vector<uint8_t>& data) {
+        std::string out;
+        out.reserve(data.size() * 2);
+        for (auto b : data) {
+            out.push_back(hex_table[b >> 4]);
+            out.push_back(hex_table[b & 0xf]);
+        }
+        return out;
+    };
+    std::stringstream ss;
+    ss << "{\"success\":" << (res.success ? "true" : "false")
+       << ",\"gas_used\":" << res.gas_used
+       << ",\"state_writes\":" << res.state_writes
+       << ",\"output\":\"" << encodeHex(res.output) << "\"";
+    if (!res.error.empty()) {
+        ss << ",\"error\":\"" << res.error << "\"";
+    }
+    ss << "}";
+    return ss.str();
+}
+} // namespace
 
 static Block DeserializeBlock(const std::vector<uint8_t>& buf)
 {
@@ -277,6 +343,62 @@ void RPCServer::AttachBridgeHandlers(crosschain::BridgeManager& bridge)
         ss >> height;
         bool ok = bridge.Refund(lockId, height);
         return std::string("{\"refunded\":") + (ok ? "true" : "false") + "}";
+    });
+}
+
+void RPCServer::AttachSidechainHandlers(sidechain::rpc::WasmRpcService& wasm)
+{
+    using namespace sidechain::wasm;
+    Register("deploy_contract", [&wasm](const std::string& params) {
+        auto kv = ParseKeyValues(params);
+        sidechain::rpc::DeployRequest req;
+        req.contract_id = kv["module"];
+        req.asset_id = kv.count("asset") ? static_cast<uint8_t>(std::stoul(kv["asset"])) : kAssetDrm;
+        req.gas_limit = kv.count("gas") ? std::stoull(kv["gas"]) : 0;
+        req.init_code = DecodeInstructions(kv["code"]);
+        return FormatExecResult(wasm.DeployContract(req));
+    });
+
+    Register("call_contract", [&wasm](const std::string& params) {
+        auto kv = ParseKeyValues(params);
+        sidechain::rpc::ContractCall req;
+        req.contract_id = kv["module"];
+        req.asset_id = kv.count("asset") ? static_cast<uint8_t>(std::stoul(kv["asset"])) : kAssetDrm;
+        req.gas_limit = kv.count("gas") ? std::stoull(kv["gas"]) : 0;
+        req.code = DecodeInstructions(kv["code"]);
+        return FormatExecResult(wasm.CallContract(req));
+    });
+
+    Register("mint_nft", [&wasm](const std::string& params) {
+        auto kv = ParseKeyValues(params);
+        sidechain::rpc::MintNftRequest req;
+        req.token_id = kv["token"];
+        req.owner = kv["owner"];
+        req.metadata_hash = kv["meta"];
+        req.asset_id = kv.count("asset") ? static_cast<uint8_t>(std::stoul(kv["asset"])) : kAssetTln;
+        req.gas_limit = kv.count("gas") ? std::stoull(kv["gas"]) : 0;
+        return FormatExecResult(wasm.MintNft(req));
+    });
+
+    Register("transfer_nft", [&wasm](const std::string& params) {
+        auto kv = ParseKeyValues(params);
+        sidechain::rpc::TransferNftRequest req;
+        req.token_id = kv["token"];
+        req.from = kv["from"];
+        req.to = kv["to"];
+        req.asset_id = kv.count("asset") ? static_cast<uint8_t>(std::stoul(kv["asset"])) : kAssetTln;
+        req.gas_limit = kv.count("gas") ? std::stoull(kv["gas"]) : 0;
+        return FormatExecResult(wasm.TransferNft(req));
+    });
+
+    Register("call_dapp", [&wasm](const std::string& params) {
+        auto kv = ParseKeyValues(params);
+        sidechain::rpc::DappCall req;
+        req.app_id = kv["app"];
+        req.asset_id = kv.count("asset") ? static_cast<uint8_t>(std::stoul(kv["asset"])) : kAssetObl;
+        req.gas_limit = kv.count("gas") ? std::stoull(kv["gas"]) : 0;
+        req.code = DecodeInstructions(kv["code"]);
+        return FormatExecResult(wasm.CallDapp(req));
     });
 }
 

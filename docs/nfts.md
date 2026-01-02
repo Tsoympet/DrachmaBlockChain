@@ -1,22 +1,17 @@
-# NFTs on the DRACHMA Sidechain
+# NFTs (TLN, asset_id=0)
 
-The sidechain ships an ERC-721-like NFT precompile backed by LevelDB trie storage. Gas is paid in **wDRM** and ownership is enforced by the sidechain consensus rules.
+NFT minting, ownership, and transfers are bound to TLN only. The WASM validator rejects NFT calls funded by DRM or OBL.
 
-## Viewing and Transferring in the Desktop App
+## Model
+- RPC entrypoints: `mint_nft` and `transfer_nft` (see `sidechain/rpc/wasm_rpc.*`).
+- State isolation: ownership and metadata hashes are stored under the NFT domain; other domains cannot access them.
+- Gas: fixed-cost metering for mint/transfer, paid in TLN.
 
-1. Enable sidechain support and open the **Sidechain → NFTs** section.
-2. The gallery lists token ID, name, and metadata URL. Images are fetched by dApps; the wallet keeps metadata lightweight.
-3. Select a token and click **Transfer** to send it to another address. Confirm the recipient in the dialog.
-4. If your configured minting contract allows it, use **Mint** to request a new token.
+## Using the Desktop GUI
+1. Open **Sidechain → NFTs**. Balances show TLN (NFTs), DRM (contracts), and OBL (dApps).
+2. Use **Mint** to register a token ID + metadata hash; the wallet funds TLN automatically.
+3. Use **Transfer** to move ownership; the UI will reject mixed-asset attempts.
 
-## Metadata
-
-- Prefer IPFS or other content-addressed URIs (e.g., `ipfs://...`).
-- Include standard fields: `name`, `description`, `image`, and optional `attributes`.
-- Keep assets small; large media should be served via gateways/CDNs managed by the dApp.
-
-## Bridge and Security Notes
-
-- NFTs remain on the sidechain; only wDRM crosses the peg bridge.
-- Duplicate mints are rejected by the precompile. Anti-replay and timeout rules protect bridge flows.
-- Mainnet DRM remains unaffected if you disable the sidechain in Settings.
+## Tips
+- Keep metadata URIs deterministic and hash them client-side before submission.
+- Use the TLN domain only; bridging or wrapping assets for NFTs is disallowed by consensus.

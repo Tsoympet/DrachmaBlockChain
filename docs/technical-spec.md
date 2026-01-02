@@ -98,7 +98,7 @@ Update `time` and `nonce` values with finalized parameters and compare the print
 
 ## Non-Goals
 
-- No on-chain smart contracts or programmable VM
+- No EVM/ABI or wrapped assets; only deterministic WASM sidechain is supported
 - No privileged keys or governance layers
 - No premines or developer fees embedded in consensus
 

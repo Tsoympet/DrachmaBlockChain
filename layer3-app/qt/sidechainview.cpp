@@ -29,23 +29,26 @@ QWidget* SidechainView::build_balances_widget()
 {
     QGroupBox* box = new QGroupBox("Balances", this);
     QFormLayout* f = new QFormLayout(box);
+    tln_balance_label = new QLabel("0 TLN", box);
+    tln_balance_label->setToolTip("TLN (asset 0) powers NFTs");
     drm_balance_label = new QLabel("0 DRM", box);
-    drm_balance_label->setToolTip("Mainnet DRM balance");
-    wdrm_balance_label = new QLabel("0 wDRM", box);
-    wdrm_balance_label->setToolTip("Sidechain wrapped DRM balance");
-    f->addRow("Mainnet DRM", drm_balance_label);
-    f->addRow("Sidechain wDRM", wdrm_balance_label);
+    drm_balance_label->setToolTip("DRM (asset 1) funds WASM smart contracts");
+    obl_balance_label = new QLabel("0 OBL", box);
+    obl_balance_label->setToolTip("OBL (asset 2) fuels dApps");
+    f->addRow("TLN (NFTs)", tln_balance_label);
+    f->addRow("DRM (contracts)", drm_balance_label);
+    f->addRow("OBL (dApps)", obl_balance_label);
     return box;
 }
 
 QWidget* SidechainView::build_bridge_widget()
 {
-    QGroupBox* box = new QGroupBox("Bridge", this);
+    QGroupBox* box = new QGroupBox("Anchors & Fees", this);
     QHBoxLayout* h = new QHBoxLayout(box);
-    QPushButton* lock_btn = new QPushButton("Lock DRM → Mint wDRM", box);
-    QPushButton* burn_btn = new QPushButton("Burn wDRM → Unlock DRM", box);
-    lock_btn->setToolTip("Locks mainnet DRM via bridge and mints wrapped DRM on the sidechain.");
-    burn_btn->setToolTip("Burns wrapped DRM on the sidechain and unlocks DRM on mainnet after confirmations.");
+    QPushButton* lock_btn = new QPushButton("Submit checkpoint (DRM)", box);
+    QPushButton* burn_btn = new QPushButton("Fund OBL fees", box);
+    lock_btn->setToolTip("DRM-backed WASM contracts anchor execution roots; checkpoints are mandatory.");
+    burn_btn->setToolTip("OBL is the only fee token for dApps; fund the OBL domain before calling dApps.");
     connect(lock_btn, &QPushButton::clicked, this, &SidechainView::request_lock_to_sidechain);
     connect(burn_btn, &QPushButton::clicked, this, &SidechainView::request_burn_from_sidechain);
     h->addWidget(lock_btn);
@@ -97,7 +100,7 @@ QWidget* SidechainView::build_dapps_widget()
 
 void SidechainView::seed_mock_data()
 {
-    set_balances(123.45, 12.34);
+    set_balances(3.21, 123.45, 42.00);
     set_sidechain_status("Synced", 78, 5);
     QList<NftItem> items;
     items << NftItem{"1", "Genesis Badge", "https://example.com/genesis.png"}
@@ -106,10 +109,7 @@ void SidechainView::seed_mock_data()
     if (nft_gallery) nft_gallery->set_items(items);
 
     if (contract_caller) {
-        contract_caller->apply_abi(R"([
-            {"name":"greet","type":"function","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"string"}]},
-            {"name":"setGreeting","type":"function","stateMutability":"nonpayable","inputs":[{"name":"g","type":"string"}],"outputs":[]}
-        ])");
+        contract_caller->apply_abi(R"({"module":"greeting.wasm","exports":["init","greet","set_greeting"]})");
     }
 
     if (dapp_browser) {
@@ -122,10 +122,11 @@ void SidechainView::seed_mock_data()
     }
 }
 
-void SidechainView::set_balances(double drm_balance, double wdrm_balance)
+void SidechainView::set_balances(double tln_balance, double drm_balance, double obl_balance)
 {
+    tln_balance_label->setText(QString::number(tln_balance, 'f', 4) + " TLN");
     drm_balance_label->setText(QString::number(drm_balance, 'f', 4) + " DRM");
-    wdrm_balance_label->setText(QString::number(wdrm_balance, 'f', 4) + " wDRM");
+    obl_balance_label->setText(QString::number(obl_balance, 'f', 4) + " OBL");
 }
 
 void SidechainView::set_sidechain_status(const QString& status_text, int sync_progress, int peer_count)
@@ -139,4 +140,3 @@ void SidechainView::apply_abi_json(const QString& json_text)
 {
     if (contract_caller) contract_caller->apply_abi(json_text);
 }
-

@@ -12,8 +12,8 @@ namespace sidechain::bridge {
 struct lock_tx {
     std::string tx_id;      // unique mainnet transaction identifier
     std::string from;       // mainnet sender locking DRM
-    std::string to;         // sidechain recipient to receive wDRM
-    uint64_t amount{0};     // amount of DRM locked / wDRM minted
+    std::string to;         // sidechain recipient to receive DRM execution credit (no wrapped asset)
+    uint64_t amount{0};     // amount of DRM locked for WASM execution
     bool is_lock{false};    // whether the transaction is a recognized lock primitive
 };
 
@@ -65,4 +65,3 @@ private:
 };
 
 }  // namespace sidechain::bridge
-

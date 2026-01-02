@@ -104,17 +104,20 @@ Always verify signatures and checksums before running binaries.
 
 Commands are subject to change as the implementation matures; prefer scripts in `scripts/` for reproducible setups.
 
-## Smart Contracts, NFTs & dApps (optional sidechain)
+## Smart Contracts, NFTs & dApps (mandatory WASM sidechain)
 
-DRACHMA keeps the base layer minimal. A merge-mined PoW sidechain adds a **modified Ethereum-style EVM** with reduced opcodes, Schnorr signatures, and wDRM gas. The desktop wallet now exposes this optional stack via the **Sidechain** tab:
+BlockChainDrachma ships a **mandatory WASM execution layer** that is anchored to Layer 1 checkpoints. The asset-to-function law is enforced by consensus and validation:
 
-- **Balances:** view mainnet DRM and sidechain wDRM separately.
-- **Bridge:** lock DRM to mint wDRM; burn wDRM to unlock DRM using the peg bridge.
-- **Smart contracts:** paste ABI JSON or use ERC-20/721 presets, then call or send transactions to contracts.
-- **NFTs:** browse owned tokens, transfer them, mint with metadata URIs (IPFS gateway supported), and manage approvals/operators.
-- **dApps:** launch a built-in WebEngine browser pointed at a local or configurable gateway (default `http://localhost:8080`).
+| Asset (`asset_id`) | Function            | RPC entrypoints                          |
+|--------------------|---------------------|------------------------------------------|
+| TLN (0)            | NFTs                | `mint_nft`, `transfer_nft`               |
+| DRM (1)            | Smart contracts     | `deploy_contract`, `call_contract`       |
+| OBL (2)            | dApps / interaction | `call_dapp`                              |
 
-Sidechain support can be disabled entirely in **Settings → Sidechain support**. When disabled, the tab hides and the mainnet wallet remains unchanged.
+- **Execution:** Deterministic WASM only; no EVM/ABI/solidity or wrapped assets. Gas is paid in the asset bound to the domain.
+- **Anchors:** Sidechain checkpoints are required; they cannot be disabled in the wallet or node.
+- **Wallet UX:** The Sidechain tab auto-selects the correct asset based on the action (TLN for NFTs, DRM for contracts, OBL for dApps) and surfaces the WASM manifest instead of ABI JSON.
+- **dApp gateway:** Defaults to `http://localhost:8080` for OBL-backed dApps; RPC defaults to `http://localhost:9334/wasm`.
 
 ### Live Testnet
 
@@ -228,7 +231,7 @@ Security-impacting changes and reports are welcomed; consensus/crypto modificati
 - **Supply Cap:** 42,000,000 DRM
 - **Consensus First:** All critical rules reside exclusively in Layer 1
 - **No Governance Logic:** No voting systems, no administrative keys
-- **No Smart Contracts:** Monetary network only
+- **Execution model:** Mandatory WASM sidechain with enforced asset/function law (TLN→NFTs, DRM→contracts, OBL→dApps)
 
 Network neutrality is achieved through **absence of privilege**, not through special enforcement mechanisms.
 

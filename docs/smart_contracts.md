@@ -1,40 +1,24 @@
-# Sidechain Smart Contracts
+# WASM Smart Contracts (DRM, asset_id=1)
 
-The DRACHMA sidechain offers an **optional, merge-mined execution layer** with a constrained EVM designed for auditability:
+The sidechain is **mandatory** and executes deterministic WASM modules only. EVM/ABI/solidity, wrapped assets, and optional toggles are not supported. DRM (`asset_id=1`) is the sole funding asset for contracts.
 
-- ~50 essential opcodes, omitting risky calls such as `SELFDESTRUCT` and `DELEGATECALL`.
-- Schnorr signature verification alongside ECDSA for transactions and precompiles.
-- Gas is paid in wrapped DRM (**wDRM**) minted via the mainnet↔sidechain peg.
-- Keccak-256 hashing via OpenSSL and deterministic gas metering tied to DRM peg fees.
+## Model
+- Deterministic interpreter (no JIT), fixed gas schedule (`sidechain/wasm/gas`), and explicit host imports.
+- Asset/function law: DRM → smart contracts; TLN → NFTs; OBL → dApps. Mixed-asset execution is rejected by `ValidateAssetDomain`.
+- Checkpoints are required; every block carries `state_root`, `execution_root`, and a main-chain checkpoint.
+- RPC entrypoints: `deploy_contract` and `call_contract` via `sidechain/rpc/wasm_rpc.*`.
 
 ## Using the Desktop GUI
+1. The **Sidechain** tab is always enabled; RPC defaults to `http://localhost:9334/wasm`.
+2. The Smart Contracts pane expects a WASM manifest JSON: `{"module":"<id>","exports":["init","handle_call"]}`.
+3. The wallet auto-selects DRM for gas and submits `deploy_contract`/`call_contract` requests with the provided manifest/payload.
+4. Checkpoint status and peer count are displayed in the status bar; they cannot be disabled.
 
-1. Enable the sidechain in **Settings → Sidechain support**. Provide the RPC endpoint (default `http://localhost:8545`).
-2. Open the **Sidechain** tab to see DRM and wDRM balances plus sync/peer status.
-3. Use the **Bridge** buttons to lock DRM → wDRM or burn wDRM → DRM through the peg.
-4. In **Smart Contracts**, paste an ABI JSON or choose ERC-20/721 presets, enter the contract address, then **Call** for reads or **Send transaction** for writes.
-5. **NFTs** shows owned tokens with transfer/mint shortcuts (tied to the ERC-721-like precompile).
-6. The **dApps** browser (QWebEngine) opens a local gateway such as `http://localhost:8080`; shortcuts to common explorers/DEX demos are provided.
+## Deploying and Calling
+- Build your contract to WASM (no floating point). Keep exports minimal and deterministic.
+- Deploy with `deploy_contract` supplying the module ID, code, and gas limit.
+- Invoke exported functions with `call_contract`, passing DRM for gas. Calls outside the DRM domain are rejected.
 
-## Deploying Contracts
-
-Deploy contracts with standard Solidity tooling pointed at the sidechain RPC. Example (Solidity-compatible) contract:
-
-```solidity
-// SPDX-License-Identifier: MIT
-pragma solidity ^0.8.21;
-
-contract Greeting {
-    string private message = "hello";
-    function greet() external view returns (string memory) { return message; }
-    function setGreeting(string calldata m) external { message = m; }
-}
-```
-
-After deployment, copy the contract address into the GUI, load the ABI, and interact via the generated function grid.
-
-## Tooling & Explorer
-
-- **Explorer:** run or open the sidechain explorer listed in `explorer/` or your dApp gateway.
-- **SDK:** standard Web3.js/ethers.js providers work against the sidechain RPC; prefer HTTPS or IPC where available.
-- **Security:** contracts are isolated to the sidechain. Mainnet DRM remains minimal and unaffected.
+## Tooling
+- Prefer Rust/C/C++ toolchains targeting `wasm32-unknown-unknown` with deterministic builds.
+- Use the provided `sidechain_wasm_execution_test` as a reference for gas metering and asset-law validation.

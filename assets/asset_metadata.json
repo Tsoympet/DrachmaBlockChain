@@ -1,0 +1,25 @@
+{
+  "assets": [
+    {
+      "asset_id": 0,
+      "symbol": "TLN",
+      "name": "Talanton",
+      "role": "NFTs only",
+      "icon": "assets/icons/asset-tln.svg"
+    },
+    {
+      "asset_id": 1,
+      "symbol": "DRM",
+      "name": "Drachma",
+      "role": "WASM smart contracts",
+      "icon": "assets/icons/asset-drm.svg"
+    },
+    {
+      "asset_id": 2,
+      "symbol": "OBL",
+      "name": "Obolos",
+      "role": "WASM dApps and interaction fees",
+      "icon": "assets/icons/asset-obl.svg"
+    }
+  ]
+}

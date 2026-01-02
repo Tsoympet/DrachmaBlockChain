@@ -7,9 +7,6 @@
 #include <QPushButton>
 #include <QTreeWidget>
 #include <QProgressBar>
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
 #include <QTabWidget>
 
 class ContractCaller;
@@ -21,7 +18,7 @@ class SidechainView : public QWidget {
 public:
     explicit SidechainView(QWidget* parent = nullptr);
 
-    void set_balances(double drm_balance, double wdrm_balance);
+    void set_balances(double tln_balance, double drm_balance, double obl_balance);
     void set_sidechain_status(const QString& status_text, int sync_progress, int peer_count);
     void apply_abi_json(const QString& json_text);
 
@@ -42,8 +39,9 @@ private:
 
     void seed_mock_data();
 
+    QLabel* tln_balance_label{nullptr};
     QLabel* drm_balance_label{nullptr};
-    QLabel* wdrm_balance_label{nullptr};
+    QLabel* obl_balance_label{nullptr};
     QLabel* status_label{nullptr};
     QProgressBar* sync_bar{nullptr};
     QLabel* peer_label{nullptr};
@@ -52,4 +50,3 @@ private:
     NftGallery* nft_gallery{nullptr};
     DappBrowser* dapp_browser{nullptr};
 };
-

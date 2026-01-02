@@ -1128,7 +1128,7 @@ public:
         connect(node, &NodeProcessController::nodeStarted, this, [this]{ statusBar()->showMessage("Node started"); });
         connect(node, &NodeProcessController::nodeStopped, this, [this]{ statusBar()->showMessage("Node stopped"); });
         connect(miner, &MiningManager::hashrateUpdated, this, &MainWindow::updateHashrate);
-        sidechainStatusLbl = new QLabel("Sidechain: disabled", this);
+        sidechainStatusLbl = new QLabel("Sidechain: WASM active", this);
         sidechainPeersLbl = new QLabel("SC peers: 0", this);
         sidechainStatusBar = new QProgressBar(this);
         sidechainStatusBar->setRange(0, 100);
@@ -1518,23 +1518,23 @@ private:
         sidechainView = new SidechainView(w);
         v->addWidget(sidechainView);
         connect(sidechainView, &SidechainView::request_lock_to_sidechain, this, [this]{
-            QMessageBox::information(this, "Bridge", "Lock DRM → wDRM flow will use the peg bridge when available.");
+            QMessageBox::information(this, "Checkpoint", "Submit DRM-backed checkpoint to anchor WASM execution roots.");
         });
         connect(sidechainView, &SidechainView::request_burn_from_sidechain, this, [this]{
-            QMessageBox::information(this, "Bridge", "Burn wDRM → unlock DRM will submit a peg proof to mainnet.");
+            QMessageBox::information(this, "Fees", "Fund OBL to cover dApp call fees (asset_id=2 only).");
         });
         connect(sidechainView, &SidechainView::request_contract_call, this, [this](const QString& address, const QString& abi, bool write){
-            QString mode = write ? "transaction" : "call";
-            QMessageBox::information(this, "Smart contract", QString("Prepared %1 to %2 with ABI length %3 bytes.").arg(mode, address).arg(abi.size()));
+            QString mode = write ? "execution" : "call";
+            QMessageBox::information(this, "Smart contract", QString("Prepared WASM %1 for module %2 (DRM gas, manifest bytes %3).").arg(mode, address).arg(abi.size()));
         });
         connect(sidechainView, &SidechainView::request_nft_transfer, this, [this](const QString& token_id, const QString& to){
-            QMessageBox::information(this, "NFT", QString("Transfer token %1 to %2").arg(token_id, to));
+            QMessageBox::information(this, "NFT", QString("Transfer TLN-backed NFT %1 to %2").arg(token_id, to));
         });
         connect(sidechainView, &SidechainView::request_nft_mint, this, [this]{
-            QMessageBox::information(this, "NFT", "Mint request prepared for configured contract.");
+            QMessageBox::information(this, "NFT", "Mint request prepared for TLN NFT domain.");
         });
         connect(sidechainView, &SidechainView::request_open_dapp, this, [this](const QUrl& url){
-            statusBar()->showMessage(QString("Opening dApp %1").arg(url.toString()), 2000);
+            statusBar()->showMessage(QString("Opening dApp %1 (OBL fees)").arg(url.toString()), 2000);
         });
         return w;
     }
@@ -1561,10 +1561,12 @@ private:
         rpcPassEdit = new QLineEdit(w);
         rpcPassEdit->setEchoMode(QLineEdit::Password);
 
-        sidechainEnable = new QCheckBox("Enable merge-mined sidechain (optional)", w);
-        sidechainEnable->setToolTip("Toggle the optional PoW sidechain with smart contracts, NFTs, and dApps.");
+        sidechainEnable = new QCheckBox("WASM sidechain (mandatory)", w);
+        sidechainEnable->setToolTip("Sidechain execution is always on; DRM contracts, TLN NFTs, and OBL dApps are enforced.");
+        sidechainEnable->setChecked(true);
+        sidechainEnable->setEnabled(false);
         sidechainRpc = new QLineEdit(w);
-        sidechainRpc->setPlaceholderText("http://localhost:8545");
+        sidechainRpc->setPlaceholderText("http://localhost:9334/wasm");
         dappGateway = new QLineEdit(w);
         dappGateway->setPlaceholderText("http://localhost:8080");
 
@@ -1913,15 +1915,15 @@ private slots:
         s.setValue("network", networkBox->currentText());
         s.setValue("rpcUser", rpcUserEdit->text());
         s.setValue("rpcPass", rpcPassEdit->text());
-        s.setValue("sidechainEnabled", sidechainEnable->isChecked());
+        s.setValue("sidechainEnabled", true);
         s.setValue("sidechainRpc", sidechainRpc->text());
         s.setValue("dappGateway", dappGateway->text());
         s.setValue("theme", themeBox->currentText());
         statusBar()->showMessage("Settings saved", 3000);
         startNodeFromSettings();
         applyTheme(themeBox->currentText());
-        toggleSidechainTab(sidechainEnable->isChecked());
-        if (sidechainEnable->isChecked() && sidechainView) {
+        toggleSidechainTab(true);
+        if (sidechainView) {
             sidechainView->set_sidechain_status("Connecting", sidechainStatusBar ? sidechainStatusBar->value() : 0, 0);
         }
     }
@@ -1934,11 +1936,11 @@ private slots:
         networkBox->setCurrentText(s.value("network", "testnet").toString());
         rpcUserEdit->setText(s.value("rpcUser", "user").toString());
         rpcPassEdit->setText(s.value("rpcPass", "pass").toString());
-        sidechainEnable->setChecked(s.value("sidechainEnabled", false).toBool());
-        sidechainRpc->setText(s.value("sidechainRpc", "http://localhost:8545").toString());
+        sidechainEnable->setChecked(true);
+        sidechainRpc->setText(s.value("sidechainRpc", "http://localhost:9334/wasm").toString());
         dappGateway->setText(s.value("dappGateway", "http://localhost:8080").toString());
         themeBox->setCurrentText(s.value("theme", "System").toString());
-        toggleSidechainTab(sidechainEnable->isChecked());
+        toggleSidechainTab(true);
     }
 
     void applyThemeFromSettings()
@@ -1949,20 +1951,17 @@ private slots:
 
     void toggleSidechainTab(bool enabled)
     {
+        Q_UNUSED(enabled);
         if (!sidechainTab || !tabs) return;
         int idx = tabs->indexOf(sidechainTab);
         if (idx >= 0) {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-            tabs->setTabVisible(idx, enabled);
+            tabs->setTabVisible(idx, true);
 #else
-            sidechainTab->setVisible(enabled);
+            sidechainTab->setVisible(true);
 #endif
-            if (!enabled && tabs->currentIndex() == idx) {
-                tabs->setCurrentIndex(0);
-            }
         }
-        if (sidechainStatusLbl) sidechainStatusLbl->setText(enabled ? "Sidechain: enabled" : "Sidechain: disabled");
-        if (sidechainStatusBar) sidechainStatusBar->setValue(enabled ? sidechainStatusBar->value() : 0);
+        if (sidechainStatusLbl) sidechainStatusLbl->setText("Sidechain: WASM active");
     }
 
     void startNodeFromSettings()
@@ -2020,10 +2019,9 @@ private slots:
 
     void simulateSidechainStatus()
     {
-        if (!sidechainEnable || !sidechainEnable->isChecked()) return;
         static int progress = 20;
         progress = (progress + 7) % 100;
-        if (sidechainStatusLbl) sidechainStatusLbl->setText("Sidechain: syncing");
+        if (sidechainStatusLbl) sidechainStatusLbl->setText("Sidechain: syncing (WASM)");
         if (sidechainStatusBar) sidechainStatusBar->setValue(progress);
         if (sidechainPeersLbl) sidechainPeersLbl->setText(QString("SC peers: %1").arg(3 + (progress % 3)));
         if (sidechainView) sidechainView->set_sidechain_status("Syncing", progress, 3 + (progress % 3));

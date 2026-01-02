@@ -4,7 +4,7 @@
 Cross-chain features are strictly non-consensus. The core chain state, supply, and validation rules remain unchanged regardless of external chain interactions. Relayers and adapters run in Layer 2 and provide proofs to wallets and monitoring tools.
 
 ## Components
-- **Adapters:** Pluggable validators for external chains (e.g., Bitcoin-like or EVM-like). They verify headers and Merkle proofs to attest to external events.
+ - **Adapters:** Pluggable validators for external chains (e.g., Bitcoin-like or WASM-light header formats). They verify headers and Merkle proofs to attest to external events.
 - **Relayer:** Untrusted service that fetches external data, verifies proofs via adapters, and queues messages for local consumers.
 - **Bridge Manager:** Routes verified messages to interested subsystems (wallet UI, auditing tools) without mutating Layer 1 state.
 - **Cross-chain Messages:** Structured payloads containing the external header chain context, Merkle branches, and event metadata.

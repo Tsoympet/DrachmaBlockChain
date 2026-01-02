@@ -5,62 +5,42 @@
 #include <QGroupBox>
 #include <QMessageBox>
 
-namespace {
-QString erc20_interface()
-{
-    return R"([
-        {"name":"name","type":"function","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"string"}]},
-        {"name":"symbol","type":"function","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"string"}]},
-        {"name":"decimals","type":"function","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"uint8"}]},
-        {"name":"balanceOf","type":"function","stateMutability":"view","inputs":[{"name":"owner","type":"address"}],"outputs":[{"name":"","type":"uint256"}]},
-        {"name":"transfer","type":"function","stateMutability":"nonpayable","inputs":[{"name":"to","type":"address"},{"name":"value","type":"uint256"}],"outputs":[{"name":"","type":"bool"}]}
-    ])";
-}
-
-QString erc721_interface()
-{
-    return R"([
-        {"name":"name","type":"function","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"string"}]},
-        {"name":"symbol","type":"function","stateMutability":"view","inputs":[],"outputs":[{"name":"","type":"string"}]},
-        {"name":"ownerOf","type":"function","stateMutability":"view","inputs":[{"name":"tokenId","type":"uint256"}],"outputs":[{"name":"","type":"address"}]},
-        {"name":"transferFrom","type":"function","stateMutability":"nonpayable","inputs":[{"name":"from","type":"address"},{"name":"to","type":"address"},{"name":"tokenId","type":"uint256"}],"outputs":[]}
-    ])";
-}
-}
-
 ContractCaller::ContractCaller(QWidget* parent)
     : QWidget(parent)
 {
     QVBoxLayout* v = new QVBoxLayout(this);
     QFormLayout* f = new QFormLayout();
     address_edit = new QLineEdit(this);
-    address_edit->setPlaceholderText("0x...");
+    address_edit->setPlaceholderText("module-id (e.g. wasm.contract.greet)");
     interface_box = new QComboBox(this);
-    interface_box->addItems({"Custom ABI", "ERC-20", "ERC-721"});
+    interface_box->addItems({"Custom WASM manifest", "DRM contract (deploy/call)", "OBL dApp (call_dapp)"});
     abi_edit = new QTextEdit(this);
-    abi_edit->setPlaceholderText("Paste ABI JSON here");
+    abi_edit->setPlaceholderText("Paste WASM manifest JSON: {\"module\":\"<id>\",\"exports\":[\"init\",\"entry\"]}");
     abi_edit->setAcceptRichText(false);
     abi_edit->setMinimumHeight(120);
 
-    helper_label = new QLabel("Functions will be parsed automatically.", this);
+    helper_label = new QLabel("Exports will be parsed from the manifest.", this);
     function_tree = new QTreeWidget(this);
-    function_tree->setHeaderLabels({"Function", "Type"});
+    function_tree->setHeaderLabels({"Export", "Domain"});
     function_tree->setRootIsDecorated(false);
 
-    QPushButton* parse_btn = new QPushButton("Parse ABI", this);
+    QPushButton* parse_btn = new QPushButton("Parse manifest", this);
     QPushButton* call_btn = new QPushButton("Call (read)", this);
-    QPushButton* send_btn = new QPushButton("Send transaction (write)", this);
+    QPushButton* send_btn = new QPushButton("Execute (write)", this);
 
     connect(parse_btn, &QPushButton::clicked, this, [this]{ apply_abi(abi_edit->toPlainText()); });
     connect(call_btn, &QPushButton::clicked, this, [this]{ handle_call(false); });
     connect(send_btn, &QPushButton::clicked, this, [this]{ handle_call(true); });
     connect(interface_box, &QComboBox::currentTextChanged, this, [this](const QString& text){
-        if (text == "ERC-20") abi_edit->setPlainText(erc20_interface());
-        else if (text == "ERC-721") abi_edit->setPlainText(erc721_interface());
+        if (text == "DRM contract (deploy/call)") {
+            abi_edit->setPlainText(R"({"module":"drm.contract.sample","exports":["init","handle_call"]})");
+        } else if (text == "OBL dApp (call_dapp)") {
+            abi_edit->setPlainText(R"({"module":"obl.dapp.sample","exports":["query","interaction"]})");
+        }
     });
 
-    f->addRow("Contract address", address_edit);
-    f->addRow("ABI preset", interface_box);
+    f->addRow("Module ID", address_edit);
+    f->addRow("Manifest preset", interface_box);
 
     v->addLayout(f);
     v->addWidget(abi_edit);
@@ -90,37 +70,38 @@ void ContractCaller::apply_abi(const QString& text)
     abi_edit->setPlainText(text);
     QJsonParseError err;
     QJsonDocument doc = QJsonDocument::fromJson(text.toUtf8(), &err);
-    if (err.error != QJsonParseError::NoError || !doc.isArray()) {
-        helper_label->setText(QString("ABI parse error: %1").arg(err.errorString()));
+    if (err.error != QJsonParseError::NoError || !doc.isObject()) {
+        helper_label->setText(QString("Manifest parse error: %1").arg(err.errorString()));
         function_tree->clear();
         return;
     }
-    populate_functions(doc.array());
+    const QJsonObject obj = doc.object();
+    if (address_edit->text().isEmpty()) {
+        const QString module = obj.value("module").toString();
+        if (!module.isEmpty()) address_edit->setText(module);
+    }
+    const QJsonArray exports = obj.value("exports").toArray();
+    populate_functions(exports);
 }
 
-void ContractCaller::populate_functions(const QJsonArray& abi_array)
+void ContractCaller::populate_functions(const QJsonArray& exports)
 {
     function_tree->clear();
-    for (const QJsonValue& v : abi_array) {
-        if (!v.isObject()) continue;
-        QJsonObject obj = v.toObject();
-        QString type = obj.value("type").toString();
-        if (type != "function") continue;
-        QString name = obj.value("name").toString("<anonymous>");
-        QString state = obj.value("stateMutability").toString();
-        auto* item = new QTreeWidgetItem({name, state});
+    for (const QJsonValue& v : exports) {
+        if (!v.isString()) continue;
+        const QString name = v.toString("<export>");
+        auto* item = new QTreeWidgetItem({name, "WASM"});
         function_tree->addTopLevelItem(item);
     }
-    helper_label->setText("Parsed functions; select to call or send.");
+    helper_label->setText("Parsed WASM exports; select to call or execute.");
     function_tree->resizeColumnToContents(0);
 }
 
 void ContractCaller::handle_call(bool write)
 {
     if (address_edit->text().isEmpty()) {
-        QMessageBox::warning(this, "Contract", "Please enter a contract address.");
+        QMessageBox::warning(this, "Contract", "Please enter a module identifier.");
         return;
     }
     emit call_requested(address_edit->text(), abi_edit->toPlainText(), write);
 }
-

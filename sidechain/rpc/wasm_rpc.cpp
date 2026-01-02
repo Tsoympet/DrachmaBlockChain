@@ -10,14 +10,23 @@ using sidechain::wasm::ExecutionResult;
 using sidechain::wasm::Instruction;
 
 namespace {
-sidechain::wasm::ExecutionResult DomainViolation() {
-    ExecutionResult res;
-    res.error = "asset/domain violation";
-    return res;
-}
+constexpr uint64_t kFixedNftGas = 50;
+constexpr char kNftModule[] = "nft";
+constexpr char kNftMetaModule[] = "nft:meta";
 
 bool Validate(ExecutionDomain domain, uint8_t asset, std::string& error) {
     return sidechain::wasm::ValidateAssetDomain({domain, asset}, error);
+}
+
+bool ApplyFixedNftCost(uint64_t provided_limit, ExecutionResult& res) {
+    const uint64_t limit = provided_limit == 0 ? kFixedNftGas : provided_limit;
+    if (limit < kFixedNftGas) {
+        res.error = "out of gas";
+        res.gas_used = limit;
+        return false;
+    }
+    res.gas_used = kFixedNftGas;
+    return true;
 }
 }  // namespace
 
@@ -67,17 +76,18 @@ ExecutionResult WasmRpcService::MintNft(const MintNftRequest& request) {
         return res;
     }
     ExecutionResult res;
-    const std::string module = "nft";
-    if (state_.Exists(ExecutionDomain::NFT, module, request.token_id)) {
+    if (!ApplyFixedNftCost(request.gas_limit, res)) {
+        return res;
+    }
+    if (state_.Exists(ExecutionDomain::NFT, kNftModule, request.token_id)) {
         res.error = "token exists";
         return res;
     }
     std::vector<uint8_t> owner_bytes(request.owner.begin(), request.owner.end());
     std::vector<uint8_t> meta_bytes(request.metadata_hash.begin(), request.metadata_hash.end());
-    state_.Put(ExecutionDomain::NFT, module, request.token_id, owner_bytes);
-    state_.Put(ExecutionDomain::NFT, module + ":meta", request.token_id, meta_bytes);
+    state_.Put(ExecutionDomain::NFT, kNftModule, request.token_id, owner_bytes);
+    state_.Put(ExecutionDomain::NFT, kNftMetaModule, request.token_id, meta_bytes);
     res.success = true;
-    res.gas_used = request.gas_limit;
     return res;
 }
 
@@ -89,21 +99,22 @@ ExecutionResult WasmRpcService::TransferNft(const TransferNftRequest& request) {
         return res;
     }
     ExecutionResult res;
-    const std::string module = "nft";
-    if (!state_.Exists(ExecutionDomain::NFT, module, request.token_id)) {
+    if (!ApplyFixedNftCost(request.gas_limit, res)) {
+        return res;
+    }
+    if (!state_.Exists(ExecutionDomain::NFT, kNftModule, request.token_id)) {
         res.error = "token missing";
         return res;
     }
-    const auto owner_bytes = state_.Get(ExecutionDomain::NFT, module, request.token_id);
+    const auto owner_bytes = state_.Get(ExecutionDomain::NFT, kNftModule, request.token_id);
     const std::string current_owner(owner_bytes.begin(), owner_bytes.end());
     if (current_owner != request.from) {
         res.error = "ownership mismatch";
         return res;
     }
     std::vector<uint8_t> new_owner(request.to.begin(), request.to.end());
-    state_.Put(ExecutionDomain::NFT, module, request.token_id, new_owner);
+    state_.Put(ExecutionDomain::NFT, kNftModule, request.token_id, new_owner);
     res.success = true;
-    res.gas_used = request.gas_limit;
     return res;
 }
 

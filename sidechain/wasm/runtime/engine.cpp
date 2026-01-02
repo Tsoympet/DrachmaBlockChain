@@ -1,16 +1,21 @@
 #include "engine.h"
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <cstring>
+#include <limits>
 
 namespace sidechain::wasm {
 
 namespace {
 std::vector<uint8_t> EncodeI32(int64_t value) {
     std::vector<uint8_t> out(4);
-    uint32_t v = static_cast<uint32_t>(value);
-    std::memcpy(out.data(), &v, sizeof(v));
+    const int64_t clamped =
+        std::max<int64_t>(std::numeric_limits<int32_t>::min(),
+                          std::min<int64_t>(std::numeric_limits<int32_t>::max(), value));
+    const int32_t narrowed = static_cast<int32_t>(clamped);
+    std::memcpy(out.data(), &narrowed, sizeof(narrowed));
     return out;
 }
 
@@ -18,7 +23,7 @@ int64_t DecodeI32(const std::vector<uint8_t>& bytes) {
     if (bytes.size() < 4) {
         return 0;
     }
-    uint32_t v = 0;
+    int32_t v = 0;
     std::memcpy(&v, bytes.data(), sizeof(v));
     return static_cast<int64_t>(v);
 }
@@ -62,72 +67,104 @@ ExecutionResult ExecutionEngine::Execute(const ExecutionRequest& request,
 
     GasMeter gas_meter(request.gas_limit, DefaultGasSchedule());
     std::vector<int64_t> stack;
+    bool halted = false;
     for (const auto& instr : request.code) {
         if (!gas_meter.Consume(instr.op)) {
             result.error = gas_meter.last_error();
-            break;
+            halted = true;
+        } else {
+            switch (instr.op) {
+                case OpCode::Nop:
+                    break;
+                case OpCode::ConstI32:
+                    if (!Push(stack, instr.immediate, result, gas_meter)) {
+                        halted = true;
+                    }
+                    break;
+                case OpCode::AddI32: {
+                    int64_t a = 0, b = 0;
+                    if (!PopTwo(stack, a, b, result)) {
+                        halted = true;
+                        break;
+                    }
+                    int64_t sum = 0;
+#if defined(__GNUC__)
+                    if (__builtin_add_overflow(a, b, &sum)) {
+                        result.error = "arithmetic overflow";
+                        halted = true;
+                        break;
+                    }
+#else
+                    const bool overflow = (b > 0 && a > std::numeric_limits<int64_t>::max() - b) ||
+                                          (b < 0 && a < std::numeric_limits<int64_t>::min() - b);
+                    if (overflow) {
+                        result.error = "arithmetic overflow";
+                        halted = true;
+                        break;
+                    }
+                    sum = a + b;
+#endif
+                    if (!Push(stack, sum, result, gas_meter)) {
+                        halted = true;
+                    }
+                    break;
+                }
+                case OpCode::Load: {
+                    const auto stored = state.Get(request.domain, request.module_id,
+                                                  std::to_string(instr.immediate));
+                    if (!Push(stack, DecodeI32(stored), result, gas_meter)) {
+                        halted = true;
+                    }
+                    break;
+                }
+                case OpCode::Store: {
+                    if (stack.empty()) {
+                        result.error = "stack underflow";
+                        halted = true;
+                        break;
+                    }
+                    const int64_t value = stack.back();
+                    stack.pop_back();
+                    const auto encoded = EncodeI32(value);
+                    if (!gas_meter.ConsumeMemory(encoded.size())) {
+                        result.error = gas_meter.last_error();
+                        halted = true;
+                        break;
+                    }
+                    state.Put(request.domain, request.module_id, std::to_string(instr.immediate),
+                              encoded);
+                    ++result.state_writes;
+                    break;
+                }
+                case OpCode::ReturnTop: {
+                    if (stack.empty()) {
+                        result.error = "stack underflow";
+                    } else {
+                        result.output = EncodeI32(stack.back());
+                        result.success = true;
+                    }
+                    halted = true;
+                    break;
+                }
+                default:
+                    result.error = "unknown opcode";
+                    halted = true;
+                    break;
+            }
         }
 
-        switch (instr.op) {
-            case OpCode::Nop:
-                break;
-            case OpCode::ConstI32:
-                if (!Push(stack, instr.immediate, result, gas_meter)) {
-                    goto end_loop;
-                }
-                break;
-            case OpCode::AddI32: {
-                int64_t a = 0, b = 0;
-                if (!PopTwo(stack, a, b, result)) {
-                    goto end_loop;
-                }
-                if (!Push(stack, a + b, result, gas_meter)) {
-                    goto end_loop;
-                }
-                break;
-            }
-            case OpCode::Load: {
-                const auto stored = state.Get(request.domain, request.module_id,
-                                              std::to_string(instr.immediate));
-                if (!Push(stack, DecodeI32(stored), result, gas_meter)) {
-                    goto end_loop;
-                }
-                break;
-            }
-            case OpCode::Store: {
-                if (stack.empty()) {
-                    result.error = "stack underflow";
-                    goto end_loop;
-                }
-                const int64_t value = stack.back();
-                stack.pop_back();
-                const auto encoded = EncodeI32(value);
-                if (!gas_meter.ConsumeMemory(encoded.size())) {
-                    result.error = gas_meter.last_error();
-                    goto end_loop;
-                }
-                state.Put(request.domain, request.module_id, std::to_string(instr.immediate),
-                          encoded);
-                ++result.state_writes;
-                break;
-            }
-            case OpCode::ReturnTop: {
-                if (stack.empty()) {
-                    result.error = "stack underflow";
-                    goto end_loop;
-                }
-                result.output = EncodeI32(stack.back());
-                result.success = true;
-                goto end_loop;
-            }
+        if (halted) {
+            break;
         }
     }
 
     if (result.error.empty()) {
-        result.success = true;
+        const bool completed = (!halted || result.success);
+        result.success = result.success || completed;
+    } else {
+        result.success = false;
     }
 
-end_loop:
     result.gas_used = gas_meter.used();
     return result;
 }

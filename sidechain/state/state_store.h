@@ -1,5 +1,6 @@
 #pragma once
 
+#include <map>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -23,7 +24,7 @@ private:
         std::unordered_map<std::string, std::vector<uint8_t>> kv;
     };
 
-    std::unordered_map<ExecutionDomain, std::unordered_map<std::string, ModuleState>> data_;
+    std::map<ExecutionDomain, std::unordered_map<std::string, ModuleState>> data_;
 };
 
 }  // namespace sidechain::state

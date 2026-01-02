@@ -1,4 +1,5 @@
 #include "validator.h"
+#include "../runtime/types.h"
 
 namespace sidechain::wasm {
 
@@ -11,8 +12,9 @@ bool MatchesAsset(ExecutionDomain domain, uint8_t asset_id) {
             return asset_id == kAssetTln;
         case ExecutionDomain::Dapp:
             return asset_id == kAssetObl;
+        default:
+            return false;
     }
-    return false;
 }
 }  // namespace
 

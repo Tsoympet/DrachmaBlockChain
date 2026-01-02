@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "types.h"
+
 #include "../gas/model.h"
 #include "../validator/validator.h"
 #include "../../state/state_store.h"

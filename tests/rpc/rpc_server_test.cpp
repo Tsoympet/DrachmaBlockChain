@@ -8,6 +8,9 @@
 #include "../../layer2-services/mempool/mempool.h"
 #include "../../layer2-services/index/txindex.h"
 #include "../../layer2-services/wallet/wallet.h"
+#include "../../sidechain/rpc/wasm_rpc.h"
+#include "../../sidechain/wasm/runtime/engine.h"
+#include "../../sidechain/state/state_store.h"
 
 namespace http = boost::beast::http;
 
@@ -39,6 +42,31 @@ static std::string RpcCall(boost::asio::io_context& io, uint16_t port, const std
     return "";
 }
 
+static std::string Hex(const std::vector<uint8_t>& bytes)
+{
+    static const char* hex = "0123456789abcdef";
+    std::string out;
+    out.reserve(bytes.size() * 2);
+    for (auto b : bytes) {
+        out.push_back(hex[b >> 4]);
+        out.push_back(hex[b & 0xf]);
+    }
+    return out;
+}
+
+static std::string ConstThenReturnHex(int32_t imm)
+{
+    // OpCode::ConstI32 (1) + OpCode::ReturnTop (5)
+    std::vector<uint8_t> code = {
+        0x01,
+        static_cast<uint8_t>(imm & 0xff),
+        static_cast<uint8_t>((imm >> 8) & 0xff),
+        static_cast<uint8_t>((imm >> 16) & 0xff),
+        static_cast<uint8_t>((imm >> 24) & 0xff),
+        0x05, 0x00, 0x00, 0x00, 0x00};
+    return Hex(code);
+}
+
 TEST(RPC, EndpointsRespond)
 {
     boost::asio::io_context io;
@@ -59,7 +87,11 @@ TEST(RPC, EndpointsRespond)
     net::P2PNode p2p(io, 19601);
 
     rpc::RPCServer server(io, "user", "pass", 19600);
+    sidechain::wasm::ExecutionEngine engine;
+    sidechain::state::StateStore state;
+    sidechain::rpc::WasmRpcService wasm(engine, state);
     server.AttachCoreHandlers(pool, wallet, index, p2p);
+    server.AttachSidechainHandlers(wasm);
     server.Start();
 
     std::thread t([&io]() { io.run(); });
@@ -82,6 +114,25 @@ TEST(RPC, EndpointsRespond)
     EXPECT_NE(staking.find("\"DRM\""), std::string::npos);
     EXPECT_NE(staking.find("\"OBL\""), std::string::npos);
     EXPECT_NE(staking.find("\"posAllowed\":true"), std::string::npos);
+
+    // Sidechain RPCs (WASM-only, asset/domain bound)
+    std::string codeHex = ConstThenReturnHex(1);
+    std::string deploy = RpcCall(io, 19600, std::string("{\"method\":\"deploy_contract\",\"params\":\"module=test.mod;asset=1;gas=100;code=") + codeHex + "\"}");
+    EXPECT_NE(deploy.find("\"success\":true"), std::string::npos);
+
+    std::string call = RpcCall(io, 19600, std::string("{\"method\":\"call_contract\",\"params\":\"module=test.mod;asset=1;gas=100;code=") + codeHex + "\"}");
+    EXPECT_NE(call.find("\"success\":true"), std::string::npos);
+
+    std::string mint = RpcCall(io, 19600, "{\"method\":\"mint_nft\",\"params\":\"token=token-1;owner=alice;meta=hash;asset=0;gas=50\"}");
+    EXPECT_NE(mint.find("\"success\":true"), std::string::npos);
+
+    std::string transfer = RpcCall(io, 19600, "{\"method\":\"transfer_nft\",\"params\":\"token=token-1;from=alice;to=bob;asset=0;gas=50\"}");
+    EXPECT_NE(transfer.find("\"success\":true"), std::string::npos);
+
+    std::string dappCode = ConstThenReturnHex(7);
+    std::string dapp = RpcCall(io, 19600, std::string("{\"method\":\"call_dapp\",\"params\":\"app=dapp.mod;asset=2;gas=100;code=") + dappCode + "\"}");
+    EXPECT_NE(dapp.find("\"success\":true"), std::string::npos);
+    EXPECT_NE(dapp.find("07000000"), std::string::npos); // output hex
 
     io.stop();
     t.join();

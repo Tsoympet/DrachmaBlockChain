@@ -1,0 +1,7 @@
+add_test([=[PoW.ProofOfWorkBoundaries]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/pow_check_gtest [==[--gtest_filter=PoW.ProofOfWorkBoundaries]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[PoW.ProofOfWorkBoundaries]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[PoW.DifficultyClampsTimespan]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/pow_check_gtest [==[--gtest_filter=PoW.DifficultyClampsTimespan]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[PoW.DifficultyClampsTimespan]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[PoW.WorkIncreasesWithDifficulty]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/pow_check_gtest [==[--gtest_filter=PoW.WorkIncreasesWithDifficulty]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[PoW.WorkIncreasesWithDifficulty]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  pow_check_gtest_TESTS PoW.ProofOfWorkBoundaries PoW.DifficultyClampsTimespan PoW.WorkIncreasesWithDifficulty)

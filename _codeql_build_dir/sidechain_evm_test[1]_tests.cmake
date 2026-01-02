@@ -1,0 +1,5 @@
+add_test([=[EvmExecute.AddsTwoNumbersAndReturns]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/sidechain_evm_test [==[--gtest_filter=EvmExecute.AddsTwoNumbersAndReturns]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[EvmExecute.AddsTwoNumbersAndReturns]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[EvmExecute.RejectsUnsupportedOpcode]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/sidechain_evm_test [==[--gtest_filter=EvmExecute.RejectsUnsupportedOpcode]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[EvmExecute.RejectsUnsupportedOpcode]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  sidechain_evm_test_TESTS EvmExecute.AddsTwoNumbersAndReturns EvmExecute.RejectsUnsupportedOpcode)

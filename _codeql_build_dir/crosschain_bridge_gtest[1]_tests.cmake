@@ -1,0 +1,5 @@
+add_test([=[BridgeFlow.InitiateClaimRefund]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/crosschain_bridge_gtest [==[--gtest_filter=BridgeFlow.InitiateClaimRefund]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[BridgeFlow.InitiateClaimRefund]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[BridgeFlow.DetectsInboundLock]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/crosschain_bridge_gtest [==[--gtest_filter=BridgeFlow.DetectsInboundLock]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[BridgeFlow.DetectsInboundLock]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  crosschain_bridge_gtest_TESTS BridgeFlow.InitiateClaimRefund BridgeFlow.DetectsInboundLock)

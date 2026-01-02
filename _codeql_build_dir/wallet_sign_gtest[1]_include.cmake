@@ -1,0 +1,5 @@
+if(EXISTS "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/wallet_sign_gtest[1]_tests.cmake")
+  include("/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/wallet_sign_gtest[1]_tests.cmake")
+else()
+  add_test(wallet_sign_gtest_NOT_BUILT wallet_sign_gtest_NOT_BUILT)
+endif()

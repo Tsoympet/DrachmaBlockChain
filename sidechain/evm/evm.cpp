@@ -1,6 +1,6 @@
 #include "evm.h"
 
-#include "layer1-core/crypto/schnorr.h"
+#include "../../layer1-core/crypto/schnorr.h"
 
 #include <openssl/evp.h>
 
@@ -375,7 +375,13 @@ evm_result execute(const evm_code& bytecode, const evm_state& state, uint64_t ga
                 const cpp_int exponent = stack_pop(ctx);
                 const cpp_int base = stack_pop(ctx);
                 if (!ctx.halted) {
-                    stack_push(ctx, boost::multiprecision::pow(base, exponent));
+                    if (exponent < 0 || exponent > std::numeric_limits<unsigned>::max()) {
+                        ctx.error = "invalid exponent";
+                        ctx.halted = true;
+                    } else {
+                        const unsigned exp = exponent.convert_to<unsigned>();
+                        stack_push(ctx, boost::multiprecision::pow(base, exp));
+                    }
                 }
                 break;
             }
@@ -488,10 +494,14 @@ evm_result execute(const evm_code& bytecode, const evm_state& state, uint64_t ga
                 const cpp_int shift = stack_pop(ctx);
                 const cpp_int value = stack_pop(ctx);
                 if (!ctx.halted) {
-                    if (shift >= k_word_bits) {
+                    if (shift < 0) {
+                        ctx.error = "negative shift";
+                        ctx.halted = true;
+                    } else if (shift >= k_word_bits) {
                         stack_push(ctx, cpp_int(0));
                     } else {
-                        stack_push(ctx, mask_word(value << shift));
+                        const unsigned shift_bits = shift.convert_to<unsigned>();
+                        stack_push(ctx, mask_word(value << shift_bits));
                     }
                 }
                 break;
@@ -500,10 +510,14 @@ evm_result execute(const evm_code& bytecode, const evm_state& state, uint64_t ga
                 const cpp_int shift = stack_pop(ctx);
                 const cpp_int value = stack_pop(ctx);
                 if (!ctx.halted) {
-                    if (shift >= k_word_bits) {
+                    if (shift < 0) {
+                        ctx.error = "negative shift";
+                        ctx.halted = true;
+                    } else if (shift >= k_word_bits) {
                         stack_push(ctx, cpp_int(0));
                     } else {
-                        stack_push(ctx, mask_word(value >> shift));
+                        const unsigned shift_bits = shift.convert_to<unsigned>();
+                        stack_push(ctx, mask_word(value >> shift_bits));
                     }
                 }
                 break;
@@ -512,10 +526,14 @@ evm_result execute(const evm_code& bytecode, const evm_state& state, uint64_t ga
                 const cpp_int shift = stack_pop(ctx);
                 const cpp_int value = signed_value(stack_pop(ctx));
                 if (!ctx.halted) {
-                    if (shift >= k_word_bits) {
+                    if (shift < 0) {
+                        ctx.error = "negative shift";
+                        ctx.halted = true;
+                    } else if (shift >= k_word_bits) {
                         stack_push(ctx, value < 0 ? cpp_int(-1) : cpp_int(0));
                     } else {
-                        stack_push(ctx, mask_word(value >> shift));
+                        const unsigned shift_bits = shift.convert_to<unsigned>();
+                        stack_push(ctx, mask_word(value >> shift_bits));
                     }
                 }
                 break;
@@ -741,4 +759,3 @@ evm_result execute(const evm_code& bytecode, const evm_state& state, uint64_t ga
     result.error = ctx.error;
     return result;
 }
-

@@ -1,4 +1,4 @@
-#include "sidechain/bridge/peg_tx.h"
+#include "../../sidechain/bridge/peg_tx.h"
 
 #include <gtest/gtest.h>
 
@@ -79,4 +79,3 @@ TEST(PegBridge, ExpiredProofFails) {
     EXPECT_FALSE(result.success);
     EXPECT_EQ(bridge.balance_of(lock.to), 0);
 }
-

@@ -1,0 +1,5 @@
+if(EXISTS "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/schnorr_vectors_test[1]_tests.cmake")
+  include("/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/schnorr_vectors_test[1]_tests.cmake")
+else()
+  add_test(schnorr_vectors_test_NOT_BUILT schnorr_vectors_test_NOT_BUILT)
+endif()

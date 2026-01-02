@@ -1,0 +1,5 @@
+add_test([=[MempoolStress.EvictsLowestFeeWhenFull]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/mempool_stress_test [==[--gtest_filter=MempoolStress.EvictsLowestFeeWhenFull]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[MempoolStress.EvictsLowestFeeWhenFull]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[MempoolStress.FeeRateEstimateTracksPercentile]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/mempool_stress_test [==[--gtest_filter=MempoolStress.FeeRateEstimateTracksPercentile]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[MempoolStress.FeeRateEstimateTracksPercentile]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  mempool_stress_test_TESTS MempoolStress.EvictsLowestFeeWhenFull MempoolStress.FeeRateEstimateTracksPercentile)

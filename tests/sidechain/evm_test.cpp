@@ -1,4 +1,4 @@
-#include "sidechain/evm/evm.h"
+#include "../../sidechain/evm/evm.h"
 
 #include <gtest/gtest.h>
 
@@ -47,4 +47,3 @@ TEST(EvmExecute, RejectsUnsupportedOpcode) {
     EXPECT_FALSE(result.success);
     EXPECT_FALSE(result.error.empty());
 }
-

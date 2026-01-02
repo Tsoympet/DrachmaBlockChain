@@ -1,0 +1,5 @@
+if(EXISTS "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/regtest_private_chain_test[1]_tests.cmake")
+  include("/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/regtest_private_chain_test[1]_tests.cmake")
+else()
+  add_test(regtest_private_chain_test_NOT_BUILT regtest_private_chain_test_NOT_BUILT)
+endif()

@@ -1,0 +1,5 @@
+add_test([=[Difficulty.ClampsExtremeTimespans]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/difficulty_gtest [==[--gtest_filter=Difficulty.ClampsExtremeTimespans]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[Difficulty.ClampsExtremeTimespans]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[Difficulty.RejectsOverflowTargets]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/difficulty_gtest [==[--gtest_filter=Difficulty.RejectsOverflowTargets]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[Difficulty.RejectsOverflowTargets]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  difficulty_gtest_TESTS Difficulty.ClampsExtremeTimespans Difficulty.RejectsOverflowTargets)

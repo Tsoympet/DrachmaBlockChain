@@ -1,0 +1,5 @@
+if(EXISTS "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/sidechain_evm_test[1]_tests.cmake")
+  include("/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/sidechain_evm_test[1]_tests.cmake")
+else()
+  add_test(sidechain_evm_test_NOT_BUILT sidechain_evm_test_NOT_BUILT)
+endif()

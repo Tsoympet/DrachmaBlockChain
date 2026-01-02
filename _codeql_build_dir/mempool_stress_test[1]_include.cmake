@@ -1,0 +1,5 @@
+if(EXISTS "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/mempool_stress_test[1]_tests.cmake")
+  include("/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/mempool_stress_test[1]_tests.cmake")
+else()
+  add_test(mempool_stress_test_NOT_BUILT mempool_stress_test_NOT_BUILT)
+endif()

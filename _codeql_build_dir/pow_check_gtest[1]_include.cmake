@@ -1,0 +1,5 @@
+if(EXISTS "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/pow_check_gtest[1]_tests.cmake")
+  include("/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/pow_check_gtest[1]_tests.cmake")
+else()
+  add_test(pow_check_gtest_NOT_BUILT pow_check_gtest_NOT_BUILT)
+endif()

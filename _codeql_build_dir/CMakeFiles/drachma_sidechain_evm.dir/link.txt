@@ -1,0 +1,2 @@
+/usr/bin/ar qc libdrachma_sidechain_evm.a CMakeFiles/drachma_sidechain_evm.dir/sidechain/evm/evm.cpp.o CMakeFiles/drachma_sidechain_evm.dir/sidechain/contracts/precompiles/nft.cpp.o CMakeFiles/drachma_sidechain_evm.dir/sidechain/bridge/peg_tx.cpp.o
+/usr/bin/ranlib libdrachma_sidechain_evm.a

@@ -1,0 +1,5 @@
+if(EXISTS "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/crosschain_bridge_gtest[1]_tests.cmake")
+  include("/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/crosschain_bridge_gtest[1]_tests.cmake")
+else()
+  add_test(crosschain_bridge_gtest_NOT_BUILT crosschain_bridge_gtest_NOT_BUILT)
+endif()

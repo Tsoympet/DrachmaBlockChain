@@ -1,0 +1,5 @@
+if(EXISTS "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/p2p_multinode_gtest[1]_tests.cmake")
+  include("/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/p2p_multinode_gtest[1]_tests.cmake")
+else()
+  add_test(p2p_multinode_gtest_NOT_BUILT p2p_multinode_gtest_NOT_BUILT)
+endif()

@@ -1,0 +1,46 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/_deps/leveldb-subbuild/CMakeFiles/leveldb-populate"
+		},
+		{
+			"file" : "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/_deps/leveldb-subbuild/CMakeFiles/leveldb-populate.rule"
+		},
+		{
+			"file" : "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/_deps/leveldb-subbuild/CMakeFiles/leveldb-populate-complete.rule"
+		},
+		{
+			"file" : "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/_deps/leveldb-subbuild/leveldb-populate-prefix/src/leveldb-populate-stamp/leveldb-populate-build.rule"
+		},
+		{
+			"file" : "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/_deps/leveldb-subbuild/leveldb-populate-prefix/src/leveldb-populate-stamp/leveldb-populate-configure.rule"
+		},
+		{
+			"file" : "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/_deps/leveldb-subbuild/leveldb-populate-prefix/src/leveldb-populate-stamp/leveldb-populate-download.rule"
+		},
+		{
+			"file" : "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/_deps/leveldb-subbuild/leveldb-populate-prefix/src/leveldb-populate-stamp/leveldb-populate-install.rule"
+		},
+		{
+			"file" : "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/_deps/leveldb-subbuild/leveldb-populate-prefix/src/leveldb-populate-stamp/leveldb-populate-mkdir.rule"
+		},
+		{
+			"file" : "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/_deps/leveldb-subbuild/leveldb-populate-prefix/src/leveldb-populate-stamp/leveldb-populate-patch.rule"
+		},
+		{
+			"file" : "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/_deps/leveldb-subbuild/leveldb-populate-prefix/src/leveldb-populate-stamp/leveldb-populate-test.rule"
+		},
+		{
+			"file" : "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/_deps/leveldb-subbuild/leveldb-populate-prefix/src/leveldb-populate-stamp/leveldb-populate-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"leveldb-populate"
+		],
+		"name" : "leveldb-populate"
+	}
+}

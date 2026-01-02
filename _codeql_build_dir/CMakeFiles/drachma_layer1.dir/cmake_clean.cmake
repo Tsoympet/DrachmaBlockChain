@@ -1,0 +1,43 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/drachma_layer1.dir/layer1-core/block/block.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/block/block.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/chainstate/coins.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/chainstate/coins.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/consensus/fork_resolution.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/consensus/fork_resolution.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/consensus/genesis.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/consensus/genesis.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/consensus/params.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/consensus/params.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/consensus/versioning/versionbits.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/consensus/versioning/versionbits.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/crypto/schnorr.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/crypto/schnorr.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/crypto/tagged_hash.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/crypto/tagged_hash.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/merkle/merkle.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/merkle/merkle.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/pow/difficulty.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/pow/difficulty.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/pow/difficulty_adjust.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/pow/difficulty_adjust.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/pow/sha256d.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/pow/sha256d.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/script/interpreter.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/script/interpreter.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/storage/blockstore.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/storage/blockstore.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/tx/transaction.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/tx/transaction.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/validation/anti_dos.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/validation/anti_dos.cpp.o.d"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/validation/validation.cpp.o"
+  "CMakeFiles/drachma_layer1.dir/layer1-core/validation/validation.cpp.o.d"
+  "libdrachma_layer1.a"
+  "libdrachma_layer1.pdb"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/drachma_layer1.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

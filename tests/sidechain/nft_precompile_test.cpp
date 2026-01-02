@@ -1,4 +1,4 @@
-#include "sidechain/contracts/precompiles/nft.h"
+#include "../../sidechain/contracts/precompiles/nft.h"
 
 #include <filesystem>
 #include <gtest/gtest.h>
@@ -109,4 +109,3 @@ TEST(NftPrecompileTest, TokenUriAndApprovals) {
     ASSERT_TRUE(transfer_res.owner.has_value());
     EXPECT_EQ(transfer_res.owner.value(), recipient);
 }
-

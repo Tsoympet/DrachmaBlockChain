@@ -1,0 +1,5 @@
+add_test([=[PegBridge.FullPegCycle]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/peg_bridge_test [==[--gtest_filter=PegBridge.FullPegCycle]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[PegBridge.FullPegCycle]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[PegBridge.ExpiredProofFails]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/peg_bridge_test [==[--gtest_filter=PegBridge.ExpiredProofFails]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[PegBridge.ExpiredProofFails]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  peg_bridge_test_TESTS PegBridge.FullPegCycle PegBridge.ExpiredProofFails)

@@ -1,0 +1,5 @@
+if(EXISTS "/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/rpc_server_test[1]_tests.cmake")
+  include("/home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/rpc_server_test[1]_tests.cmake")
+else()
+  add_test(rpc_server_test_NOT_BUILT rpc_server_test_NOT_BUILT)
+endif()

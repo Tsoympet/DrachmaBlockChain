@@ -1,0 +1,5 @@
+add_test([=[Schnorr.ValidVectorPasses]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/schnorr_vectors_test [==[--gtest_filter=Schnorr.ValidVectorPasses]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[Schnorr.ValidVectorPasses]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[Schnorr.RejectsRandomData]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/schnorr_vectors_test [==[--gtest_filter=Schnorr.RejectsRandomData]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[Schnorr.RejectsRandomData]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  schnorr_vectors_test_TESTS Schnorr.ValidVectorPasses Schnorr.RejectsRandomData)

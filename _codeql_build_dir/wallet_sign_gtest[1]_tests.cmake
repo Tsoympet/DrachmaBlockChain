@@ -1,0 +1,5 @@
+add_test([=[Wallet.SignsEachInputUniquely]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/wallet_sign_gtest [==[--gtest_filter=Wallet.SignsEachInputUniquely]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[Wallet.SignsEachInputUniquely]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+add_test([=[Wallet.DeterministicSignaturesForSameInput]=]  /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir/wallet_sign_gtest [==[--gtest_filter=Wallet.DeterministicSignaturesForSameInput]==] --gtest_also_run_disabled_tests)
+set_tests_properties([=[Wallet.DeterministicSignaturesForSameInput]=]  PROPERTIES WORKING_DIRECTORY /home/runner/work/BlockChainDrachma/BlockChainDrachma/_codeql_build_dir SKIP_REGULAR_EXPRESSION [==[\[  SKIPPED \]]==])
+set(  wallet_sign_gtest_TESTS Wallet.SignsEachInputUniquely Wallet.DeterministicSignaturesForSameInput)

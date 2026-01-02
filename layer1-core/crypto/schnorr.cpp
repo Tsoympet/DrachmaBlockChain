@@ -472,9 +472,10 @@ bool schnorr_batch_verify(const std::vector<std::array<uint8_t, 33>>& pubkeys,
     }
 
     bn_ptr scalar_sum(BN_new(), &BN_clear_free);
-    if (!scalar_sum || BN_zero(scalar_sum.get()) != 1) {
+    if (!scalar_sum) {
         return false;
     }
+    BN_zero(scalar_sum.get());
 
     ec_point_ptr rhs(EC_POINT_new(group.get()), &EC_POINT_free);
     if (!rhs || EC_POINT_set_to_infinity(group.get(), rhs.get()) != 1) {

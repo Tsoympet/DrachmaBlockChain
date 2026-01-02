@@ -7,6 +7,8 @@ testnet mirrors mainnet consensus rules with these key variations:
 - Minimum-difficulty blocks are permitted when the network stalls.
 - Default ports are offset from mainnet in higher-level services.
 - Genesis message: "DRACHMA TESTNET".
+- Multi-asset activation: height 1 (regenesis for TLN/DRM/OBL tagging). Wipe old
+  testnet data directories before upgrading nodes.
 
 ## Genesis tools
 
@@ -40,8 +42,9 @@ accepts `--allowlist` to restrict payouts to pre-approved addresses.
 ## Seeds and monitoring
 
 - `seeds.json` lists geographically diverse DNS seeds and IPv4/IPv6 anchors used
-  by bootstrap discovery. New operators should contribute additional DNS seeds
-  to expand coverage.
+  by bootstrap discovery. Seeds were refreshed for the multi-asset regen; delete
+  stale peers.dat when upgrading. New operators should contribute additional DNS
+  seeds to expand coverage.
 - `monitoring/` contains Prometheus and Grafana starter configs to watch block
   height, peers, and mempool utilization across nodes and faucet services. See
   the README inside that directory for scrape targets matching the provided

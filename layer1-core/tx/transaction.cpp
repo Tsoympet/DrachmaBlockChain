@@ -103,6 +103,7 @@ Transaction DeserializeTransaction(const std::vector<uint8_t>& data)
 
 std::array<uint8_t, 32> ComputeInputDigest(const Transaction& tx, size_t inputIndex)
 {
+    // Counts and indices are serialized as 32-bit values; reject impossible sizes early for consistency with the wire format.
     if (tx.vin.size() > std::numeric_limits<uint32_t>::max())
         throw std::runtime_error("too many inputs");
     if (inputIndex > std::numeric_limits<uint32_t>::max())

@@ -170,8 +170,8 @@ std::vector<uint8_t> WalletBackend::SignDigest(const PrivKey& key, const Transac
     std::array<uint8_t, 32> aux{};
     unsigned int aux_len = 0;
     HMAC(EVP_sha256(), key.data(), key.size(), digest.data(), digest.size(), aux.data(), &aux_len);
-    if (aux_len != aux.size())
-        throw std::runtime_error("failed to derive deterministic aux for schnorr");
+    if (aux_len != 32u)
+        throw std::runtime_error("deterministic aux must be 32 bytes");
     if (!schnorr_sign_with_aux(key.data(), digest.data(), aux.data(), sig.data()))
         throw std::runtime_error("schnorr sign failed");
     return std::vector<uint8_t>(sig.begin(), sig.end());
@@ -345,6 +345,7 @@ Transaction WalletBackend::CreateMultisigSpend(const std::vector<TxOut>& outputs
         if (!changeTemplate) {
             changeTemplate = *maybe;
         } else if (changeTemplate->scriptPubKey != maybe->scriptPubKey) {
+            // Keep change under the same locking script as the gathered inputs to avoid weakening spend conditions when mixing policies.
             throw std::runtime_error("cannot create change output: input UTXOs have different script types");
         }
         inTotal += maybe->value;

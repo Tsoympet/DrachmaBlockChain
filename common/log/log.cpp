@@ -82,7 +82,8 @@ void Write(Level level, const std::string& msg)
     std::cerr << line;
     if (g_file.is_open()) {
         g_file << line;
-        g_file.flush();
+        if (level >= Level::WARN)
+            g_file.flush();
     }
 }
 

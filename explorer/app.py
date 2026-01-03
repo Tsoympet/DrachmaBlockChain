@@ -5,15 +5,22 @@ import requests
 RPC_URL = os.environ.get("DRACHMA_RPC_URL", "http://localhost:18443")
 RPC_AUTH = (os.environ.get("DRACHMA_RPC_USER", "user"), os.environ.get("DRACHMA_RPC_PASS", "pass"))
 
+def _format_rpc_error(err):
+    message = err.get("message") if isinstance(err, dict) else None
+    if message:
+        return message
+    fallback = str(err)
+    if fallback and fallback != "None":
+        return fallback
+    return "RPC returned an error"
+
 def rpc_call(method, params=None):
     payload = {"jsonrpc": "2.0", "id": "explorer", "method": method, "params": params or []}
     resp = requests.post(RPC_URL, json=payload, auth=RPC_AUTH, timeout=5)
     resp.raise_for_status()
     data = resp.json()
     if data.get("error"):
-        err = data["error"]
-        message = err.get("message") if isinstance(err, dict) else str(err)
-        raise RuntimeError(message or "RPC returned an error")
+        raise RuntimeError(_format_rpc_error(data["error"]))
     return data.get("result")
 
 

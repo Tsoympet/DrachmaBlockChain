@@ -5,6 +5,7 @@ All notable changes to this project will be documented in this file. Dates use I
 ## [Unreleased]
 ### Fixed
 - Explorer RPC client now surfaces RPC errors instead of rendering empty results, improving user feedback and debugging.
+- Log file writes flush on warnings and errors to reduce lost diagnostics during crashes while avoiding heavy I/O on info-level logs.
 
 ## [v0.1.0-rc] - 2024-12-20 (suggested tag: `v0.1.0-rc`)
 ### Added

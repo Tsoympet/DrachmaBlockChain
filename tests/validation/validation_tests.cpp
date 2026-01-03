@@ -270,6 +270,14 @@ int main()
         assert(!ValidateTransactions(txs, params, 10));
     }
 
+    // Block with a coinbase lacking outputs should be rejected as structurally invalid.
+    {
+        Transaction cb = MakeCoinbase(consensus::GetBlockSubsidy(10, params, static_cast<uint8_t>(AssetId::TALANTON)));
+        cb.vout.clear();
+        std::vector<Transaction> txs{cb};
+        assert(!ValidateTransactions(txs, params, 10));
+    }
+
     // Outputs with invalid asset identifiers are rejected before script evaluation.
     {
         Transaction cb = MakeCoinbase(consensus::GetBlockSubsidy(11, params, static_cast<uint8_t>(AssetId::TALANTON)));
@@ -277,6 +285,60 @@ int main()
         cb.vin[0].assetId = cb.vout[0].assetId;
         std::vector<Transaction> txs{cb};
         assert(!ValidateTransactions(txs, params, 11));
+    }
+
+    // Non-coinbase transactions appearing before the coinbase invalidate the block sequence.
+    {
+        Transaction spend;
+        spend.vout.push_back(MakeTxOut(25));
+        spend.vin.resize(1);
+        spend.vin[0].prevout = MakeOutPoint(0xBC, 1);
+        spend.vin[0].scriptSig = {0x01};
+        spend.vin[0].assetId = static_cast<uint8_t>(AssetId::TALANTON);
+        Transaction cb = MakeCoinbase(consensus::GetBlockSubsidy(12, params, static_cast<uint8_t>(AssetId::TALANTON)));
+        UTXOSet utxos;
+        utxos[spend.vin[0].prevout] = MakeTxOut(25);
+        auto lookup = [&utxos](const OutPoint& op) -> std::optional<TxOut> {
+            auto it = utxos.find(op);
+            if (it == utxos.end()) return std::nullopt;
+            return it->second;
+        };
+        std::vector<Transaction> txs{spend, cb};
+        assert(!ValidateTransactions(txs, params, 12, lookup));
+    }
+
+    // Cached lookup should hit after the first miss when the same prevout is reused (double-spend remains invalid).
+    {
+        UTXOSet utxos;
+        OutPoint prev = MakeOutPoint(0xED, 0);
+        TxOut stakeOut = MakeTxOut(1000, static_cast<uint8_t>(AssetId::DRACHMA));
+        utxos[prev] = stakeOut;
+
+        Transaction stake;
+        stake.vin.resize(1);
+        stake.vin[0].prevout = prev;
+        stake.vin[0].scriptSig = {0x01};
+        stake.vin[0].assetId = stakeOut.assetId;
+        stake.vout.resize(2);
+        stake.vout[0] = MakeTxOut(0, stakeOut.assetId);
+        stake.vout[1] = MakeTxOut(stakeOut.value, stakeOut.assetId);
+
+        Transaction doubleSpend = stake;
+        doubleSpend.vout[1].value = 700; // conflicting spend
+
+        size_t lookups = 0;
+        auto countingLookup = [&utxos, &lookups](const OutPoint& op) -> std::optional<TxOut> {
+            ++lookups;
+            auto it = utxos.find(op);
+            if (it == utxos.end()) return std::nullopt;
+            return it->second;
+        };
+
+        std::vector<Transaction> txs{stake, doubleSpend};
+        const bool ok = ValidateTransactions(
+            txs, params, params.nPoSActivationHeight, countingLookup, true, params.nGenesisBits, 2000);
+        assert(!ok);
+        assert(lookups == 1); // second access hits validation cache
     }
 
     return 0;

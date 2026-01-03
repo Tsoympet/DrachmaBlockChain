@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "../../layer1-core/crypto/schnorr.h"
+#include "../../layer1-core/crypto/tagged_hash.h"
 
 TEST(Schnorr, ValidVectorPasses)
 {
@@ -26,4 +27,43 @@ TEST(Schnorr, RejectsRandomData)
     sig.fill(2);
     std::vector<uint8_t> msg = {0xAA, 0xBB};
     EXPECT_FALSE(VerifySchnorr(pubkey, sig, msg));
+}
+
+TEST(Schnorr, EdgeCaseKeysAndScalarsAreRejected)
+{
+    std::array<uint8_t,33> oddPub{};
+    oddPub.fill(0x03); // malformed compressed key (odd prefix with zero coords)
+    std::array<uint8_t,32> msg{};
+    std::array<uint8_t,64> sig{};
+    sig.fill(0xFF); // s component out of range
+    EXPECT_FALSE(schnorr_verify(oddPub.data(), msg.data(), sig.data()));
+
+    std::array<uint8_t,32> maxSeckey{};
+    maxSeckey.fill(0xFF); // larger than curve order
+    EXPECT_FALSE(schnorr_sign_with_aux(maxSeckey.data(), msg.data(), nullptr, sig.data()));
+
+    sig.fill(0x00);
+    EXPECT_FALSE(schnorr_verify(oddPub.data(), msg.data(), sig.data()));
+}
+
+TEST(Schnorr, TaggedHashMisuseChangesDigestDeterministically)
+{
+    std::array<uint8_t,32> data{};
+    data.fill(0xAA);
+    const auto h1 = tagged_hash("BIP0340/nonce", data.data(), data.size());
+    const auto h2 = tagged_hash("BIP0340/challenge", data.data(), data.size());
+    EXPECT_NE(h1, h2);
+
+    // Verification remains deterministic for the same inputs.
+    const std::array<uint8_t,32> pubkey = {
+        0xF9,0x30,0x8A,0x01,0x92,0x58,0xC3,0x10,0x49,0x34,0x4F,0x85,0xF8,0x9D,0x52,0x29,
+        0xB5,0x31,0xC8,0x45,0x83,0x6F,0x99,0xB0,0x86,0x01,0xF1,0x13,0xBC,0xE0,0x36,0xF9};
+    const std::array<uint8_t,64> sig = {
+        0xE9,0x07,0x83,0x1F,0x80,0x84,0x8D,0x10,0x69,0xA5,0x37,0x1B,0x40,0x24,0x10,0x36,
+        0x4B,0xDF,0x1C,0x5F,0x83,0x07,0xB0,0x08,0x4C,0x55,0xF1,0xCE,0x2D,0xCA,0x82,0x15,
+        0x25,0xF6,0x6A,0x4A,0x85,0xEA,0x8B,0x71,0xE4,0x82,0xA7,0x4F,0x38,0x2D,0x2C,0xE5,
+        0xEB,0xEE,0xE8,0xFD,0xB2,0x17,0x2F,0x47,0x7D,0xF4,0x90,0x0D,0x31,0x05,0x36,0xC0};
+    const std::vector<uint8_t> msg(32, 0x00);
+    EXPECT_TRUE(VerifySchnorr(pubkey, sig, msg));
+    EXPECT_TRUE(VerifySchnorr(pubkey, sig, msg));
 }

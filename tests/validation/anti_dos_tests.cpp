@@ -21,8 +21,11 @@ int main()
     assert(!buffer.Add(b));
     auto evicted = buffer.Add(c);
     assert(evicted.has_value());
+    assert(*evicted == a.hash); // oldest orphan evicted first
     auto children = buffer.PopChildren(a.parent);
     assert(children.size() == 1);
+    auto remaining = buffer.PopChildren(b.parent);
+    assert(remaining.size() == 1);
+    assert(remaining.front().hash == b.hash);
     return 0;
 }
-

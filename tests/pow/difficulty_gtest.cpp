@@ -51,3 +51,29 @@ TEST(Difficulty, ThrowsWhenTargetTimespanZero)
     params.nPowTargetTimespan = 0;
     EXPECT_THROW(powalgo::CalculateNextWorkRequired(params.nGenesisBits, 1, params), std::runtime_error);
 }
+
+TEST(Difficulty, RetargetsClampToPowLimitAndAreDeterministic)
+{
+    const auto& params = consensus::Main();
+    // Extremely slow span should clamp to 2x and never exceed pow limit.
+    uint32_t eased = powalgo::CalculateNextWorkRequired(params.nGenesisBits, params.nPowTargetTimespan * 100, params);
+    EXPECT_GE(eased, params.nGenesisBits);
+    uint32_t again = powalgo::CalculateNextWorkRequired(params.nGenesisBits, params.nPowTargetTimespan * 100, params);
+    EXPECT_EQ(eased, again);
+}
+
+TEST(Difficulty, NegativeTimespansClampToMinimumInterval)
+{
+    auto params = consensus::Main();
+    powalgo::BlockIndex first{};
+    powalgo::BlockIndex last{};
+    first.height = 0;
+    first.time = 1000;
+    first.bits = params.nGenesisBits;
+    last.prev = &first;
+    last.height = static_cast<int>(params.nDifficultyAdjustmentInterval) - 1;
+    last.time = 900; // time moved backwards
+    last.bits = params.nGenesisBits;
+    auto next = powalgo::calculate_next_work_required(params, &last);
+    EXPECT_LT(next, params.nGenesisBits); // harder because span clamps to minimum
+}

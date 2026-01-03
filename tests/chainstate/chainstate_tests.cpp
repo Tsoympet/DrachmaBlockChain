@@ -72,6 +72,40 @@ int main()
         assert(cs.GetUTXO(opC).value == 90);
     }
 
+    // Balance updates and asset tags survive overwrites and removals.
+    {
+        Chainstate cs(temp.string(), 4);
+        auto op = MakeOutPoint(0x05, 1);
+        cs.AddUTXO(op, MakeOutput(40, 0xAA, 3));
+        cs.AddUTXO(op, MakeOutput(60, 0xAA, 4)); // overwrite same outpoint
+        auto out = cs.GetUTXO(op);
+        assert(out.value == 60);
+        assert(out.assetId == 4);
+        cs.SpendUTXO(op);
+        bool missing = false;
+        try {
+            (void)cs.GetUTXO(op);
+        } catch (const std::exception&) {
+            missing = true;
+        }
+        assert(missing);
+    }
+
+    // Transactional rollback restores prior balances when a block is invalidated.
+    {
+        Chainstate cs(temp.string(), 4);
+        auto opA = MakeOutPoint(0x06, 0);
+        auto opB = MakeOutPoint(0x07, 0);
+        cs.AddUTXO(opA, MakeOutput(25, 0xAB, 2));
+        cs.BeginTransaction();
+        cs.AddUTXO(opB, MakeOutput(50, 0xAC, 2));
+        cs.SpendUTXO(opA);
+        cs.Rollback();
+        assert(cs.HaveUTXO(opA));
+        assert(!cs.TryGetUTXO(opB).has_value());
+        assert(cs.GetUTXO(opA).value == 25);
+    }
+
     std::filesystem::remove(temp, ec);
     return 0;
 }

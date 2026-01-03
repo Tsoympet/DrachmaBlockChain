@@ -313,7 +313,7 @@ if(DRACHMA_BUILD_TESTS)
     target_link_libraries(attacks_sim PRIVATE drachma_layer1)
     add_test(NAME attacks_sim COMMAND attacks_sim)
 
-    add_executable(rpc_server_test tests/rpc/rpc_server_test.cpp)
+    add_executable(rpc_server_test tests/rpc/rpcserver_tests.cpp)
     target_link_libraries(rpc_server_test PRIVATE drachma_layer2 GTest::gtest_main)
     gtest_discover_tests(rpc_server_test)
 

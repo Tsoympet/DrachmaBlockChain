@@ -46,7 +46,12 @@ jobs:
       - name: Package artifacts
         run: |
           mkdir -p dist/ubuntu
-          for bin in build/layer1-core/drachmad build/layer1-core/drachma-cli build/drachma_cpu_miner; do
+          BINARIES=(
+            build/layer1-core/drachmad
+            build/layer1-core/drachma-cli
+            build/drachma_cpu_miner
+          )
+          for bin in "${BINARIES[@]}"; do
             if [ -f "${bin}" ]; then
               cp "${bin}" dist/ubuntu/
             else
@@ -80,7 +85,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
-          merge-multiple: true
           if-no-artifacts-found: error
 
       - name: Prepare release assets

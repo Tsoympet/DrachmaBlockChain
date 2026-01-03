@@ -37,7 +37,12 @@ jobs:
             --print-summary \
             --exclude 'build/_deps' \
             --exclude 'tests' \
-            --filter '^(layer1-core|layer2-services|sidechain|miners|common|layer3-app)(/|$)' \
+            --filter '^layer1-core(/|$)' \
+            --filter '^layer2-services(/|$)' \
+            --filter '^sidechain(/|$)' \
+            --filter '^miners(/|$)' \
+            --filter '^common(/|$)' \
+            --filter '^layer3-app(/|$)' \
             --gcov-ignore-parse-errors=negative_hits.warn
 
       - name: Upload coverage artifact

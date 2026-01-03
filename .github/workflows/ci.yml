@@ -13,6 +13,7 @@ jobs:
       statuses: write
     env:
       BUILD_DIR: build
+      COVERAGE_FILTER: "^(layer1-core|layer2-services|sidechain|miners|common|layer3-app)(/|$)"
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -31,14 +32,13 @@ jobs:
 
       - name: Coverage
         run: |
-          FILTER_PATTERN='^(layer1-core|layer2-services|sidechain|miners|common|layer3-app)(/|$)'
           gcovr \
             --root . \
             --xml -o coverage.xml \
             --print-summary \
             --exclude 'build/_deps' \
             --exclude 'tests' \
-            --filter "${FILTER_PATTERN}" \
+            --filter "${COVERAGE_FILTER}" \
             --gcov-ignore-parse-errors=negative_hits.warn
 
       - name: Upload coverage artifact

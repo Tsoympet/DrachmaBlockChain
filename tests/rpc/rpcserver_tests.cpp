@@ -17,16 +17,23 @@
 
 namespace http = boost::beast::http;
 
+constexpr char kInvalidAuthHeader[] = "Basic invalid_base64";
+constexpr uint8_t kWalletPrivSeed = 42;
+constexpr uint8_t kWalletIdSeed = 99;
+constexpr int kRateLimitRequests = 121;
+constexpr int kMaxRetryAttempts = 3;
+constexpr int kRetryDelayMs = 25;
+constexpr int kServerStartupDelayMs = 50;
+
 static http::response<http::string_body> RpcCallResponse(boost::asio::io_context& io, uint16_t port,
                                                          const std::string& body, bool include_auth = true,
                                                          const std::string& token = "",
                                                          const std::string& auth_override = "")
 {
-    boost::asio::io_context clientIo;
-    for (int attempt = 0; attempt < 3; ++attempt) {
+    for (int attempt = 0; attempt < kMaxRetryAttempts; ++attempt) {
         try {
-            boost::asio::ip::tcp::resolver resolver(clientIo);
-            boost::beast::tcp_stream stream(clientIo);
+            boost::asio::ip::tcp::resolver resolver(io);
+            boost::beast::tcp_stream stream(io);
             auto const results = resolver.resolve("127.0.0.1", std::to_string(port));
             stream.connect(results);
 
@@ -47,7 +54,7 @@ static http::response<http::string_body> RpcCallResponse(boost::asio::io_context
             http::read(stream, buffer, res);
             return res;
         } catch (...) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(25));
+            std::this_thread::sleep_for(std::chrono::milliseconds(kRetryDelayMs));
         }
     }
     return {};
@@ -117,8 +124,8 @@ struct RpcTestHarness {
 
     void FundWallet()
     {
-        wallet::PrivKey priv{}; priv.fill(42);
-        wallet::KeyId id{}; id.fill(99);
+        wallet::PrivKey priv{}; priv.fill(kWalletPrivSeed);
+        wallet::KeyId id{}; id.fill(kWalletIdSeed);
         store.Import(id, priv);
         OutPoint op{}; op.hash.fill(1); op.index = 0;
         TxOut out; out.value = 5000; out.assetId = static_cast<uint8_t>(AssetId::DRACHMA); wallet.AddUTXO(op, out);
@@ -139,7 +146,7 @@ struct RpcTestHarness {
         }
         server->Start();
         thread = std::thread([this]() { io.run(); });
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds(kServerStartupDelayMs));
     }
 
     void Stop()
@@ -311,12 +318,12 @@ TEST(RPCFailurePaths, AuthAndRateLimitEnforced)
     env.Start(true, false);
 
     auto invalidAuth = RpcCallResponse(env.io, env.rpc_port,
-        "{\"method\":\"getblockcount\",\"params\":null}", true, "", "Basic !!!!");
+        "{\"method\":\"getblockcount\",\"params\":null}", true, "", kInvalidAuthHeader);
     EXPECT_EQ(invalidAuth.result(), http::status::unauthorized);
     EXPECT_EQ(invalidAuth.body(), "{\"error\":\"auth required\"}");
 
     http::response<http::string_body> last;
-    for (int i = 0; i < 121; ++i) {
+    for (int i = 0; i < kRateLimitRequests; ++i) {
         last = RpcCallResponse(env.io, env.rpc_port, "{\"method\":\"getblockcount\",\"params\":null}");
     }
     EXPECT_EQ(last.result(), http::status::too_many_requests);

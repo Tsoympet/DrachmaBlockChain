@@ -165,6 +165,32 @@ TEST(Wallet, InsufficientFundsAndAssetIsolation)
     EXPECT_THROW(backend.CreateSpend(tlnOutputs, id, 10), std::runtime_error);
 }
 
+TEST(Wallet, HdSeedRequiredBeforeDerive)
+{
+    KeyStore store;
+    WalletBackend backend(store);
+    EXPECT_THROW(backend.DeriveChild(wallet::HDNode{}, 0, false), std::runtime_error);
+
+    std::vector<uint8_t> seed(32, 0x01);
+    backend.SetHDSeed(seed);
+    EXPECT_NO_THROW(backend.DeriveBip44(0, 0, 0));
+}
+
+TEST(Wallet, MultisigSpendFailsWithoutInputs)
+{
+    KeyStore store;
+    WalletBackend backend(store);
+    auto priv = MakeKey(13);
+    backend.ImportKey(priv);
+
+    std::vector<TxOut> outputs{TxOut{1'000, std::vector<uint8_t>(32, 0xAA)}};
+    outputs[0].assetId = static_cast<uint8_t>(AssetId::DRACHMA);
+    std::vector<OutPoint> coins{OutPoint{}};
+    std::vector<PrivKey> keys{priv};
+    EXPECT_THROW(backend.CreateMultisigSpend(outputs, coins, keys, 1, 10), std::runtime_error);
+    EXPECT_EQ(backend.GetBalance(), 0u);
+}
+
 TEST(Keystore, EncryptsAndRejectsBadPassphrase)
 {
     wallet::KeyStore store;
@@ -184,4 +210,12 @@ TEST(Keystore, EncryptsAndRejectsBadPassphrase)
     wallet::KeyStore badPass;
     EXPECT_THROW(badPass.LoadFromFile("wrong", tmp.string()), std::runtime_error);
     std::filesystem::remove(tmp);
+}
+
+TEST(Keystore, MissingFileThrows)
+{
+    wallet::KeyStore store;
+    auto tmp = std::filesystem::temp_directory_path() / "keystore_missing.dat";
+    std::filesystem::remove(tmp);
+    EXPECT_THROW(store.LoadFromFile("pass", tmp.string()), std::runtime_error);
 }

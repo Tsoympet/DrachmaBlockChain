@@ -60,5 +60,35 @@ int main()
     auto feerate = pool.EstimateFeeRate(50);
     assert(feerate >= policy.MinFeeRate());
 
+    // Duplicate submissions and conflicts without opt-in RBF are rejected.
+    assert(!pool.Accept(tx3, fee3));
+    auto conflict = tx3;
+    conflict.vout[0].value += 1;
+    assert(!pool.Accept(conflict, fee3 + 100));
+    assert(pool.Exists(tx3.GetHash()));
+
+    // Replace-by-fee succeeds only with higher fee and replaceable flag.
+    policy::FeePolicy rbfPolicy(1000, 100000, 5);
+    mempool::Mempool rbfPool(rbfPolicy);
+    Transaction rbfA = MakeTx(9);
+    rbfA.vin[0].sequence = 0xfffffffd;
+    auto feeA = RequiredFee(rbfPolicy, rbfA);
+    assert(rbfPool.Accept(rbfA, feeA));
+    Transaction rbfB = rbfA;
+    rbfB.vout[0].value += 5;
+    auto feeB = feeA + rbfPolicy.MinFeeRate();
+    assert(rbfPool.Accept(rbfB, feeB));
+    assert(!rbfPool.Exists(rbfA.GetHash()));
+    assert(rbfPool.Exists(rbfB.GetHash()));
+
+    // Oversize transactions fail policy checks and leave the pool empty.
+    policy::FeePolicy tightPolicy(1, 10, 5);
+    mempool::Mempool tight(tightPolicy);
+    Transaction big = MakeTx(30);
+    big.vin[0].scriptSig.assign(20, 0xaa);
+    assert(!tight.Accept(big, 1000));
+    assert(tight.Snapshot().empty());
+    assert(tight.EstimateFeeRate(10) == tightPolicy.MinFeeRate());
+
     return 0;
 }

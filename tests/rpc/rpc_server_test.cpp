@@ -16,7 +16,7 @@
 namespace http = boost::beast::http;
 
 static std::string RpcCall(boost::asio::io_context& io, uint16_t port, const std::string& body,
-                           bool include_auth = true)
+                           bool include_auth = true, const std::string& token = "", const std::string& auth_override = "")
 {
     boost::asio::io_context clientIo;
     for (int attempt = 0; attempt < 3; ++attempt) {
@@ -29,7 +29,10 @@ static std::string RpcCall(boost::asio::io_context& io, uint16_t port, const std
             http::request<http::string_body> req{http::verb::post, "/", 11};
             req.set(http::field::host, "127.0.0.1");
             if (include_auth) {
-                req.set(http::field::authorization, "Basic dXNlcjpwYXNz");
+                req.set(http::field::authorization, auth_override.empty() ? "Basic dXNlcjpwYXNz" : auth_override);
+            }
+            if (!token.empty()) {
+                req.set("X-Auth-Token", token);
             }
             req.body() = body;
             req.prepare_payload();
@@ -107,6 +110,41 @@ TEST(TxIndex, UsesCacheWhenDbAbsent)
     EXPECT_EQ(heightOut, 42u);
 }
 
+TEST(TxIndex, ReopensEmptyAndTracksNewBlocks)
+{
+    std::filesystem::path tmp = std::filesystem::temp_directory_path() / "txindex_reindex";
+    std::filesystem::remove_all(tmp);
+
+    {
+        txindex::TxIndex disk;
+        disk.Open(tmp.string());
+        uint256 missing{};
+        missing.fill(0x0a);
+        uint32_t heightOut{0};
+        EXPECT_FALSE(disk.Lookup(missing, heightOut));
+        disk.Add(missing, 9);
+        EXPECT_TRUE(disk.Lookup(missing, heightOut));
+        EXPECT_EQ(heightOut, 9u);
+    }
+
+    txindex::TxIndex reopened;
+    reopened.Open(tmp.string());
+    uint32_t out{0};
+    uint256 missing{};
+    missing.fill(0x0a);
+    EXPECT_TRUE(reopened.Lookup(missing, out));
+    EXPECT_EQ(out, 9u);
+    EXPECT_EQ(reopened.BlockCount(), 0u);
+
+    uint256 block{};
+    block.fill(0x0b);
+    EXPECT_FALSE(reopened.LookupBlock(block, out));
+    reopened.AddBlock(block, 3);
+    EXPECT_EQ(reopened.BlockCount(), 1u);
+    EXPECT_TRUE(reopened.LookupBlock(block, out));
+    EXPECT_EQ(out, 3u);
+}
+
 TEST(RPC, EndpointsRespond)
 {
     boost::asio::io_context io;
@@ -148,15 +186,26 @@ TEST(RPC, EndpointsRespond)
     EXPECT_NE(height.find("1"), std::string::npos);
 
     std::string error = RpcCall(io, 19600, "{\"method\":\"unknown\",\"params\":null}");
-    EXPECT_NE(error.find("error"), std::string::npos);
+    EXPECT_EQ(error, "{\"error\":\"unknown method\"}");
 
     std::string staking = RpcCall(io, 19600, "{\"method\":\"getstakinginfo\",\"params\":null}");
     EXPECT_NE(staking.find("\"DRM\""), std::string::npos);
     EXPECT_NE(staking.find("\"OBL\""), std::string::npos);
     EXPECT_NE(staking.find("\"posAllowed\":true"), std::string::npos);
 
+    std::string numericParams = RpcCall(io, 19600, "{\"method\":\"getbalance\",\"params\":123}");
+    EXPECT_EQ(numericParams, "{\"result\":null}");
+
     std::string unauthorized = RpcCall(io, 19600, "{\"method\":\"getbalance\",\"params\":null}", false);
-    EXPECT_NE(unauthorized.find("auth required"), std::string::npos);
+    EXPECT_EQ(unauthorized, "{\"error\":\"auth required\"}");
+
+    std::string badCredentials =
+        RpcCall(io, 19600, "{\"method\":\"getbalance\",\"params\":null}", true, "", "Basic ZmFrZTp3cm9uZw==");
+    EXPECT_EQ(badCredentials, "{\"error\":\"auth required\"}");
+
+    std::string tokenAuthorized =
+        RpcCall(io, 19600, "{\"method\":\"getbalance\",\"params\":null}", false, "drachma-token");
+    EXPECT_NE(tokenAuthorized.find("\"DRM\""), std::string::npos);
 
     std::string invalidBalance =
         RpcCall(io, 19600, R"({"method":"getbalance","params":"\"invalid-asset\""})");
@@ -185,6 +234,10 @@ TEST(RPC, EndpointsRespond)
     std::string badMint = RpcCall(io, 19600, "{\"method\":\"mint_nft\",\"params\":\"token=token-2;owner=alice;meta=;asset=0;gas=50\"}");
     EXPECT_NE(badMint.find("invalid canon reference"), std::string::npos);
 
+    std::string tlnListing = RpcCall(
+        io, 19600, "{\"method\":\"list_nft\",\"params\":\"token=token-1;seller=bob;asset=0;price=1;gas=50\"}");
+    EXPECT_NE(tlnListing.find("payment must be DRM or OBL"), std::string::npos);
+
     std::string dappCode = ConstThenReturnHex(7);
     std::string dapp = RpcCall(io, 19600, std::string("{\"method\":\"call_dapp\",\"params\":\"app=dapp.mod;asset=2;gas=100;code=") + dappCode + "\"}");
     EXPECT_NE(dapp.find("\"success\":true"), std::string::npos);
@@ -195,6 +248,9 @@ TEST(RPC, EndpointsRespond)
 
     std::string malformed = RpcCall(io, 19600, "{\"method\":\"sendtx\",\"params\":\"zz\"}");
     EXPECT_NE(malformed.find("error"), std::string::npos);
+
+    std::string badSend = RpcCall(io, 19600, "{\"method\":\"sendtx\",\"params\":\"00\"}");
+    EXPECT_NE(badSend.find("deserialize uint32 overflow"), std::string::npos);
 
     io.stop();
     t.join();

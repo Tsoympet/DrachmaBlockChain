@@ -10,6 +10,10 @@ def rpc_call(method, params=None):
     resp = requests.post(RPC_URL, json=payload, auth=RPC_AUTH, timeout=5)
     resp.raise_for_status()
     data = resp.json()
+    if data.get("error"):
+        err = data["error"]
+        message = err.get("message") if isinstance(err, dict) else str(err)
+        raise RuntimeError(message or "RPC returned an error")
     return data.get("result")
 
 

@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file. Dates use ISO 8601 format.
 
+## [Unreleased]
+### Fixed
+- Explorer RPC client now surfaces RPC errors instead of rendering empty results, improving user feedback and debugging.
+
 ## [v0.1.0-rc] - 2024-12-20 (suggested tag: `v0.1.0-rc`)
 ### Added
 - Cross-platform release workflow that builds, signs, and publishes Linux/macOS/Windows binaries with SHA-256 checksums and detached GPG signatures.

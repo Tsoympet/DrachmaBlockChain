@@ -22,10 +22,12 @@ int main()
     }
 
     // Invalid inputs should be rejected.
+    std::array<uint8_t,32> msg_hash{};
+    msg_hash.fill(0x11);
     std::array<uint8_t,64> outSig{};
-    bool nullSign = schnorr_sign(nullptr, msg.data(), outSig.data());
+    bool nullSign = schnorr_sign(nullptr, msg_hash.data(), outSig.data());
     assert(!nullSign);
-    bool nullVerify = schnorr_verify(nullptr, msg.data(), sig.data());
+    bool nullVerify = schnorr_verify(nullptr, msg_hash.data(), sig.data());
     assert(!nullVerify);
 
     // Mutating signature should fail verification.

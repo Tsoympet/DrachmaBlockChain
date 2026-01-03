@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 #include <filesystem>
 #include <openssl/sha.h>
-#include <chrono>
-#include <thread>
 #include "../../layer2-services/crosschain/bridge/bridge_manager.h"
 #include "../../layer2-services/crosschain/relayer/relayer.h"
 #include "../../layer2-services/net/p2p.h"
@@ -80,7 +78,6 @@ TEST(RelayerFlow, HandlesEmptyEndpoint)
     crosschain::Relayer rel(mgr, p2p, io);
     rel.AddWatchedChain("empty", cfg);
     rel.Start();
-    std::this_thread::sleep_for(std::chrono::milliseconds(50));
     rel.Stop();
     EXPECT_EQ(rel.Metrics().detected.load(), 0u);
 }

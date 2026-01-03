@@ -78,20 +78,30 @@ TEST(Wallet, ScriptInterpreterAcceptsWalletSigs)
     KeyId id = backend.ImportKey(priv);
 
     OutPoint op{};
-    TxOut utxo{10'000'000, std::vector<uint8_t>(32, 0x01)};
+    TxOut utxo{20'000'000, std::vector<uint8_t>(32, 0x01)};
     utxo.assetId = static_cast<uint8_t>(AssetId::DRACHMA);
     backend.AddUTXO(op, utxo);
 
-    std::vector<TxOut> outputs{TxOut{9'000'000, std::vector<uint8_t>(32, 0xBB)}};
-    outputs[0].assetId = utxo.assetId;
-    auto tx = backend.CreateSpend(outputs, id, 500'000);
+    std::vector<TxOut> outputs1{TxOut{1'000'000, std::vector<uint8_t>(32, 0xBB)}};
+    outputs1[0].assetId = utxo.assetId;
+    auto firstSpend = backend.CreateSpend(outputs1, id, 100'000);
+    ASSERT_FALSE(firstSpend.vout.empty());
+    TxOut confirmed = firstSpend.vout.back(); // change output carries the wallet-derived pubkey
+    confirmed.assetId = utxo.assetId;
+
+    OutPoint op2{};
+    op2.hash.fill(0x02);
+    backend.AddUTXO(op2, confirmed);
+
+    std::vector<TxOut> outputs2{TxOut{500'000, std::vector<uint8_t>(32, 0xCC)}};
+    outputs2[0].assetId = utxo.assetId;
+    auto tx = backend.CreateSpend(outputs2, id, 50'000);
     ASSERT_EQ(tx.vin.size(), 1u);
-    utxo.scriptPubKey = tx.vout.back().scriptPubKey;
-    EXPECT_TRUE(VerifyScript(tx, 0, utxo));
+    EXPECT_TRUE(VerifyScript(tx, 0, confirmed));
 
     auto tampered = tx;
     tampered.vin[0].scriptSig.pop_back();
-    EXPECT_FALSE(VerifyScript(tampered, 0, utxo));
+    EXPECT_FALSE(VerifyScript(tampered, 0, confirmed));
 }
 
 TEST(Wallet, ThrowsOnMissingKeyOrFunds)
@@ -134,7 +144,7 @@ TEST(Keystore, EncryptsAndRejectsBadPassphrase)
 {
     wallet::KeyStore store;
     wallet::PrivKey priv = MakeKey(11);
-    wallet::KeyId id{}; id.fill(1);
+    wallet::KeyId id{}; id.fill(0x01);
     store.Import(id, priv);
 
     auto tmp = std::filesystem::temp_directory_path() / "keystore_test.dat";

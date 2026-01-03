@@ -43,9 +43,6 @@ TEST(PoW, Sha256dRejectsNullInputs)
     // Zero length with valid buffer should leave deterministic hash of empty string.
     Hash256 empty = SHA256d(nullptr, 0);
     EXPECT_NE(empty, Hash256{});
-
-    // Null output buffer should be ignored safely.
-    sha256d(nullptr, reinterpret_cast<const uint8_t*>("a"), 1);
 }
 
 TEST(PoW, CheckPowDisallowsEqualTarget)

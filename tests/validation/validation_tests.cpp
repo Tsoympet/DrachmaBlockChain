@@ -248,7 +248,7 @@ int main()
 
         bool digestThrew = false;
         try {
-            ComputeInputDigest(tx, 5);
+            ComputeInputDigest(tx, tx.vin.size()); // out of range boundary
         } catch (const std::exception&) {
             digestThrew = true;
         }

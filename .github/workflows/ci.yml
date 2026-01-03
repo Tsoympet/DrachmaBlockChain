@@ -34,8 +34,10 @@ jobs:
         run: |
           gcovr \
             --root . \
+            --object-directory "${BUILD_DIR}" \
             --xml -o coverage.xml \
             --print-summary \
+            --exclude-directories 'build-cov' \
             --exclude 'build/_deps' \
             --exclude 'tests' \
             --filter "${COVERAGE_FILTER}" \

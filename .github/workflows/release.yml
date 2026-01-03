@@ -39,10 +39,13 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libssl-dev libboost-all-dev libleveldb-dev
 
       - name: Configure
-        run: cmake -S . -B "${BUILD_DIR}" -G Ninja -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -DDRACHMA_BUILD_GUI=OFF -DDRACHMA_BUILD_TESTS=OFF
+        run: cmake -S . -B "${BUILD_DIR}" -G Ninja -DCMAKE_BUILD_TYPE="${BUILD_TYPE}" -DDRACHMA_BUILD_GUI=OFF -DDRACHMA_BUILD_TESTS=ON -DDRACHMA_COVERAGE=OFF
 
       - name: Build
         run: cmake --build "${BUILD_DIR}" --parallel
+
+      - name: Test
+        run: ctest --test-dir "${BUILD_DIR}" --output-on-failure
 
       - name: Package artifacts
         run: |

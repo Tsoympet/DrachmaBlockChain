@@ -1,5 +1,6 @@
 # Build outputs
 build/
+build-cov/
 _codeql_build_dir/
 dist/
 out/

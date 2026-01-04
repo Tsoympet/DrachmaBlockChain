@@ -39,3 +39,6 @@ yarn-error.log*
 # macOS and Windows
 .DS_Store
 Thumbs.db
+
+# Documentation backups
+docs-backup-*/

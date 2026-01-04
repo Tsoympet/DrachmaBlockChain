@@ -1,6 +1,11 @@
 // OpenCL SHA-256d kernel for mining
 // Mirrors the CUDA implementation but uses portable OpenCL 1.2 constructs
 // so it can run on AMD, Intel, and other devices.
+//
+// Target comparison follows consensus rules from layer1-core/pow/difficulty.cpp:
+// - Treats hash and target as big-endian 256-bit integers
+// - Compares from high-order words (index 7) to low-order (index 0)
+// - Returns true if hash <= target
 
 __constant uint K[64] = {
   0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
@@ -23,13 +28,15 @@ inline uint sm1(uint x)  { return rotr(x,17) ^ rotr(x,19) ^ (x >> 10); }
 
 inline bool meets_target(const uint* state, const uint* target)
 {
+    // Compare full 256-bit value high-to-low (big-endian comparison)
+    // Matches consensus rule from layer1-core/pow/difficulty.cpp
     for (int i = 7; i >= 0; --i) {
         uint hv = state[i];
         uint tv = target[i];
         if (hv < tv) return true;
         if (hv > tv) return false;
     }
-    return true;
+    return true; // Equal is also valid
 }
 
 inline void sha256_round(uint state[8], const uint* w)

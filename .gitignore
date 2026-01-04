@@ -11,6 +11,10 @@ out/
 *.out
 *.a
 
+# Test files
+test_*.json
+*_old.cpp
+
 # Python
 __pycache__/
 *.py[cod]

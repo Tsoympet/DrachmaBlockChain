@@ -6,6 +6,11 @@
 // comparison improve effective hash rate on modern GPUs. Shared-memory
 // caching of the static header improves occupancy on both NVIDIA and
 // ROCm-compatible devices running CUDA.
+//
+// Target comparison follows consensus rules from layer1-core/pow/difficulty.cpp:
+// - Treats hash and target as big-endian 256-bit integers
+// - Compares from high-order words (index 7) to low-order (index 0)
+// - Returns true if hash <= target
 
 constexpr int THREADS_PER_BLOCK = 256;
 
@@ -36,14 +41,15 @@ __constant__ uint32_t K[64] = {
 
 __device__ __forceinline__ bool meets_target(const uint32_t* state, const uint32_t* target)
 {
-    // Compare full 256-bit value high-to-low
+    // Compare full 256-bit value high-to-low (big-endian comparison)
+    // Matches consensus rule from layer1-core/pow/difficulty.cpp
     for (int i = 7; i >= 0; --i) {
         uint32_t hv = state[i];
         uint32_t tv = __ldg(&target[i]);
         if (hv < tv) return true;
         if (hv > tv) return false;
     }
-    return true;
+    return true; // Equal is also valid
 }
 
 __device__ void sha256_round(uint32_t state[8], const uint32_t* w)

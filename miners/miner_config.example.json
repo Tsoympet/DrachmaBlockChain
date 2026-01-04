@@ -1,0 +1,37 @@
+{
+  "_comment": "BlockChainDrachma Miner Configuration Example",
+  "_comment2": "This file can be used with any of the three miners:",
+  "_comment3": "  ./drachma_cpu_miner --config miner_config.json",
+  "_comment4": "  ./drachma_cuda_miner --config miner_config.json",
+  "_comment5": "  ./drachma_opencl_miner --config miner_config.json",
+  
+  "stratum_url": "stratum+tcp://pool.example.com:3333",
+  "user": "your_wallet_address",
+  "pass": "x",
+  "worker": "worker1",
+  
+  "_comment_threads": "CPU miner only - number of mining threads",
+  "threads": 4,
+  
+  "_comment_devices": "GPU miners only - device indices to use (comma-separated in array)",
+  "devices": [0, 1],
+  
+  "_comment_security": "Security: set to true to allow remote pool connections",
+  "allow_remote": false,
+  
+  "_comment_difficulty": "Minimum difficulty target (0 = use pool default)",
+  "min_target_bits": 0,
+  
+  "_comment_benchmark": "Run in benchmark mode (no pool connection)",
+  "benchmark": false,
+  "benchmark_seconds": 10,
+  
+  "_comment_intensity": "Mining intensity - affects batch size (higher = more GPU/CPU usage)",
+  "intensity": 256,
+  
+  "_comment_protocol": "Use Stratum V2 if supported by pool",
+  "stratum_v2": false,
+  
+  "_comment_auth": "Optional RPC auth token (overrides 'pass' if set)",
+  "rpc_auth_token": ""
+}

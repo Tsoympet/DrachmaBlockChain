@@ -5,6 +5,25 @@
 
 namespace validation {
 
+namespace {
+
+struct OutPointHasher {
+    std::size_t operator()(const OutPoint& o) const noexcept {
+        size_t h = 0;
+        for (auto b : o.hash) h = (h * 131) ^ b;
+        h ^= static_cast<size_t>(o.index + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2));
+        return h;
+    }
+};
+
+struct OutPointEq {
+    bool operator()(const OutPoint& a, const OutPoint& b) const noexcept {
+        return a.index == b.index && a.hash == b.hash;
+    }
+};
+
+} // namespace
+
 // ConnectBlock applies a validated block to the UTXO set and checks that
 // all inputs are available and signed correctly.
 bool ConnectBlock(const Block& block, 
@@ -21,22 +40,7 @@ bool ConnectBlock(const Block& block,
     }
 
     // Track all inputs spent in this block to detect double-spends within block
-    std::unordered_set<OutPoint, struct OutPointHasher, struct OutPointEq> spentInBlock;
-    
-    struct OutPointHasher {
-        std::size_t operator()(const OutPoint& o) const noexcept {
-            size_t h = 0;
-            for (auto b : o.hash) h = (h * 131) ^ b;
-            h ^= static_cast<size_t>(o.index + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2));
-            return h;
-        }
-    };
-    
-    struct OutPointEq {
-        bool operator()(const OutPoint& a, const OutPoint& b) const noexcept {
-            return a.index == b.index && a.hash == b.hash;
-        }
-    };
+    std::unordered_set<OutPoint, OutPointHasher, OutPointEq> spentInBlock;
 
     // Process all transactions
     for (size_t txIdx = 0; txIdx < block.transactions.size(); ++txIdx) {

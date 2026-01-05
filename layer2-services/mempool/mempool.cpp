@@ -140,31 +140,31 @@ uint64_t Mempool::EstimateFeeRate(size_t percentile) const
     std::lock_guard<std::mutex> g(m_mutex);
     if (m_entries.empty()) return m_policy.MinFeeRate();
     
-    // m_byFeeRate is a multimap sorted by fee rate (ascending)
-    // Collect all fee rates to handle duplicates correctly
-    std::vector<uint64_t> feeRates;
-    feeRates.reserve(m_byFeeRate.size());
-    for (const auto& entry : m_byFeeRate) {
-        feeRates.push_back(entry.first);
-    }
-    
-    // Sort to ensure proper ordering
-    std::sort(feeRates.begin(), feeRates.end());
-    
     percentile = std::clamp(percentile, static_cast<size_t>(1), static_cast<size_t>(99));
     
-    // Use linear interpolation for percentile calculation
-    const double pos = (percentile / 100.0) * (feeRates.size() - 1);
-    const size_t idx = static_cast<size_t>(pos);
+    // m_byFeeRate is already sorted ascending, work directly with it
+    const size_t totalSize = m_byFeeRate.size();
+    if (totalSize == 0) return m_policy.MinFeeRate();
     
-    if (idx >= feeRates.size() - 1) {
-        return feeRates.back();
+    // Calculate position with interpolation
+    const double pos = (percentile / 100.0) * (totalSize - 1);
+    const size_t lowerIdx = static_cast<size_t>(pos);
+    
+    if (lowerIdx >= totalSize - 1) {
+        // Return the highest fee rate
+        return m_byFeeRate.rbegin()->first;
     }
     
+    // Get iterators to lower and upper elements
+    auto lowerIt = m_byFeeRate.begin();
+    std::advance(lowerIt, lowerIdx);
+    auto upperIt = lowerIt;
+    ++upperIt;
+    
     // Linear interpolation between two closest values
-    const double fraction = pos - idx;
-    const uint64_t lower = feeRates[idx];
-    const uint64_t upper = feeRates[idx + 1];
+    const double fraction = pos - lowerIdx;
+    const uint64_t lower = lowerIt->first;
+    const uint64_t upper = upperIt->first;
     
     return static_cast<uint64_t>(lower + fraction * (upper - lower));
 }

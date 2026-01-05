@@ -151,15 +151,21 @@ ExecutionResult ExecutionEngine::Execute(const ExecutionRequest& request,
                         break;
                     }
 #else
-                    if (a != 0 && b != 0) {
-                        if ((a == -1 && b == std::numeric_limits<int64_t>::min()) ||
-                            (b == -1 && a == std::numeric_limits<int64_t>::min())) {
-                            result.error = "arithmetic overflow";
-                            halted = true;
-                            break;
-                        }
-                        const int64_t maxQuot = std::numeric_limits<int64_t>::max() / std::abs(a);
-                        if (std::abs(b) > maxQuot) {
+                    // Check for overflow: a * b overflows if |a| > max / |b|
+                    if (a == std::numeric_limits<int64_t>::min() && b == -1) {
+                        result.error = "arithmetic overflow";
+                        halted = true;
+                        break;
+                    }
+                    if (b == std::numeric_limits<int64_t>::min() && a == -1) {
+                        result.error = "arithmetic overflow";
+                        halted = true;
+                        break;
+                    }
+                    if (b != 0) {
+                        const int64_t absA = (a < 0) ? -a : a;
+                        const int64_t absB = (b < 0) ? -b : b;
+                        if (absA > std::numeric_limits<int64_t>::max() / absB) {
                             result.error = "arithmetic overflow";
                             halted = true;
                             break;

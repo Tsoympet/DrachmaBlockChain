@@ -11,6 +11,7 @@
 #include <openssl/sha.h>
 #include <optional>
 #include <stdexcept>
+#include <unordered_set>
 
 namespace wallet {
 namespace {
@@ -99,6 +100,21 @@ KeyId make_key_id(const PrivKey& priv)
     SHA256(priv.data(), priv.size(), id.data());
     return id;
 }
+
+struct OutPointHasher {
+    std::size_t operator()(const OutPoint& o) const noexcept {
+        size_t h = 0;
+        for (auto b : o.hash) h = (h * 131) ^ b;
+        h ^= static_cast<size_t>(o.index + 0x9e3779b97f4a7c15ULL + (h << 6) + (h >> 2));
+        return h;
+    }
+};
+
+struct OutPointEqual {
+    bool operator()(const OutPoint& a, const OutPoint& b) const noexcept {
+        return a.index == b.index && std::equal(a.hash.begin(), a.hash.end(), b.hash.begin());
+    }
+};
 
 } // namespace
 
@@ -417,14 +433,20 @@ Transaction WalletBackend::CreateMultisigSpend(const std::vector<TxOut>& outputs
 void WalletBackend::RemoveCoins(const std::vector<OutPoint>& used)
 {
     std::lock_guard<std::mutex> g(m_mutex);
+    if (used.empty()) return;
+    
+    // Use hash set for O(1) lookups instead of O(n) nested loops
+    std::unordered_set<OutPoint, OutPointHasher, OutPointEqual> spentSet;
+    for (const auto& op : used) {
+        spentSet.insert(op);
+    }
+    
     std::vector<UTXO> remaining;
     remaining.reserve(m_utxos.size());
     for (const auto& u : m_utxos) {
-        bool spent = false;
-        for (const auto& op : used) {
-            if (u.outpoint.hash == op.hash && u.outpoint.index == op.index) { spent = true; break; }
+        if (spentSet.find(u.outpoint) == spentSet.end()) {
+            remaining.push_back(u);
         }
-        if (!spent) remaining.push_back(u);
     }
     m_utxos.swap(remaining);
 }

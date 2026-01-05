@@ -40,7 +40,8 @@ bool Mempool::Accept(const Transaction& tx, uint64_t fee)
     {
         std::lock_guard<std::mutex> g(m_mutex);
         const auto ser = Serialize(tx);
-        const uint64_t feeRate = (ser.size() ? (fee * 1000 / ser.size()) : fee * 1000);
+        const size_t txSize = ser.size();
+        const uint64_t feeRate = (txSize ? (fee * 1000 / txSize) : fee * 1000);
         uint256 hash = tx.GetHash();
         if (m_entries.count(hash)) return false;
         if (!m_policy.IsFeeAcceptable(tx, fee)) return false;
@@ -65,7 +66,7 @@ bool Mempool::Accept(const Transaction& tx, uint64_t fee)
         if (m_entries.size() >= m_policy.MaxEntries()) EvictOne();
         EvictExpired();
 
-        MempoolEntry entry{tx, fee, feeRate, std::chrono::steady_clock::now(), replace};
+        MempoolEntry entry{tx, fee, feeRate, txSize, std::chrono::steady_clock::now(), replace};
         m_arrival.push_back(hash);
         m_byFeeRate.emplace(feeRate, hash);
         m_entries.emplace(hash, std::move(entry));
@@ -231,12 +232,12 @@ void Mempool::EvictExpired()
     if (!expired.empty()) Remove(expired);
 
     size_t approxSize = 0;
-    for (const auto& kv : m_entries) approxSize += Serialize(kv.second.tx).size();
+    for (const auto& kv : m_entries) approxSize += kv.second.txSize;
     while (approxSize > m_targetBytes && !m_byFeeRate.empty()) {
         auto victim = m_byFeeRate.begin()->second;
         auto entryIt = m_entries.find(victim);
         size_t vsize = 0;
-        if (entryIt != m_entries.end()) vsize = Serialize(entryIt->second.tx).size();
+        if (entryIt != m_entries.end()) vsize = entryIt->second.txSize;
         Remove({victim});
         if (approxSize >= vsize) approxSize -= vsize; else break;
     }

@@ -5,7 +5,6 @@
 #include <algorithm>
 #include <chrono>
 #include <fstream>
-#include <regex>
 #include <sstream>
 #include <stdexcept>
 #include <cstring>
@@ -61,23 +60,25 @@ std::vector<sidechain::wasm::Instruction> DecodeInstructions(const std::string& 
     return out;
 }
 
+// Shared hex encoding utility - more efficient than multiple implementations
+inline std::string EncodeHex(const std::vector<uint8_t>& data) {
+    static const char* hex_table = "0123456789abcdef";
+    std::string out;
+    out.reserve(data.size() * 2);
+    for (auto b : data) {
+        out.push_back(hex_table[b >> 4]);
+        out.push_back(hex_table[b & 0xf]);
+    }
+    return out;
+}
+
 std::string FormatExecResult(const sidechain::wasm::ExecutionResult& res)
 {
-    static const char* hex_table = "0123456789abcdef";
-    auto encodeHex = [&](const std::vector<uint8_t>& data) {
-        std::string out;
-        out.reserve(data.size() * 2);
-        for (auto b : data) {
-            out.push_back(hex_table[b >> 4]);
-            out.push_back(hex_table[b & 0xf]);
-        }
-        return out;
-    };
     std::stringstream ss;
     ss << "{\"success\":" << (res.success ? "true" : "false")
        << ",\"gas_used\":" << res.gas_used
        << ",\"state_writes\":" << res.state_writes
-       << ",\"output\":\"" << encodeHex(res.output) << "\"";
+       << ",\"output\":\"" << EncodeHex(res.output) << "\"";
     if (!res.error.empty()) {
         ss << ",\"error\":\"" << res.error << "\"";
     }
@@ -568,14 +569,7 @@ RPCServer::Handler RPCServer::GetHandler(const std::string& name)
 
 std::string RPCServer::HexEncode(const std::vector<uint8_t>& data)
 {
-    static const char* hex = "0123456789abcdef";
-    std::string out;
-    out.reserve(data.size() * 2);
-    for (auto b : data) {
-        out.push_back(hex[b >> 4]);
-        out.push_back(hex[b & 0xf]);
-    }
-    return out;
+    return EncodeHex(data);
 }
 
 std::optional<Block> RPCServer::ReadBlock(uint32_t height)
@@ -624,13 +618,58 @@ std::string RPCServer::TrimQuotes(std::string in)
 
 std::pair<std::string, std::string> RPCServer::ParseJsonRpc(const std::string& body)
 {
-    // very small parser: {"method":"name","params":"value"}
-    std::regex methodRe("\"method\"\\s*:\\s*\"([^\"]+)\"");
-    std::regex paramsRe("\"params\"\\s*:\\s*([^,}]+)");
-    std::smatch m;
+    // Simple parser without regex for better performance: {"method":"name","params":"value"}
     std::string method, params;
-    if (std::regex_search(body, m, methodRe)) method = m[1];
-    if (std::regex_search(body, m, paramsRe)) params = m[1];
+    
+    // Find method
+    size_t methodPos = body.find("\"method\"");
+    if (methodPos != std::string::npos) {
+        size_t colonPos = body.find(':', methodPos);
+        if (colonPos != std::string::npos) {
+            size_t startQuote = body.find('"', colonPos);
+            if (startQuote != std::string::npos) {
+                size_t endQuote = body.find('"', startQuote + 1);
+                if (endQuote != std::string::npos) {
+                    method = body.substr(startQuote + 1, endQuote - startQuote - 1);
+                }
+            }
+        }
+    }
+    
+    // Find params
+    size_t paramsPos = body.find("\"params\"");
+    if (paramsPos != std::string::npos) {
+        size_t colonPos = body.find(':', paramsPos);
+        if (colonPos != std::string::npos) {
+            size_t start = colonPos + 1;
+            while (start < body.size() && std::isspace(body[start])) ++start;
+            if (start < body.size()) {
+                size_t end = start;
+                // Find end of params value (looking for comma or closing brace)
+                int depth = 0;
+                bool inString = false;
+                for (size_t i = start; i < body.size(); ++i) {
+                    if (body[i] == '"' && (i == 0 || body[i-1] != '\\')) {
+                        inString = !inString;
+                    } else if (!inString) {
+                        if (body[i] == '{' || body[i] == '[') depth++;
+                        else if (body[i] == '}' || body[i] == ']') {
+                            if (depth > 0) depth--;
+                            else { end = i; break; }
+                        }
+                        else if ((body[i] == ',' || body[i] == '}') && depth == 0) {
+                            end = i;
+                            break;
+                        }
+                    }
+                }
+                if (end > start) {
+                    params = body.substr(start, end - start);
+                }
+            }
+        }
+    }
+    
     return {method, params};
 }
 

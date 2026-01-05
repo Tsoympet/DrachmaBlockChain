@@ -8,6 +8,7 @@
 #include <mutex>
 #include <optional>
 #include <random>
+#include <unordered_set>
 
 #include "../../layer1-core/pow/sha256d.h"
 
@@ -15,12 +16,10 @@ namespace net {
 
 using boost::asio::ip::tcp;
 
-static std::string PadCommand(const std::string& cmd)
+static void PadCommand(const std::string& cmd, char* out12)
 {
-    std::array<char, 12> buf{};
-    std::memset(buf.data(), 0, buf.size());
-    std::memcpy(buf.data(), cmd.data(), std::min(cmd.size(), buf.size()));
-    return std::string(buf.data(), buf.size());
+    std::memset(out12, 0, 12);
+    std::memcpy(out12, cmd.data(), std::min(cmd.size(), size_t(12)));
 }
 
 static constexpr size_t k_max_payload = 4 * 1024 * 1024; // 4 MiB safety cap
@@ -213,25 +212,26 @@ void P2PNetwork::ConnectSeeds()
 {
     if (m_stopped) return;
     std::vector<std::string> seeds;
+    std::unordered_set<std::string> connectedAddrs;
     {
         std::lock_guard<std::mutex> g(m_mutex);
         seeds.assign(m_seedAddrs.begin(), m_seedAddrs.end());
+        // Build hash set of connected addresses for O(1) lookup
+        for (const auto& kv : m_peers) {
+            if (kv.second) {
+                connectedAddrs.insert(kv.second->info.id);
+            }
+        }
     }
     for (const auto& addr : seeds) {
+        // Skip if already connected
+        if (connectedAddrs.count(addr)) continue;
+        
         auto colon = addr.find(':');
         if (colon == std::string::npos) continue;
         auto host = addr.substr(0, colon);
         auto port = addr.substr(colon + 1);
-        {
-            std::lock_guard<std::mutex> g(m_mutex);
-            bool alreadyConnected = std::any_of(m_peers.begin(), m_peers.end(), [&](const auto& kv) {
-                if (!kv.second) return false;
-                if (kv.second->info.address != host) return false;
-                auto pos = kv.second->info.id.rfind(':');
-                return pos != std::string::npos && kv.second->info.id.substr(pos + 1) == port;
-            });
-            if (alreadyConnected) continue;
-        }
+        
         auto peer = std::make_shared<PeerState>(m_io, PeerInfo{"", host, false});
         auto resolver = std::make_shared<tcp::resolver>(m_io);
         resolver->async_resolve(host, port, [this, peer, resolver](const boost::system::error_code& ec, tcp::resolver::results_type res) {
@@ -311,11 +311,10 @@ void P2PNetwork::WriteLoop(const std::shared_ptr<PeerState>& peer)
         if (peer->outbound.empty()) return;
         msg = peer->outbound.front();
     }
-    std::string cmdPadded = PadCommand(msg.command);
     uint32_t len = static_cast<uint32_t>(msg.payload.size());
     std::array<uint8_t, 24> header{};
     std::memcpy(header.data(), &k_message_magic, sizeof(uint32_t));
-    std::memcpy(header.data() + 4, cmdPadded.data(), 12);
+    PadCommand(msg.command, reinterpret_cast<char*>(header.data() + 4));
     std::memcpy(header.data() + 16, &len, sizeof(len));
     uint8_t checksumFull[32]{};
     sha256d(checksumFull, msg.payload.empty() ? nullptr : msg.payload.data(), msg.payload.size());

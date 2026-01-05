@@ -133,11 +133,10 @@ static bn_ptr compute_bip340_nonce(const BIGNUM* seckey,
     }
 
     // k0 = SHA256_tag("BIP0340/nonce", t || pubkey_x || msg_hash)
-    std::vector<uint8_t> nonce_preimage;
-    nonce_preimage.reserve(32 + pubkey_x.size() + 32);
-    nonce_preimage.insert(nonce_preimage.end(), t.begin(), t.end());
-    nonce_preimage.insert(nonce_preimage.end(), pubkey_x.begin(), pubkey_x.end());
-    nonce_preimage.insert(nonce_preimage.end(), msg_hash32, msg_hash32 + 32);
+    std::array<uint8_t, 96> nonce_preimage;
+    std::memcpy(nonce_preimage.data(), t.data(), 32);
+    std::memcpy(nonce_preimage.data() + 32, pubkey_x.data(), pubkey_x.size());
+    std::memcpy(nonce_preimage.data() + 64, msg_hash32, 32);
     const auto nonce_hash = tagged_hash(
         "BIP0340/nonce", nonce_preimage.data(), nonce_preimage.size());
 
@@ -281,11 +280,10 @@ bool schnorr_sign_with_aux(const uint8_t* private_key,
     }
 
     // Compute challenge e = int(hash("BIP0340/challenge", r || pub_x || msg)) mod n
-    std::vector<uint8_t> challenge_preimage;
-    challenge_preimage.reserve(32 + 32 + 32);
-    challenge_preimage.insert(challenge_preimage.end(), r_bytes.begin(), r_bytes.end());
-    challenge_preimage.insert(challenge_preimage.end(), pub_x_bytes.begin(), pub_x_bytes.end());
-    challenge_preimage.insert(challenge_preimage.end(), msg_hash_32, msg_hash_32 + 32);
+    std::array<uint8_t, 96> challenge_preimage;
+    std::memcpy(challenge_preimage.data(), r_bytes.data(), 32);
+    std::memcpy(challenge_preimage.data() + 32, pub_x_bytes.data(), 32);
+    std::memcpy(challenge_preimage.data() + 64, msg_hash_32, 32);
     const auto challenge_hash = tagged_hash(
         "BIP0340/challenge", challenge_preimage.data(), challenge_preimage.size());
     bn_ptr e(bn_from_bytes(challenge_hash.data(), challenge_hash.size()));
@@ -387,11 +385,10 @@ bool schnorr_verify(const uint8_t* public_key_33_compressed,
     if (!bn_to_fixed_32(r.get(), r_bytes.data())) {
         return false;
     }
-    std::vector<uint8_t> challenge_preimage;
-    challenge_preimage.reserve(32 + 32 + 32);
-    challenge_preimage.insert(challenge_preimage.end(), r_bytes.begin(), r_bytes.end());
-    challenge_preimage.insert(challenge_preimage.end(), pub_x_bytes.begin(), pub_x_bytes.end());
-    challenge_preimage.insert(challenge_preimage.end(), msg_hash_32, msg_hash_32 + 32);
+    std::array<uint8_t, 96> challenge_preimage;
+    std::memcpy(challenge_preimage.data(), r_bytes.data(), 32);
+    std::memcpy(challenge_preimage.data() + 32, pub_x_bytes.data(), 32);
+    std::memcpy(challenge_preimage.data() + 64, msg_hash_32, 32);
     const auto challenge_hash = tagged_hash(
         "BIP0340/challenge", challenge_preimage.data(), challenge_preimage.size());
     bn_ptr e(bn_from_bytes(challenge_hash.data(), challenge_hash.size()));
@@ -520,10 +517,10 @@ bool schnorr_batch_verify(const std::vector<std::array<uint8_t, 33>>& pubkeys,
         if (!bn_to_fixed_32(px.get(), pub_x.data())) {
             return false;
         }
-        std::vector<uint8_t> preimage;
-        preimage.insert(preimage.end(), sig.begin(), sig.begin() + 32);
-        preimage.insert(preimage.end(), pub_x.begin(), pub_x.end());
-        preimage.insert(preimage.end(), msg_hashes[i].begin(), msg_hashes[i].end());
+        std::array<uint8_t, 96> preimage;
+        std::memcpy(preimage.data(), sig.data(), 32);
+        std::memcpy(preimage.data() + 32, pub_x.data(), 32);
+        std::memcpy(preimage.data() + 64, msg_hashes[i].data(), 32);
         const auto challenge = tagged_hash("BIP0340/challenge", preimage.data(), preimage.size());
         bn_ptr e = bn_from_bytes(challenge.data(), challenge.size());
         if (!e || BN_mod(e.get(), e.get(), order.get(), ctx.get()) != 1) {

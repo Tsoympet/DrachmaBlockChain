@@ -20,6 +20,7 @@ struct MempoolEntry {
     Transaction tx;
     uint64_t fee{0};
     uint64_t feeRate{0};
+    size_t txSize{0};  // Cache serialized size to avoid repeated serialization
     std::chrono::steady_clock::time_point added;
     bool replaceable{false};
 };

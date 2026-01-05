@@ -76,10 +76,30 @@ PubKey derive_pubkey(const PrivKey& priv)
 
 uint32_t fingerprint(const PubKey& pub)
 {
-    uint8_t sha_out[SHA256_DIGEST_LENGTH]{};
-    SHA256(pub.data(), pub.size(), sha_out);
-    uint8_t ripe_out[RIPEMD160_DIGEST_LENGTH]{};
-    RIPEMD160(sha_out, SHA256_DIGEST_LENGTH, ripe_out);
+    uint8_t sha_out[32]{};
+    unsigned int sha_len = 32;
+    EVP_MD_CTX* sha_ctx = EVP_MD_CTX_new();
+    if (!sha_ctx) throw std::runtime_error("EVP_MD_CTX_new failed");
+    if (EVP_DigestInit_ex(sha_ctx, EVP_sha256(), nullptr) != 1 ||
+        EVP_DigestUpdate(sha_ctx, pub.data(), pub.size()) != 1 ||
+        EVP_DigestFinal_ex(sha_ctx, sha_out, &sha_len) != 1) {
+        EVP_MD_CTX_free(sha_ctx);
+        throw std::runtime_error("SHA256 failed");
+    }
+    EVP_MD_CTX_free(sha_ctx);
+    
+    uint8_t ripe_out[20]{};
+    unsigned int ripe_len = 20;
+    EVP_MD_CTX* ripe_ctx = EVP_MD_CTX_new();
+    if (!ripe_ctx) throw std::runtime_error("EVP_MD_CTX_new failed");
+    if (EVP_DigestInit_ex(ripe_ctx, EVP_ripemd160(), nullptr) != 1 ||
+        EVP_DigestUpdate(ripe_ctx, sha_out, 32) != 1 ||
+        EVP_DigestFinal_ex(ripe_ctx, ripe_out, &ripe_len) != 1) {
+        EVP_MD_CTX_free(ripe_ctx);
+        throw std::runtime_error("RIPEMD160 failed");
+    }
+    EVP_MD_CTX_free(ripe_ctx);
+    
     uint32_t fp = 0;
     for (int i = 0; i < 4; ++i) {
         fp = (fp << 8) | ripe_out[i];
@@ -97,7 +117,16 @@ void enforce_single_asset(std::optional<uint8_t>& current, uint8_t candidate)
 KeyId make_key_id(const PrivKey& priv)
 {
     KeyId id{};
-    SHA256(priv.data(), priv.size(), id.data());
+    unsigned int len = 32;
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    if (!ctx) throw std::runtime_error("EVP_MD_CTX_new failed");
+    if (EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr) != 1 ||
+        EVP_DigestUpdate(ctx, priv.data(), priv.size()) != 1 ||
+        EVP_DigestFinal_ex(ctx, id.data(), &len) != 1) {
+        EVP_MD_CTX_free(ctx);
+        throw std::runtime_error("SHA256 failed");
+    }
+    EVP_MD_CTX_free(ctx);
     return id;
 }
 

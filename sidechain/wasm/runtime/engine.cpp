@@ -151,7 +151,7 @@ ExecutionResult ExecutionEngine::Execute(const ExecutionRequest& request,
                         break;
                     }
 #else
-                    // Check for overflow: a * b overflows if |a| > max / |b|
+                    // Check for overflow: special cases first
                     if (a == std::numeric_limits<int64_t>::min() && b == -1) {
                         result.error = "arithmetic overflow";
                         halted = true;
@@ -162,10 +162,12 @@ ExecutionResult ExecutionEngine::Execute(const ExecutionRequest& request,
                         halted = true;
                         break;
                     }
+                    // For general case: |a| * |b| must not overflow
                     if (b != 0) {
-                        const int64_t absA = (a < 0) ? -a : a;
-                        const int64_t absB = (b < 0) ? -b : b;
-                        if (absA > std::numeric_limits<int64_t>::max() / absB) {
+                        // Use unsigned arithmetic to safely compute absolute values
+                        const uint64_t absA = (a < 0) ? static_cast<uint64_t>(-(a + 1)) + 1 : static_cast<uint64_t>(a);
+                        const uint64_t absB = (b < 0) ? static_cast<uint64_t>(-(b + 1)) + 1 : static_cast<uint64_t>(b);
+                        if (absA > static_cast<uint64_t>(std::numeric_limits<int64_t>::max()) / absB) {
                             result.error = "arithmetic overflow";
                             halted = true;
                             break;

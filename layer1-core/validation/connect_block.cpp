@@ -46,9 +46,20 @@ bool ConnectBlock(const Block& block,
     for (size_t txIdx = 0; txIdx < block.transactions.size(); ++txIdx) {
         const auto& tx = block.transactions[txIdx];
         
-        // Skip coinbase (first tx)
-        bool isCoinbase = (txIdx == 0 && tx.vin.size() == 1 && 
-                           tx.vin[0].prevout.index == std::numeric_limits<uint32_t>::max());
+        // Detect coinbase: must be first tx with single input that has null prevout
+        bool isCoinbase = false;
+        if (txIdx == 0 && tx.vin.size() == 1) {
+            const auto& input = tx.vin[0];
+            // Check for null hash (all zeros) and max index
+            bool hasNullHash = true;
+            for (auto b : input.prevout.hash) {
+                if (b != 0) {
+                    hasNullHash = false;
+                    break;
+                }
+            }
+            isCoinbase = hasNullHash && input.prevout.index == std::numeric_limits<uint32_t>::max();
+        }
         
         if (!isCoinbase) {
             // Verify all inputs exist and aren't double-spent

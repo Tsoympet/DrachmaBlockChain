@@ -78,27 +78,28 @@ uint32_t fingerprint(const PubKey& pub)
 {
     uint8_t sha_out[32]{};
     unsigned int sha_len = 32;
-    EVP_MD_CTX* sha_ctx = EVP_MD_CTX_new();
-    if (!sha_ctx) throw std::runtime_error("EVP_MD_CTX_new failed");
-    if (EVP_DigestInit_ex(sha_ctx, EVP_sha256(), nullptr) != 1 ||
-        EVP_DigestUpdate(sha_ctx, pub.data(), pub.size()) != 1 ||
-        EVP_DigestFinal_ex(sha_ctx, sha_out, &sha_len) != 1) {
-        EVP_MD_CTX_free(sha_ctx);
+    // Reuse single context for both hash operations
+    EVP_MD_CTX* ctx = EVP_MD_CTX_new();
+    if (!ctx) throw std::runtime_error("EVP_MD_CTX_new failed");
+    
+    // Compute SHA256
+    if (EVP_DigestInit_ex(ctx, EVP_sha256(), nullptr) != 1 ||
+        EVP_DigestUpdate(ctx, pub.data(), pub.size()) != 1 ||
+        EVP_DigestFinal_ex(ctx, sha_out, &sha_len) != 1) {
+        EVP_MD_CTX_free(ctx);
         throw std::runtime_error("SHA256 failed");
     }
-    EVP_MD_CTX_free(sha_ctx);
     
+    // Compute RIPEMD160 using the same context
     uint8_t ripe_out[20]{};
     unsigned int ripe_len = 20;
-    EVP_MD_CTX* ripe_ctx = EVP_MD_CTX_new();
-    if (!ripe_ctx) throw std::runtime_error("EVP_MD_CTX_new failed");
-    if (EVP_DigestInit_ex(ripe_ctx, EVP_ripemd160(), nullptr) != 1 ||
-        EVP_DigestUpdate(ripe_ctx, sha_out, 32) != 1 ||
-        EVP_DigestFinal_ex(ripe_ctx, ripe_out, &ripe_len) != 1) {
-        EVP_MD_CTX_free(ripe_ctx);
+    if (EVP_DigestInit_ex(ctx, EVP_ripemd160(), nullptr) != 1 ||
+        EVP_DigestUpdate(ctx, sha_out, 32) != 1 ||
+        EVP_DigestFinal_ex(ctx, ripe_out, &ripe_len) != 1) {
+        EVP_MD_CTX_free(ctx);
         throw std::runtime_error("RIPEMD160 failed");
     }
-    EVP_MD_CTX_free(ripe_ctx);
+    EVP_MD_CTX_free(ctx);
     
     uint32_t fp = 0;
     for (int i = 0; i < 4; ++i) {

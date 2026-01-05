@@ -1,9 +1,31 @@
 from flask import Flask, jsonify, render_template, request
 import os
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 RPC_URL = os.environ.get("DRACHMA_RPC_URL", "http://localhost:18443")
 RPC_AUTH = (os.environ.get("DRACHMA_RPC_USER", "user"), os.environ.get("DRACHMA_RPC_PASS", "pass"))
+
+# Connection pooling for improved performance
+_session = None
+
+def get_session():
+    """Get or create a requests session with connection pooling"""
+    global _session
+    if _session is None:
+        _session = requests.Session()
+        # Configure retry strategy
+        retry_strategy = Retry(
+            total=3,
+            backoff_factor=0.1,
+            status_forcelist=[500, 502, 503, 504],
+        )
+        adapter = HTTPAdapter(pool_connections=10, pool_maxsize=20, max_retries=retry_strategy)
+        _session.mount("http://", adapter)
+        _session.mount("https://", adapter)
+        _session.auth = RPC_AUTH
+    return _session
 
 def _format_rpc_error(err):
     message = err.get("message") if isinstance(err, dict) else None
@@ -16,7 +38,8 @@ def _format_rpc_error(err):
 
 def rpc_call(method, params=None):
     payload = {"jsonrpc": "2.0", "id": "explorer", "method": method, "params": params or []}
-    resp = requests.post(RPC_URL, json=payload, auth=RPC_AUTH, timeout=5)
+    session = get_session()
+    resp = session.post(RPC_URL, json=payload, timeout=5)
     resp.raise_for_status()
     data = resp.json()
     if data.get("error"):

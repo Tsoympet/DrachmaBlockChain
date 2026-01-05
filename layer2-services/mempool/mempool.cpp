@@ -155,15 +155,15 @@ uint64_t Mempool::EstimateFeeRate(size_t percentile) const
         return m_byFeeRate.rbegin()->first;
     }
     
-    // Get iterators to lower and upper elements using std::next
-    auto lowerIt = std::next(m_byFeeRate.begin(), lowerIdx);
-    auto upperIt = std::next(lowerIt);
+    // Optimize: single iteration instead of two std::next calls
+    auto it = m_byFeeRate.begin();
+    std::advance(it, lowerIdx);
+    const uint64_t lower = it->first;
+    ++it;
+    const uint64_t upper = it->first;
     
     // Linear interpolation between two closest values
     const double fraction = pos - lowerIdx;
-    const uint64_t lower = lowerIt->first;
-    const uint64_t upper = upperIt->first;
-    
     return static_cast<uint64_t>(lower + fraction * (upper - lower));
 }
 

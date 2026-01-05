@@ -19,25 +19,41 @@ class RPCClient:
     def __init__(self, url: str, user: str, password: str):
         self.endpoint = urlparse(url)
         self.auth = b64encode(f"{user}:{password}".encode()).decode()
+        self._conn = None
 
-    def _connection(self):
-        if self.endpoint.scheme == "https":
-            return HTTPSConnection(self.endpoint.hostname, self.endpoint.port or 443, timeout=5)
-        return HTTPConnection(self.endpoint.hostname, self.endpoint.port or 80, timeout=5)
+    def _get_connection(self):
+        """Reuse connection for multiple requests to improve performance"""
+        if self._conn is None:
+            if self.endpoint.scheme == "https":
+                self._conn = HTTPSConnection(self.endpoint.hostname, self.endpoint.port or 443, timeout=5)
+            else:
+                self._conn = HTTPConnection(self.endpoint.hostname, self.endpoint.port or 80, timeout=5)
+        return self._conn
 
     def call(self, method: str, params: List):
         payload = json.dumps({"jsonrpc": "1.0", "id": "monitor", "method": method, "params": params})
         headers = {"Content-Type": "application/json", "Authorization": f"Basic {self.auth}"}
-        conn = self._connection()
-        conn.request("POST", self.endpoint.path or "/", payload, headers)
-        resp = conn.getresponse()
-        data = resp.read()
-        if resp.status != 200:
-            raise RuntimeError(f"RPC call failed: {resp.status} {resp.reason}")
-        doc = json.loads(data)
-        if doc.get("error"):
-            raise RuntimeError(f"RPC error: {doc['error']}")
-        return doc["result"]
+        
+        conn = self._get_connection()
+        try:
+            conn.request("POST", self.endpoint.path or "/", payload, headers)
+            resp = conn.getresponse()
+            data = resp.read()
+            if resp.status != 200:
+                raise RuntimeError(f"RPC call failed: {resp.status} {resp.reason}")
+            doc = json.loads(data)
+            if doc.get("error"):
+                raise RuntimeError(f"RPC error: {doc['error']}")
+            return doc["result"]
+        except Exception:
+            # On error, close and reset connection for next attempt
+            if self._conn:
+                try:
+                    self._conn.close()
+                except:
+                    pass
+                self._conn = None
+            raise
 
 
 def snapshot(client: RPCClient) -> Dict:

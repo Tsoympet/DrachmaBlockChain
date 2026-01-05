@@ -16,16 +16,21 @@ uint256 ComputeMerkleRoot(const std::vector<Transaction>& txs)
         layer.push_back(TransactionHash(tx));
     }
 
+    // Optimize: use single allocation for concat buffer outside loop
+    uint8_t concat[64];
     while (layer.size() > 1) {
-        if (layer.size() % 2 != 0)
-            layer.push_back(layer.back());
-
+        const size_t layerSize = layer.size();
+        const bool needsPadding = (layerSize % 2 != 0);
+        const size_t nextSize = (layerSize + 1) / 2;
+        
         std::vector<uint256> next;
-        next.reserve(layer.size() / 2);
-        for (size_t i = 0; i < layer.size(); i += 2) {
-            uint8_t concat[64];
+        next.reserve(nextSize);
+        
+        for (size_t i = 0; i < layerSize; i += 2) {
             std::memcpy(concat, layer[i].data(), 32);
-            std::memcpy(concat + 32, layer[i + 1].data(), 32);
+            // Handle odd-sized layer by duplicating last element
+            const size_t rightIdx = (i + 1 < layerSize) ? i + 1 : i;
+            std::memcpy(concat + 32, layer[rightIdx].data(), 32);
             next.push_back(tagged_hash("MERKLE", concat, sizeof(concat)));
         }
         layer.swap(next);

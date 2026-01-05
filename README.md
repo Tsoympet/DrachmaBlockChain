@@ -8,10 +8,10 @@
 [![GitHub Stars](https://img.shields.io/github/stars/Tsoympet/BlockChainDrachma?style=social)](https://github.com/Tsoympet/BlockChainDrachma/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/Tsoympet/BlockChainDrachma?style=social)](https://github.com/Tsoympet/BlockChainDrachma/network/members)
 [![Open Issues](https://img.shields.io/github/issues/Tsoympet/BlockChainDrachma)](https://github.com/Tsoympet/BlockChainDrachma/issues)
-[![Security Policy](https://img.shields.io/badge/Security-Policy-orange)](SECURITY.md)
+[![Security Policy](https://img.shields.io/badge/Security-Policy-orange)](docs/security/security-overview.md)
 [![Audit Status](https://img.shields.io/badge/Audit-In%20preparation-blueviolet)](docs/audit-guide.md)
 [![Discussions](https://img.shields.io/badge/Discussions-join-blue.svg)](#community--support)
-[![Roadmap](https://img.shields.io/badge/Roadmap-See%20plans-8A2BE2)](ROADMAP.md)
+[![Roadmap](https://img.shields.io/badge/Roadmap-See%20plans-8A2BE2)](docs/reference/roadmap.md)
 
 DRACHMA is a **Proof-of-Work monetary blockchain** designed for long-term stability, auditability, and minimal trust assumptions.
 
@@ -219,7 +219,7 @@ Mainnet procedures and host preparation steps are detailed in [`docs/deployment.
 
 ## Security
 
-- Review the [Security Policy](SECURITY.md) for responsible disclosure and response timelines.
+- Review the [Security Policy](docs/security/security-overview.md) for responsible disclosure and response timelines.
 - Consult the [Security Audit Guide](docs/audit-guide.md) for scope, fuzzing targets, and testnet/regtest setups.
 - See the [Threat Model](docs/threat-model.md) for adversaries, assets, and mitigations guiding validation and monitoring.
 
@@ -412,7 +412,7 @@ This repository now ships a working reference implementation with Layer 1/2/3 bi
 
 **How do I report security issues?**
 
-- Please follow [`SECURITY.md`](SECURITY.md) for private reporting. Never open public issues for security vulnerabilities.
+- Please follow [`SECURITY.md`](docs/security/security-overview.md) for private reporting. Never open public issues for security vulnerabilities.
 
 ---
 

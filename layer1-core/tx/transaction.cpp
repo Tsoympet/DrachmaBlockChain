@@ -69,6 +69,15 @@ static const std::vector<uint8_t> EMPTY_SCRIPT;
 std::vector<uint8_t> Serialize(const Transaction& tx)
 {
     std::vector<uint8_t> out;
+    // Pre-allocate approximate size to reduce reallocations
+    // Base: version(4) + vinSize(4) + voutSize(4) + lockTime(4) = 16 bytes
+    // Per input: hash(32) + index(4) + assetId(1) + sequence(4) + scriptSig_len(4) + scriptSig
+    // Per output: assetId(1) + value(8) + scriptPubKey_len(4) + scriptPubKey
+    size_t estimated = 16 + tx.vin.size() * 45 + tx.vout.size() * 13;
+    for (const auto& in : tx.vin) estimated += in.scriptSig.size();
+    for (const auto& o : tx.vout) estimated += o.scriptPubKey.size();
+    out.reserve(estimated);
+    
     WriteUint32(out, tx.version);
     WriteUint32(out, static_cast<uint32_t>(tx.vin.size()));
     for (const auto& in : tx.vin) {

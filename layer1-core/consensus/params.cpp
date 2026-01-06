@@ -17,7 +17,7 @@ static Params mainParams {
     60,                // 60 sec block time
     3600,              // 1 hour retarget window
     60,                // 60 blocks per retarget interval
-    42000000ULL * COIN,
+    41000000ULL * COIN,
     false,             // no min-difficulty blocks
     1735689600,        // genesis time
     0x1e0fffff,        // initial difficulty
@@ -41,7 +41,7 @@ static Params testParams {
     60,
     3600,
     60,
-    42000000ULL * COIN,
+    41000000ULL * COIN,
     true,              // allow min difficulty
     1735689600,
     0x1f00ffff,
@@ -72,7 +72,7 @@ constexpr size_t kAssetCount = static_cast<size_t>(AssetId::OBOLOS) + 1;
 const AssetPolicy& DefaultPolicy()
 {
     static AssetPolicy fallback{
-        static_cast<uint8_t>(AssetId::DRACHMA), true, true, 210000, 50 * COIN, 42000000ULL * COIN, 600, 0.04, false, 42000000ULL * COIN, 144};
+        static_cast<uint8_t>(AssetId::DRACHMA), true, true, 210000, 50 * COIN, 41000000ULL * COIN, 600, 0.04, false, 41000000ULL * COIN, 144};
     return fallback;
 }
 
@@ -82,7 +82,7 @@ const AssetPolicy& GetAssetPolicy(uint8_t assetId)
 {
     static const AssetPolicy kPolicies[] = {
         {static_cast<uint8_t>(AssetId::TALANTON), true, false, 210000, 50 * COIN, 21000000ULL * COIN, 600, 0.0, false, 21000000ULL * COIN, 0},
-        {static_cast<uint8_t>(AssetId::DRACHMA), true, true, 210000, 50 * COIN, 42000000ULL * COIN, 600, 0.04, false, 42000000ULL * COIN, 144},
+        {static_cast<uint8_t>(AssetId::DRACHMA), true, true, 210000, 50 * COIN, 41000000ULL * COIN, 600, 0.04, false, 41000000ULL * COIN, 144},
         {static_cast<uint8_t>(AssetId::OBOLOS), false, true, 0, 0, 61000000ULL * COIN, 600, 0.05, true, 61000000ULL * COIN, 144},
     };
 

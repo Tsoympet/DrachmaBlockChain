@@ -4,7 +4,7 @@
 Drachma is a minimalist proof-of-work cryptocurrency engineered for predictable issuance, transparent accounting, and conservative security assumptions. The protocol follows a Bitcoin-class model with SHA-256d proof-of-work, Schnorr signatures, a UTXO ledger, and straightforward networking. The design prioritizes determinism, reproducibility, and reviewability over novelty while maintaining production-grade operational expectations.
 
 ## Monetary Policy
-- **Max supply:** 42,000,000 DRM
+- **Max supply:** 41,000,000 DRM
 - **Genesis premine:** None; the genesis coinbase is provably unspendable.
 - **Block subsidy:** 10 DRM initially, halving every 2,102,400 blocks (~4 years at 60-second targets) to converge on the cap without tail emission.
 - **Block interval:** 60 seconds target.
@@ -96,7 +96,7 @@ Residual risks common to open networks—such as widespread miner collusion or n
 - **What stays the same:** SHA-256d proof-of-work, UTXO accounting, Schnorr-over-secp256k1 signatures, and conservative script rules mirror Bitcoin’s well-tested foundations. Fork choice relies on cumulative work and full validation—never checkpoints or trust anchors.
 - **What differs:**
   - **Block cadence:** 60-second targets with 60-block retargets tighten confirmation latency while retaining bounded difficulty swings.
-  - **Monetary cap:** 42 million DRM with longer halving intervals to preserve multi-decade emission, versus 21 million BTC.
+  - **Monetary cap:** 41 million DRM with longer halving intervals to preserve multi-decade emission, versus 21 million BTC.
   - **Launch posture:** No premine, no developer fees, no version-bits governance. All activation parameters are transparent and reproducible from genesis.
   - **Layered design:** Services (P2P/RPC/wallet/indexes) and UI live outside consensus to simplify audits and minimize attack surface.
   - **Mainnet readiness:** Deterministic build instructions, monitoring defaults (Prometheus/Grafana), and reproducible genesis verification scripts accompany the launch materials.
@@ -107,8 +107,8 @@ Cross-chain components operate off-consensus. Proof-based adapters validate exte
 ## Conclusion
 Drachma delivers a conservative, auditable proof-of-work system with clear monetary bounds and a minimal feature set. The layered architecture isolates consensus from services and UI, enabling independent review and safe extensibility without compromising core security guarantees.
 
-## Economic Rationale for a 42M Cap
-The 42,000,000 DRM maximum supply balances **scarcity** and **transactional utility**:
+## Economic Rationale for a 41M Cap
+The 41,000,000 DRM maximum supply balances **scarcity** and **transactional utility**:
 
 - A higher unit count than Bitcoin reduces UX friction for retail payments while maintaining scarcity via predictable halvings.
 - Halving every ~4 years maintains miner revenue visibility and reduces abrupt security budget drops.

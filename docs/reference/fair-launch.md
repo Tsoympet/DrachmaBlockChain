@@ -6,6 +6,6 @@ All participants follow the same consensus rules:
 - SHA-256d proof-of-work
 - 60-second target block time
 - 2,102,400-block halving interval (~4 years)
-- 42,000,000 DRM maximum supply
+- 41,000,000 DRM maximum supply
 
 No checkpoints, admin keys, or governance mechanisms are present. Network bootstrapping relies on public seeds and standard block validation.

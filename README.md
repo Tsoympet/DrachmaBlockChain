@@ -262,7 +262,7 @@ Security-impacting changes and reports are welcomed; consensus/crypto modificati
 
 - **Proof-of-Work:** SHA-256d (double SHA-256), unmodified
 - **Launch Model:** No premine, no privileged rewards, no special launch logic
-- **Supply Cap:** 42,000,000 DRM
+- **Supply Cap:** 41,000,000 DRM
 - **Consensus First:** All critical rules reside exclusively in Layer 1
 - **No Governance Logic:** No voting systems, no administrative keys
 - **Execution model:** Mandatory WASM sidechain with enforced domain law (Layer-2 NFTs are asset-agnostic; DRM→contracts; OBL→dApps)
@@ -425,7 +425,7 @@ This repository now ships a working reference implementation with Layer 1/2/3 bi
 
 **What is the total supply and issuance schedule?**
 
-- Hard cap of **42,000,000 DRM**.
+- Hard cap of **41,000,000 DRM**.
 - Block subsidy declines on a predictable schedule (see [`docs/technical-specs/technical-spec.md`](docs/technical-specs/technical-spec.md) for parameters) to encourage long-term participation.
 
 **How is the fair launch verifiable?**

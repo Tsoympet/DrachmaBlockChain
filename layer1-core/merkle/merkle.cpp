@@ -19,17 +19,12 @@ uint256 ComputeMerkleRoot(const std::vector<Transaction>& txs)
     if (txs.size() == 1)
         return TransactionHash(txs[0]);
 
+    // Build initial layer of transaction hashes
+    // Note: uint256 is std::array<uint8_t, 32>, size is guaranteed to be 32
     std::vector<uint256> layer;
     layer.reserve(txs.size());
-    
-    // Build initial layer and validate all hashes upfront
-    // This is more efficient than validating in the inner loop
     for (const auto& tx : txs) {
-        auto hash = TransactionHash(tx);
-        if (hash.size() != 32) {
-            throw std::runtime_error("invalid hash size in merkle computation");
-        }
-        layer.push_back(hash);
+        layer.push_back(TransactionHash(tx));
     }
 
     // Optimize: use single allocation for concat buffer outside loop
@@ -44,7 +39,6 @@ uint256 ComputeMerkleRoot(const std::vector<Transaction>& txs)
         next.reserve(nextSize);
         
         for (size_t i = 0; i < layerSize; i += 2) {
-            // Hashes already validated above, no need to check in hot path
             std::memcpy(concat, layer[i].data(), 32);
             
             // Handle odd-sized layer by duplicating last element

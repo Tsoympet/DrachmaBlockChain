@@ -613,20 +613,35 @@ std::optional<Block> RPCServer::ReadBlock(uint32_t height)
     }
     
     // Read index to find block offset
+    // Index file format: [count] [height, offset] pairs
+    // Heights are stored in ascending order, allowing binary search
     uint32_t indexCount = 0;
     indexFile.read(reinterpret_cast<char*>(&indexCount), sizeof(indexCount));
     if (!indexFile || indexCount > 10000000) return std::nullopt; // Sanity check
     
+    // Binary search through index entries for O(log n) lookup
+    // This is more efficient than O(n) linear scan for large blockchains
     std::optional<uint64_t> blockOffset;
-    for (uint32_t i = 0; i < indexCount; ++i) {
+    uint32_t left = 0, right = indexCount;
+    
+    while (left < right) {
+        uint32_t mid = left + (right - left) / 2;
+        indexFile.seekg(sizeof(uint32_t) + mid * (sizeof(uint32_t) + sizeof(uint64_t)));
+        
         uint32_t h = 0;
         uint64_t offset = 0;
         indexFile.read(reinterpret_cast<char*>(&h), sizeof(h));
         indexFile.read(reinterpret_cast<char*>(&offset), sizeof(offset));
+        
         if (!indexFile) break;
+        
         if (h == height) {
             blockOffset = offset;
             break;
+        } else if (h < height) {
+            left = mid + 1;
+        } else {
+            right = mid;
         }
     }
     

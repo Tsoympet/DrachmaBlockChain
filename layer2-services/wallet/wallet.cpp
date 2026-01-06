@@ -261,15 +261,28 @@ std::vector<UTXO> WalletBackend::SelectCoins(uint64_t amount, std::optional<uint
     
     // Strategy 3: Accumulative selection - use smallest UTXOs first to reduce fragmentation
     // This helps consolidate dust and maintains larger UTXOs for future larger transactions
-    std::vector<UTXO> sortedCandidates = candidates;
-    std::sort(sortedCandidates.begin(), sortedCandidates.end(),
-              [](const UTXO& a, const UTXO& b) { return a.txout.value < b.txout.value; });
+    // Use nth_element for partial sort - O(n) instead of full sort O(n log n)
+    std::vector<UTXO> accumCandidates = candidates;
     
+    // Find the minimal set of UTXOs needed
+    // We only need to sort enough to reach our target, not the entire set
+    auto nth = accumCandidates.begin();
+    uint64_t runningTotal = 0;
+    
+    for (size_t i = 0; i < accumCandidates.size() && runningTotal < amount; ++i) {
+        std::nth_element(accumCandidates.begin() + i, accumCandidates.begin() + i,
+                        accumCandidates.end(),
+                        [](const UTXO& a, const UTXO& b) { return a.txout.value < b.txout.value; });
+        runningTotal += accumCandidates[i].txout.value;
+        ++nth;
+    }
+    
+    // Collect the minimal sorted subset
     std::vector<UTXO> chosen;
     uint64_t acc = 0;
-    for (const auto& u : sortedCandidates) {
-        chosen.push_back(u);
-        acc += u.txout.value;
+    for (auto it = accumCandidates.begin(); it != nth; ++it) {
+        chosen.push_back(*it);
+        acc += it->txout.value;
         if (acc >= amount) {
             return chosen;
         }

@@ -21,8 +21,15 @@ uint256 ComputeMerkleRoot(const std::vector<Transaction>& txs)
 
     std::vector<uint256> layer;
     layer.reserve(txs.size());
+    
+    // Build initial layer and validate all hashes upfront
+    // This is more efficient than validating in the inner loop
     for (const auto& tx : txs) {
-        layer.push_back(TransactionHash(tx));
+        auto hash = TransactionHash(tx);
+        if (hash.size() != 32) {
+            throw std::runtime_error("invalid hash size in merkle computation");
+        }
+        layer.push_back(hash);
     }
 
     // Optimize: use single allocation for concat buffer outside loop
@@ -37,21 +44,12 @@ uint256 ComputeMerkleRoot(const std::vector<Transaction>& txs)
         next.reserve(nextSize);
         
         for (size_t i = 0; i < layerSize; i += 2) {
-            // Validate hash size (should always be 32 bytes)
-            if (layer[i].size() != 32) {
-                throw std::runtime_error("invalid hash size in merkle computation");
-            }
-            
+            // Hashes already validated above, no need to check in hot path
             std::memcpy(concat, layer[i].data(), 32);
             
             // Handle odd-sized layer by duplicating last element
             // This follows Bitcoin's merkle tree construction algorithm
             const size_t rightIdx = (i + 1 < layerSize) ? i + 1 : i;
-            
-            if (layer[rightIdx].size() != 32) {
-                throw std::runtime_error("invalid hash size in merkle computation");
-            }
-            
             std::memcpy(concat + 32, layer[rightIdx].data(), 32);
             
             // Use tagged hash for domain separation and protection against length extension

@@ -8,6 +8,8 @@
 namespace {
 
 // Fee constants (matching doc/fees.md specification)
+// TODO: Once actual implementation exists, these should be imported from the implementation
+// For now, they serve as specification-based test constants
 constexpr uint64_t BASE_FEE = 1000;           // 0.00001 OBL
 constexpr uint64_t MAX_PRIORITY_FEE = 100000; // 0.001 OBL
 
@@ -178,6 +180,8 @@ TEST_F(FeePredictabilityTest, MempoolFeeOrdering) {
 
 // Test fee burning calculation
 TEST_F(FeePredictabilityTest, FeeBurningCalculation) {
+    // TODO: Once actual implementation exists, these should be imported from the implementation
+    // For now, they serve as specification-based test constants
     const bool FEE_BURNING_ENABLED = true;
     const int BURN_PERCENTAGE = 100;
     

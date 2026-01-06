@@ -80,10 +80,24 @@ const AssetPolicy& DefaultPolicy()
 
 const AssetPolicy& GetAssetPolicy(uint8_t assetId)
 {
+    // AssetPolicy fields: assetId, powAllowed, posAllowed, powHalvingInterval, powInitialSubsidy,
+    //                     maxMoney, posSlotSpacing, posApr, posEth2Curve, posSupplyTarget, minStakeAgeSlots
     static const AssetPolicy kPolicies[] = {
-        {static_cast<uint8_t>(AssetId::TALANTON), true, false, 2102400, 5 * COIN, 21000000ULL * COIN, 600, 0.0, false, 21000000ULL * COIN, 0},
-        {static_cast<uint8_t>(AssetId::DRACHMA), true, false, 2102400, 10 * COIN, 41000000ULL * COIN, 600, 0.0, false, 41000000ULL * COIN, 0},
-        {static_cast<uint8_t>(AssetId::OBOLOS), true, false, 2102400, 8 * COIN, 61000000ULL * COIN, 600, 0.0, false, 61000000ULL * COIN, 0},
+        // TLN: PoW-only, 5 per block, 21M cap
+        {static_cast<uint8_t>(AssetId::TALANTON), /*powAllowed=*/true, /*posAllowed=*/false, 
+         /*powHalvingInterval=*/2102400, /*powInitialSubsidy=*/5 * COIN, /*maxMoney=*/21000000ULL * COIN, 
+         /*posSlotSpacing=*/600, /*posApr=*/0.0, /*posEth2Curve=*/false, /*posSupplyTarget=*/21000000ULL * COIN, 
+         /*minStakeAgeSlots=*/0},
+        // DRM: PoW-only, 10 per block, 41M cap
+        {static_cast<uint8_t>(AssetId::DRACHMA), /*powAllowed=*/true, /*posAllowed=*/false, 
+         /*powHalvingInterval=*/2102400, /*powInitialSubsidy=*/10 * COIN, /*maxMoney=*/41000000ULL * COIN, 
+         /*posSlotSpacing=*/600, /*posApr=*/0.0, /*posEth2Curve=*/false, /*posSupplyTarget=*/41000000ULL * COIN, 
+         /*minStakeAgeSlots=*/0},
+        // OBL: PoW-only, 8 per block, 61M cap (settlement token)
+        {static_cast<uint8_t>(AssetId::OBOLOS), /*powAllowed=*/true, /*posAllowed=*/false, 
+         /*powHalvingInterval=*/2102400, /*powInitialSubsidy=*/8 * COIN, /*maxMoney=*/61000000ULL * COIN, 
+         /*posSlotSpacing=*/600, /*posApr=*/0.0, /*posEth2Curve=*/false, /*posSupplyTarget=*/61000000ULL * COIN, 
+         /*minStakeAgeSlots=*/0},
     };
 
     for (const auto& policy : kPolicies) {

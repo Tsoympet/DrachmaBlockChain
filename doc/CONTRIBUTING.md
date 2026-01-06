@@ -79,13 +79,13 @@ Consensus, cryptography, and wallet key-handling changes require extra scrutiny:
 ## Issue Reporting
 
 - Use issue templates and label the area (Layer 1/2/3, docs, tests, tooling). Include environment details, stack traces, and minimal repro steps.
-- Do not report security issues publicly; follow [docs/security/security-overview.md](docs/security/security-overview.md).
+- Do not report security issues publicly; follow [doc/security/security-overview.md](doc/security/security-overview.md).
 
 ## Security & Consensus Safety
 
 - Treat consensus code as immutable unless there is strong, peer-reviewed rationale.
 - Never introduce hidden parameters, soft-forks, or policy changes without documentation and broad review.
-- Report vulnerabilities privately per [docs/security/security-overview.md](docs/security/security-overview.md); do not open public issues.
+- Report vulnerabilities privately per [doc/security/security-overview.md](doc/security/security-overview.md); do not open public issues.
 
 ## Continuous Integration
 
@@ -93,7 +93,7 @@ Consensus, cryptography, and wallet key-handling changes require extra scrutiny:
 
 ## Documentation Updates
 
-- Update relevant docs (e.g., `docs/`, `README.md`, `scripts/`) when behavior changes.
+- Update relevant docs (e.g., `doc/`, `README.md`, `scripts/`) when behavior changes.
 - Keep diagrams and examples synchronized with code.
 
 Thank you for helping make DRACHMA reliable, auditable, and fair.

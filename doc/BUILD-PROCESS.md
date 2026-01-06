@@ -522,7 +522,7 @@ sudo rm -rf /usr/local/share/drachma/
 
 ## Troubleshooting Build Issues
 
-See `docs/TROUBLESHOOTING.md` for detailed build troubleshooting.
+See `doc/TROUBLESHOOTING.md` for detailed build troubleshooting.
 
 **Common issues:**
 - Missing dependencies → install required packages
@@ -596,7 +596,7 @@ act -j build
 **Build issues?**
 
 1. Check `INSTALL.md`
-2. Review `docs/TROUBLESHOOTING.md`
+2. Review `doc/TROUBLESHOOTING.md`
 3. Search GitHub Issues
 4. Ask in community channels with:
    - Your OS and version

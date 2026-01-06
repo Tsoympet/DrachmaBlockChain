@@ -22,7 +22,7 @@ Testing is critical for mainnet readiness. This document provides:
 
 ### 1. Build & Installation Testing
 
-**Document:** `docs/BUILD-PROCESS.md`
+**Document:** `doc/BUILD-PROCESS.md`
 
 **Quick Test:**
 ```bash
@@ -103,7 +103,7 @@ python3 ./scripts/extended-validation.py --testnet
 
 ### 5. Wallet Recovery Testing
 
-**Document:** `docs/WALLET-RECOVERY-TESTING.md`
+**Document:** `doc/WALLET-RECOVERY-TESTING.md`
 
 **Test Areas:**
 - [ ] Seed phrase recovery (24-word mnemonic)
@@ -121,7 +121,7 @@ python3 ./scripts/extended-validation.py --testnet
 
 ### 6. RPC Testing
 
-**Document:** `docs/RPC-TESTING.md`
+**Document:** `doc/RPC-TESTING.md`
 
 **Quick Test:**
 ```bash
@@ -163,7 +163,7 @@ watch -n 5 'drachma-cli --testnet getblockchaininfo'
 
 ### 8. Mining Testing
 
-**Document:** `docs/MINING-GUIDE.md`
+**Document:** `doc/MINING-GUIDE.md`
 
 **Test Scenarios:**
 - [ ] CPU mining functional
@@ -463,7 +463,7 @@ act -j test
 
 **Issues during testing?**
 
-1. Check `docs/TROUBLESHOOTING.md`
+1. Check `doc/TROUBLESHOOTING.md`
 2. Review test-specific documentation
 3. Search GitHub Issues
 4. Report new issues with:
@@ -500,12 +500,12 @@ ctest --test-dir build --output-on-failure --verbose
 ## Related Documents
 
 - `ANALYSIS-EXECUTIVE-SUMMARY.md` - Overall readiness assessment
-- `docs/LAUNCH-ACTION-ITEMS.md` - Pre-launch checklist
-- `docs/MAINNET-READINESS.md` - Technical readiness
-- `docs/TROUBLESHOOTING.md` - Common issues
-- `docs/BUILD-PROCESS.md` - Build instructions
-- `docs/WALLET-RECOVERY-TESTING.md` - Wallet tests
-- `docs/RPC-TESTING.md` - RPC tests
+- `doc/LAUNCH-ACTION-ITEMS.md` - Pre-launch checklist
+- `doc/MAINNET-READINESS.md` - Technical readiness
+- `doc/TROUBLESHOOTING.md` - Common issues
+- `doc/BUILD-PROCESS.md` - Build instructions
+- `doc/WALLET-RECOVERY-TESTING.md` - Wallet tests
+- `doc/RPC-TESTING.md` - RPC tests
 
 ---
 

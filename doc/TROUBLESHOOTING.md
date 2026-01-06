@@ -460,9 +460,9 @@ testnet=0
 If your issue isn't covered here:
 
 1. **Check Documentation:**
-   - `docs/getting-started/` - Setup guides
-   - `docs/reference/` - Technical references
-   - `docs/operators/` - Node operation
+   - `doc/getting-started/` - Setup guides
+   - `doc/reference/` - Technical references
+   - `doc/operators/` - Node operation
 
 2. **Review Logs:**
    ```bash

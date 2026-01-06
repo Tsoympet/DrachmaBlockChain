@@ -584,7 +584,7 @@ daily_coins = (your_hashrate / network_hashrate) * blocks_per_day * block_reward
 
 **Issues or questions?**
 
-1. Check `docs/TROUBLESHOOTING.md`
+1. Check `doc/TROUBLESHOOTING.md`
 2. Review miner logs
 3. Search GitHub Issues
 4. Ask in community channels

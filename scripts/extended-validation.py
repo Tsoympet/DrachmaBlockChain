@@ -325,7 +325,7 @@ class DrachmaValidator:
         if self.errors:
             print("  1. Review error messages above")
             print("  2. Check node logs: ~/.drachma/debug.log")
-            print("  3. See docs/TROUBLESHOOTING.md")
+            print("  3. See doc/TROUBLESHOOTING.md")
         
         if "No peer connections" in str(self.warnings):
             print("  • Ensure network connectivity")

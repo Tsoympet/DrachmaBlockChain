@@ -58,7 +58,7 @@ if [ "$deps_ok" = false ]; then
     echo ""
     echo -e "${RED}Missing required dependencies!${NC}"
     echo "Please install: cmake, make, g++/clang++"
-    echo "See docs/getting-started/building.md for details"
+    echo "See doc/getting-started/building.md for details"
     exit 1
 fi
 

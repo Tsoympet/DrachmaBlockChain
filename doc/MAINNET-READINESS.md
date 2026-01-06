@@ -421,10 +421,10 @@ The maximum supply has been successfully updated from 42,000,000 DRM to 41,000,0
 
 ### Documentation Changes:
 - `README.md` - Updated supply cap references
-- `docs/reference/economics.md` - Updated supply cap and recalculated emission table
-- `docs/technical-specs/technical-spec.md` - Updated supply cap and emission schedule
-- `docs/reference/whitepaper.md` - Updated monetary policy and economic rationale
-- `docs/reference/fair-launch.md` - Updated maximum supply reference
+- `doc/reference/economics.md` - Updated supply cap and recalculated emission table
+- `doc/technical-specs/technical-spec.md` - Updated supply cap and emission schedule
+- `doc/reference/whitepaper.md` - Updated monetary policy and economic rationale
+- `doc/reference/fair-launch.md` - Updated maximum supply reference
 
 ### Verification:
 - All 97 tests pass after changes

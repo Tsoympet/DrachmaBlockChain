@@ -17,7 +17,7 @@ This document summarizes the implementation of actionable items identified in `A
 From the problem statement:
 > "check ANALYSIS-EXECUTIVE-SUMMARY.md and after that we do anything is mention there and can be done here now"
 
-The executive summary identified several critical areas for mainnet readiness, with specific actionable items in `docs/LAUNCH-ACTION-ITEMS.md`.
+The executive summary identified several critical areas for mainnet readiness, with specific actionable items in `doc/LAUNCH-ACTION-ITEMS.md`.
 
 ---
 
@@ -63,7 +63,7 @@ The executive summary identified several critical areas for mainnet readiness, w
 ### Phase 2: Enhanced Documentation ✅
 
 **4. Troubleshooting Guide**
-- **File:** `docs/TROUBLESHOOTING.md` (9.4KB)
+- **File:** `doc/TROUBLESHOOTING.md` (9.4KB)
 - **Purpose:** Help users resolve common issues
 - **Coverage:**
   - Build issues (CMake, compilation, tests)
@@ -76,7 +76,7 @@ The executive summary identified several critical areas for mainnet readiness, w
 - **Addresses:** LAUNCH-ACTION-ITEMS.md #8 (line 160)
 
 **5. Frequently Asked Questions (FAQ)**
-- **File:** `docs/FAQ.md` (12KB)
+- **File:** `doc/FAQ.md` (12KB)
 - **Purpose:** Answer common questions about DRACHMA
 - **Coverage:**
   - General (what is DRACHMA, mainnet status, differences)
@@ -92,7 +92,7 @@ The executive summary identified several critical areas for mainnet readiness, w
 - **Addresses:** LAUNCH-ACTION-ITEMS.md #8 (line 161)
 
 **6. Mining Setup Guide**
-- **File:** `docs/MINING-GUIDE.md` (11.8KB)
+- **File:** `doc/MINING-GUIDE.md` (11.8KB)
 - **Purpose:** Complete guide for mining operations
 - **Coverage:**
   - Node setup for mining
@@ -111,7 +111,7 @@ The executive summary identified several critical areas for mainnet readiness, w
 ### Phase 3: Build System Documentation ✅
 
 **7. Build Process Documentation**
-- **File:** `docs/BUILD-PROCESS.md` (11.8KB)
+- **File:** `doc/BUILD-PROCESS.md` (11.8KB)
 - **Purpose:** Document deterministic build process
 - **Coverage:**
   - Build requirements and dependencies
@@ -129,7 +129,7 @@ The executive summary identified several critical areas for mainnet readiness, w
 ### Phase 4: Testing Infrastructure ✅
 
 **8. Wallet Recovery Testing Procedures**
-- **File:** `docs/WALLET-RECOVERY-TESTING.md` (11.4KB)
+- **File:** `doc/WALLET-RECOVERY-TESTING.md` (11.4KB)
 - **Purpose:** Document wallet recovery test procedures
 - **Coverage:**
   - Seed phrase recovery tests
@@ -143,7 +143,7 @@ The executive summary identified several critical areas for mainnet readiness, w
 - **Addresses:** LAUNCH-ACTION-ITEMS.md #7 (line 139)
 
 **9. RPC Endpoint Validation**
-- **File:** `docs/RPC-TESTING.md` (14KB)
+- **File:** `doc/RPC-TESTING.md` (14KB)
 - **Purpose:** Comprehensive RPC testing procedures
 - **Coverage:**
   - All RPC categories (blockchain, network, mining, wallet, tx)
@@ -155,7 +155,7 @@ The executive summary identified several critical areas for mainnet readiness, w
 - **Addresses:** LAUNCH-ACTION-ITEMS.md #3 (RPC validation) and #7
 
 **10. Master Testing Procedures**
-- **File:** `docs/TESTING-PROCEDURES.md` (9.8KB)
+- **File:** `doc/TESTING-PROCEDURES.md` (9.8KB)
 - **Purpose:** Consolidate all testing procedures
 - **Coverage:**
   - All testing categories

@@ -13,9 +13,9 @@ Successfully identified and enhanced 4 critical areas with partial/minimal imple
 - **QR Code** - Documented roadmap with library recommendations
 
 ### 2. Comprehensive Documentation
-- **Technical Deep Dive**: `docs/improvements/code-enhancements.md` (8KB)
-- **Executive Summary**: `docs/improvements/SUMMARY.md` (4KB)
-- **Quick Start Guide**: `docs/improvements/README.md` (4KB)
+- **Technical Deep Dive**: `doc/improvements/code-enhancements.md` (8KB)
+- **Executive Summary**: `doc/improvements/SUMMARY.md` (4KB)
+- **Quick Start Guide**: `doc/improvements/README.md` (4KB)
 
 ### 3. Working Demonstrations
 - **Coin Selection Demo**: `tests/improvements/coin_selection_comparison.py`
@@ -75,9 +75,9 @@ Scenario 4: Dust consolidation - 75% fee savings
 
 ## New Files Created
 
-1. `docs/improvements/code-enhancements.md` - Technical documentation
-2. `docs/improvements/SUMMARY.md` - Executive summary
-3. `docs/improvements/README.md` - Quick start guide
+1. `doc/improvements/code-enhancements.md` - Technical documentation
+2. `doc/improvements/SUMMARY.md` - Executive summary
+3. `doc/improvements/README.md` - Quick start guide
 4. `tests/improvements/coin_selection_comparison.py` - Working demo
 
 ## Code Review Status

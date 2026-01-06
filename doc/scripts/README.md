@@ -98,9 +98,9 @@ python3 scripts/extended-validation.py --mainnet
 ## Testing Scripts
 
 For comprehensive testing procedures, see:
-- `docs/TESTING-PROCEDURES.md` - Master testing guide
-- `docs/RPC-TESTING.md` - RPC endpoint testing
-- `docs/WALLET-RECOVERY-TESTING.md` - Wallet recovery tests
+- `doc/TESTING-PROCEDURES.md` - Master testing guide
+- `doc/RPC-TESTING.md` - RPC endpoint testing
+- `doc/WALLET-RECOVERY-TESTING.md` - Wallet recovery tests
 
 ---
 
@@ -191,7 +191,7 @@ All scripts should pass before proceeding with mainnet deployment.
 
 **Script issues?**
 1. Check script's built-in help (if available)
-2. Review relevant documentation in `docs/`
+2. Review relevant documentation in `doc/`
 3. Search GitHub Issues
 4. Report bugs with:
    - Script name and version
@@ -203,11 +203,11 @@ All scripts should pass before proceeding with mainnet deployment.
 
 ## Related Documentation
 
-- `docs/TESTING-PROCEDURES.md` - Comprehensive testing guide
-- `docs/BUILD-PROCESS.md` - Build documentation
-- `docs/TROUBLESHOOTING.md` - Common issues
+- `doc/TESTING-PROCEDURES.md` - Comprehensive testing guide
+- `doc/BUILD-PROCESS.md` - Build documentation
+- `doc/TROUBLESHOOTING.md` - Common issues
 - `ANALYSIS-EXECUTIVE-SUMMARY.md` - Launch readiness
-- `docs/LAUNCH-ACTION-ITEMS.md` - Pre-launch tasks
+- `doc/LAUNCH-ACTION-ITEMS.md` - Pre-launch tasks
 
 ---
 

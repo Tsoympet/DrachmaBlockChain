@@ -158,7 +158,7 @@ ctest --test-dir build --output-on-failure
 
 #### macOS
 - May need to set `OPENSSL_ROOT_DIR=$(brew --prefix openssl)`
-- Qt apps can be bundled with macdeployqt (see docs/getting-started/building.md)
+- Qt apps can be bundled with macdeployqt (see doc/getting-started/building.md)
 
 #### Windows
 - Use Developer Command Prompt or PowerShell
@@ -167,12 +167,12 @@ ctest --test-dir build --output-on-failure
 
 ## Getting Help
 
-- For build issues, see `docs/getting-started/building.md`
+- For build issues, see `doc/getting-started/building.md`
 - For running the node, see `README.md`
 - Report bugs: https://github.com/Tsoympet/BlockChainDrachma/issues
 
 ## See Also
 
 - `README.md` - Project overview and quick start
-- `docs/getting-started/building.md` - Detailed build instructions
+- `doc/getting-started/building.md` - Detailed build instructions
 - `CONTRIBUTING.md` - Contribution guidelines

@@ -8,10 +8,10 @@
 [![GitHub Stars](https://img.shields.io/github/stars/Tsoympet/BlockChainDrachma?style=social)](https://github.com/Tsoympet/BlockChainDrachma/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/Tsoympet/BlockChainDrachma?style=social)](https://github.com/Tsoympet/BlockChainDrachma/network/members)
 [![Open Issues](https://img.shields.io/github/issues/Tsoympet/BlockChainDrachma)](https://github.com/Tsoympet/BlockChainDrachma/issues)
-[![Security Policy](https://img.shields.io/badge/Security-Policy-orange)](docs/security/security-overview.md)
-[![Audit Status](https://img.shields.io/badge/Audit-In%20preparation-blueviolet)](docs/security/audit-guide.md)
+[![Security Policy](https://img.shields.io/badge/Security-Policy-orange)](doc/security/security-overview.md)
+[![Audit Status](https://img.shields.io/badge/Audit-In%20preparation-blueviolet)](doc/security/audit-guide.md)
 [![Discussions](https://img.shields.io/badge/Discussions-join-blue.svg)](#community--support)
-[![Roadmap](https://img.shields.io/badge/Roadmap-See%20plans-8A2BE2)](docs/reference/roadmap.md)
+[![Roadmap](https://img.shields.io/badge/Roadmap-See%20plans-8A2BE2)](doc/reference/roadmap.md)
 
 DRACHMA is a **Proof-of-Work monetary blockchain** designed for long-term stability, auditability, and minimal trust assumptions.
 
@@ -48,7 +48,7 @@ Always verify signatures and checksums before running binaries.
   ```
   See [`INSTALL.md`](INSTALL.md) for detailed installation instructions.
 - **One-line installers:** `./scripts/install-linux.sh`, `./scripts/install-macos.sh`, and `.\scripts\install-windows.ps1` automate the build and installation process.
-- **Build from source (advanced):** See [`docs/getting-started/building.md`](docs/getting-started/building.md) for platform-specific setup, CMake options, and Qt deployment tips.
+- **Build from source (advanced):** See [`doc/getting-started/building.md`](doc/getting-started/building.md) for platform-specific setup, CMake options, and Qt deployment tips.
 - **Docker quickstart:**
   ```bash
   docker-compose up -d
@@ -99,7 +99,7 @@ sudo make install
    ctest --test-dir build
    ```
 
-> Tip: See [`INSTALL.md`](INSTALL.md) for detailed installation options, [`docs/getting-started/building.md`](docs/getting-started/building.md) for platform-specific details, and [`docs/user-guides/mining-guide.md`](docs/user-guides/mining-guide.md) for GPU tuning and troubleshooting.
+> Tip: See [`INSTALL.md`](INSTALL.md) for detailed installation options, [`doc/getting-started/building.md`](doc/getting-started/building.md) for platform-specific details, and [`doc/user-guides/mining-guide.md`](doc/user-guides/mining-guide.md) for GPU tuning and troubleshooting.
 
 ---
 
@@ -213,7 +213,7 @@ Commands are subject to change as the implementation matures; prefer scripts in 
 The Layer 3 desktop wallet is testnet-ready. Representative views are available via reproducible demo scripts rather than inline binary assets:
 
 - **Dashboard and sync status:** launch `./build/layer3-app/drachma-wallet --connect 127.0.0.1:9333` and use the built-in “Demo Mode” under **Help → Demo Screens** to generate on-demand previews.
-- **Send flow with custom fee selection:** the same demo menu exports a markdown report (`docs/assets/ui-snapshots.md`) describing the send dialog, fee slider, and QR rendering for sharing without embedding binary images in the repository.
+- **Send flow with custom fee selection:** the same demo menu exports a markdown report (`doc/assets/ui-snapshots.md`) describing the send dialog, fee slider, and QR rendering for sharing without embedding binary images in the repository.
 
 ## Internal UI Icon System
 
@@ -238,21 +238,21 @@ Use this checklist before connecting to mainnet or distributing binaries:
 
 ## Known Limitations
 
-- **API surface is evolving:** Some RPC methods are still stabilizing; see [`docs/developer-guides/api-reference.md`](docs/developer-guides/api-reference.md) for current coverage and examples.
+- **API surface is evolving:** Some RPC methods are still stabilizing; see [`doc/developer-guides/api-reference.md`](doc/developer-guides/api-reference.md) for current coverage and examples.
 - **Testnet-first posture:** Monitoring dashboards and alert thresholds are tuned for testnet; operators must adjust for mainnet scale.
 - **Hardware wallet support:** Integrations are experimental and should be treated as beta until external audits are complete.
 - **OpenCL miner variance:** Performance and determinism can differ across vendor drivers; CUDA paths are prioritized for reproducibility.
 - **Docs in motion:** Roadmaps and technical parameters may shift after audit feedback; always consult the latest tagged release notes.
 
-Mainnet procedures and host preparation steps are detailed in [`docs/operators/deployment.md`](docs/operators/deployment.md) and security reviews are outlined in [`docs/security/audit-guide.md`](docs/security/audit-guide.md).
+Mainnet procedures and host preparation steps are detailed in [`doc/operators/deployment.md`](doc/operators/deployment.md) and security reviews are outlined in [`doc/security/audit-guide.md`](doc/security/audit-guide.md).
 
 ---
 
 ## Security
 
-- Review the [Security Policy](docs/security/security-overview.md) for responsible disclosure and response timelines.
-- Consult the [Security Audit Guide](docs/security/audit-guide.md) for scope, fuzzing targets, and testnet/regtest setups.
-- See the [Threat Model](docs/security/threat-model.md) for adversaries, assets, and mitigations guiding validation and monitoring.
+- Review the [Security Policy](doc/security/security-overview.md) for responsible disclosure and response timelines.
+- Consult the [Security Audit Guide](doc/security/audit-guide.md) for scope, fuzzing targets, and testnet/regtest setups.
+- See the [Threat Model](doc/security/threat-model.md) for adversaries, assets, and mitigations guiding validation and monitoring.
 
 Security-impacting changes and reports are welcomed; consensus/crypto modifications require additional review as noted in [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -339,9 +339,9 @@ Mining and block production begin normally from the first block.
 
 Launch conditions are documented in:
 
-- [`docs/reference/fair-launch.md`](docs/reference/fair-launch.md)
-- [`docs/security/security-notes.md`](docs/security/security-notes.md)
-- [`docs/reference/whitepaper.md`](docs/reference/whitepaper.md)
+- [`doc/reference/fair-launch.md`](doc/reference/fair-launch.md)
+- [`doc/security/security-notes.md`](doc/security/security-notes.md)
+- [`doc/reference/whitepaper.md`](doc/reference/whitepaper.md)
 
 ---
 
@@ -363,7 +363,7 @@ Reference mining implementations are provided:
 - GPU miner (CUDA)
 - GPU miner (OpenCL)
 
-These miners serve as transparent reference tools and are not optimized black-box software. See [`docs/user-guides/mining-guide.md`](docs/user-guides/mining-guide.md) for configuration tips, intensity tuning, and monitoring guidance.
+These miners serve as transparent reference tools and are not optimized black-box software. See [`doc/user-guides/mining-guide.md`](doc/user-guides/mining-guide.md) for configuration tips, intensity tuning, and monitoring guidance.
 
 ---
 
@@ -376,7 +376,7 @@ drachma-blockchain/
 ├─ layer3-app/ # Desktop application
 ├─ miners/ # Reference CPU & GPU miners
 ├─ testnet/ # Test network parameters
-├─ docs/ # Technical documentation
+├─ doc/ # Technical documentation
 ├─ tests/ # Unit, integration, and fuzz tests
 ├─ common/ # Shared utilities
 └─ scripts/ # Build and run scripts
@@ -395,13 +395,13 @@ drachma-blockchain/
 - 🔄 Release candidate binaries and deterministic build reproducibility
 - 🛠️ Mainnet launch following testnet stability, audits, and reproducible builds
 
-More detail is available in [`docs/reference/roadmap.md`](docs/reference/roadmap.md).
+More detail is available in [`doc/reference/roadmap.md`](doc/reference/roadmap.md).
 
 ---
 
 ## Status
 
-This repository now ships a working reference implementation with Layer 1/2/3 binaries, miners, and ctests wired into CI. Remaining hardening items and edge-case gaps are tracked in [`docs/security/AUDIT.md`](docs/security/AUDIT.md).
+This repository now ships a working reference implementation with Layer 1/2/3 binaries, miners, and ctests wired into CI. Remaining hardening items and edge-case gaps are tracked in [`doc/security/AUDIT.md`](doc/security/AUDIT.md).
 
 ---
 
@@ -426,11 +426,11 @@ This repository now ships a working reference implementation with Layer 1/2/3 bi
 **What is the total supply and issuance schedule?**
 
 - Hard cap of **41,000,000 DRM**.
-- Block subsidy declines on a predictable schedule (see [`docs/technical-specs/technical-spec.md`](docs/technical-specs/technical-spec.md) for parameters) to encourage long-term participation.
+- Block subsidy declines on a predictable schedule (see [`doc/technical-specs/technical-spec.md`](doc/technical-specs/technical-spec.md) for parameters) to encourage long-term participation.
 
 **How is the fair launch verifiable?**
 
-- Genesis parameters, launch scripts, and seed configuration live in `testnet/` and `docs/reference/fair-launch.md` so anyone can reproduce the initial state.
+- Genesis parameters, launch scripts, and seed configuration live in `testnet/` and `doc/reference/fair-launch.md` so anyone can reproduce the initial state.
 - No embedded checkpoints or privileged keys exist; all nodes follow the same rules from block one.
 
 **Is there a premine or privileged allocation?**
@@ -443,7 +443,7 @@ This repository now ships a working reference implementation with Layer 1/2/3 bi
 
 **How do I report security issues?**
 
-- Please follow [`SECURITY.md`](docs/security/security-overview.md) for private reporting. Never open public issues for security vulnerabilities.
+- Please follow [`SECURITY.md`](doc/security/security-overview.md) for private reporting. Never open public issues for security vulnerabilities.
 
 ---
 

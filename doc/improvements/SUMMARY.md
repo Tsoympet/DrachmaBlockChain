@@ -85,7 +85,7 @@ g++ -std=c++17 -fsyntax-only layer2-services/wallet/wallet.cpp
 - Backward compatibility maintained
 
 ## Documentation
-**New File**: `docs/improvements/code-enhancements.md`
+**New File**: `doc/improvements/code-enhancements.md`
 - Detailed explanation of all changes
 - Security and performance considerations
 - Future enhancement roadmap
@@ -131,7 +131,7 @@ g++ -std=c++17 -fsyntax-only layer2-services/wallet/wallet.cpp
 - `layer2-services/rpc/rpcserver.cpp` (+52 lines, indexed access)
 - `layer2-services/wallet/wallet.cpp` (+44 lines, multi-strategy selection)
 - `layer3-app/qt/main.cpp` (+15 lines, documentation)
-- `docs/improvements/code-enhancements.md` (new file, 8KB documentation)
+- `doc/improvements/code-enhancements.md` (new file, 8KB documentation)
 
 ## Conclusion
 This PR transforms partial/simplified implementations into production-ready code while maintaining backward compatibility and adding comprehensive documentation. All changes prioritize security, performance, and maintainability.

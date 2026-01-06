@@ -176,8 +176,8 @@ Budget $50k-$150k and 4-6 weeks for a professional blockchain security firm.
 
 ### 3. Follow the Checklist
 Two detailed documents have been created:
-- `docs/MAINNET-READINESS.md` (14.5KB) - Full technical assessment
-- `docs/LAUNCH-ACTION-ITEMS.md` (11.3KB) - Prioritized action plan
+- `doc/MAINNET-READINESS.md` (14.5KB) - Full technical assessment
+- `doc/LAUNCH-ACTION-ITEMS.md` (11.3KB) - Prioritized action plan
 
 ### 4. Test Everything Again
 Even though tests pass now, the consensus changes we made mean you should:
@@ -270,7 +270,7 @@ All changes have been committed to branch `copilot/analyze-project-readiness`.
 - Rushing to launch would be disastrous
 
 ### The Path Forward 🎯
-Follow the detailed roadmap in `docs/LAUNCH-ACTION-ITEMS.md`. With proper execution of the critical items, DRACHMA can launch as a secure, reliable, production-ready blockchain.
+Follow the detailed roadmap in `doc/LAUNCH-ACTION-ITEMS.md`. With proper execution of the critical items, DRACHMA can launch as a secure, reliable, production-ready blockchain.
 
 **Don't rush. Do it right. The cryptocurrency space has enough failed launches already.**
 
@@ -279,8 +279,8 @@ Follow the detailed roadmap in `docs/LAUNCH-ACTION-ITEMS.md`. With proper execut
 ## Questions?
 
 Review these documents for details:
-1. `docs/MAINNET-READINESS.md` - Full technical assessment
-2. `docs/LAUNCH-ACTION-ITEMS.md` - Prioritized action plan
+1. `doc/MAINNET-READINESS.md` - Full technical assessment
+2. `doc/LAUNCH-ACTION-ITEMS.md` - Prioritized action plan
 
 **Next steps:** Review this assessment with your core team and begin working through the critical items checklist.
 

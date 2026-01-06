@@ -7,10 +7,10 @@ This directory contains documentation and tests for code improvements made to ad
 ### View Documentation
 ```bash
 # Read comprehensive improvement documentation
-cat docs/improvements/code-enhancements.md
+cat doc/improvements/code-enhancements.md
 
 # Read executive summary
-cat docs/improvements/SUMMARY.md
+cat doc/improvements/SUMMARY.md
 ```
 
 ### Run Demonstration Tests
@@ -110,9 +110,9 @@ layer1-core/merkle/merkle.cpp              (+19 lines)
 layer2-services/rpc/rpcserver.cpp          (+52 lines)
 layer2-services/wallet/wallet.cpp          (+44 lines)
 layer3-app/qt/main.cpp                     (+15 lines)
-docs/improvements/code-enhancements.md     (new, 8KB)
-docs/improvements/SUMMARY.md               (new, 4KB)
-docs/improvements/README.md                (this file)
+doc/improvements/code-enhancements.md     (new, 8KB)
+doc/improvements/SUMMARY.md               (new, 4KB)
+doc/improvements/README.md                (this file)
 tests/improvements/coin_selection_comparison.py (new, demo)
 ```
 
@@ -125,8 +125,8 @@ tests/improvements/coin_selection_comparison.py (new, demo)
 ## Questions?
 
 See the comprehensive documentation:
-- Technical details: `docs/improvements/code-enhancements.md`
-- Executive summary: `docs/improvements/SUMMARY.md`
+- Technical details: `doc/improvements/code-enhancements.md`
+- Executive summary: `doc/improvements/SUMMARY.md`
 - Inline comments in modified source files
 
 ---

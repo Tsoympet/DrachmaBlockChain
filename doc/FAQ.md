@@ -303,11 +303,11 @@ NFTs are **asset-agnostic Layer-2 records** anchored to Layer 1:
 - Earned via PoS (DRM, OBL)
 - No ICO, no founders' reward, no treasury
 
-See `docs/reference/fair-launch.md` for details.
+See `doc/reference/fair-launch.md` for details.
 
 ### What's the emission schedule?
 
-See `docs/reference/economics.md` for detailed emission tables.
+See `doc/reference/economics.md` for detailed emission tables.
 
 **DRM summary:**
 - ~21M in first 4 years
@@ -344,8 +344,8 @@ See `CONTRIBUTING.md` for:
 
 See:
 - `ANALYSIS-EXECUTIVE-SUMMARY.md` - Launch readiness
-- `docs/LAUNCH-ACTION-ITEMS.md` - Pre-launch tasks
-- `docs/MAINNET-READINESS.md` - Technical assessment
+- `doc/LAUNCH-ACTION-ITEMS.md` - Pre-launch tasks
+- `doc/MAINNET-READINESS.md` - Technical assessment
 
 ### Has the code been audited?
 
@@ -367,7 +367,7 @@ See `.github/SECURITY.md` for security policy and responsible disclosure.
 drachma-node --testnet
 ```
 
-See `docs/getting-started/quickstart.md` for setup.
+See `doc/getting-started/quickstart.md` for setup.
 
 ---
 
@@ -385,7 +385,7 @@ See `docs/getting-started/quickstart.md` for setup.
 
 ### Are there known vulnerabilities?
 
-See `.github/SECURITY.md` and `docs/security/AUDIT.md` for:
+See `.github/SECURITY.md` and `doc/security/AUDIT.md` for:
 - Known limitations
 - Areas requiring hardening (RPC layer)
 - Responsible disclosure process
@@ -413,8 +413,8 @@ Instead:
 
 ### Where can I get support?
 
-1. **Documentation:** `docs/` folder
-2. **Troubleshooting:** `docs/TROUBLESHOOTING.md`
+1. **Documentation:** `doc/` folder
+2. **Troubleshooting:** `doc/TROUBLESHOOTING.md`
 3. **GitHub Issues:** Bug reports and questions
 4. **Community channels:** TBD (Discord/Matrix/Forum)
 
@@ -474,10 +474,10 @@ DRACHMA prioritizes security and proper engineering over rushing to market. See 
 - OBL: 61,000,000
 
 **Documentation:**
-- Getting Started: `docs/getting-started/`
-- Technical Specs: `docs/technical-specs/`
-- Operations: `docs/operators/`
-- Security: `docs/security/`
+- Getting Started: `doc/getting-started/`
+- Technical Specs: `doc/technical-specs/`
+- Operations: `doc/operators/`
+- Security: `doc/security/`
 
 ---
 

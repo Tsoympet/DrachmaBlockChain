@@ -213,7 +213,7 @@ Commands are subject to change as the implementation matures; prefer scripts in 
 The Layer 3 desktop wallet is testnet-ready. Representative views are available via reproducible demo scripts rather than inline binary assets:
 
 - **Dashboard and sync status:** launch `./build/layer3-app/drachma-wallet --connect 127.0.0.1:9333` and use the built-in “Demo Mode” under **Help → Demo Screens** to generate on-demand previews.
-- **Send flow with custom fee selection:** the same demo menu exports a markdown report (`docs/ui_snapshots.md`) describing the send dialog, fee slider, and QR rendering for sharing without embedding binary images in the repository.
+- **Send flow with custom fee selection:** the same demo menu exports a markdown report (`docs/ui-snapshots.md`) describing the send dialog, fee slider, and QR rendering for sharing without embedding binary images in the repository.
 
 ## Internal UI Icon System
 

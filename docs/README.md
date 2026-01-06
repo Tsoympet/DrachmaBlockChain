@@ -1,6 +1,19 @@
 # DRACHMA Documentation
 
-Welcome to the DRACHMA blockchain documentation. This directory contains comprehensive documentation organized by topic.
+Welcome to the DRACHMA blockchain documentation. This directory contains comprehensive documentation organized by topic and audience.
+
+## 📖 Documentation Overview
+
+This documentation is organized into **8 main categories** with **41 documents** covering all aspects of DRACHMA:
+
+- **Getting Started** - New user guides (3 docs)
+- **User Guides** - Practical how-to guides (1+ docs)
+- **Developer Guides** - API and integration docs (6 docs)
+- **Operators** - Deployment and operations (1+ docs)
+- **Technical Specs** - Protocol specifications (6 docs)
+- **Reference** - Design and architecture (5 docs)
+- **Security** - Security and auditing (6 docs)
+- **Assets** - Templates and resources (4 docs)
 
 ## Documentation Structure
 
@@ -46,6 +59,15 @@ Security guidelines, audit information, and threat model.
 
 ### 📦 [Assets](assets/)
 Templates and supporting materials for documentation and releases.
+
+## Documentation History
+
+**2026-01 - Documentation Reorganization**
+- Reorganized all documentation into logical subdirectories
+- Created navigation README files for each category
+- Updated all internal and external links
+- Enhanced quickstart guide with better structure
+- Total: 41 markdown documents across 8 categories
 
 ## Quick Links
 

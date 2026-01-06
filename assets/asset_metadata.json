@@ -1,10 +1,18 @@
 {
+  "brand": {
+    "name": "PARTHENON CHAIN",
+    "theme": "Classical Greece · Value · Order · Timelessness",
+    "visual_dna": "Marble, Bronze, Silver, Obsidian"
+  },
   "assets": [
     {
       "asset_id": 0,
       "symbol": "TLN",
       "name": "Talanton",
       "role": "Base currency (separate from NFTs)",
+      "color": "#CD7F32",
+      "color_name": "Bronze",
+      "reference": "Ancient Greek bronze statuary and weapons",
       "icon": "assets/icons/asset-tln.svg"
     },
     {
@@ -12,6 +20,9 @@
       "symbol": "DRM",
       "name": "Drachma",
       "role": "WASM smart contracts",
+      "color": "#C0C0C0",
+      "color_name": "Silver",
+      "reference": "Laurion silver mines, Athenian coinage",
       "icon": "assets/icons/asset-drm.svg"
     },
     {
@@ -19,6 +30,9 @@
       "symbol": "OBL",
       "name": "Obolos",
       "role": "WASM dApps and interaction fees",
+      "color": "#1E4D8B",
+      "color_name": "Aegean Blue",
+      "reference": "Deep blue of the Aegean Sea",
       "icon": "assets/icons/asset-obl.svg"
     }
   ]

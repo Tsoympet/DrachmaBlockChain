@@ -1,4 +1,4 @@
-# DRACHMA Blockchain (DRM)
+# PARTHENON CHAIN (Formerly DRACHMA)
 
 [![CI](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/ci.yml/badge.svg)](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/ci.yml)
 [![Release](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/release.yml/badge.svg)](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/release.yml)
@@ -13,7 +13,11 @@
 [![Discussions](https://img.shields.io/badge/Discussions-join-blue.svg)](#community--support)
 [![Roadmap](https://img.shields.io/badge/Roadmap-See%20plans-8A2BE2)](doc/reference/roadmap.md)
 
-DRACHMA is a **Proof-of-Work monetary blockchain** designed for long-term stability, auditability, and minimal trust assumptions.
+**Master Brand**: PARTHENON CHAIN  
+**Theme**: Classical Greece · Value · Order · Timelessness  
+**Visual DNA**: Marble, Bronze, Silver, Obsidian
+
+PARTHENON CHAIN is a **Proof-of-Work monetary blockchain** designed for long-term stability, auditability, and minimal trust assumptions. Built on Classical principles of order, permanence, and timeless value.
 
 The project focuses on:
 - deterministic consensus rules,
@@ -21,7 +25,7 @@ The project focuses on:
 - strict separation of system layers,
 - and transparent network launch conditions.
 
-This repository contains the **reference implementation** of the DRACHMA network.
+This repository contains the **reference implementation** of the PARTHENON CHAIN network.
 
 > **Status: Testnet Ready** — Public testnet nodes, faucets, and explorers are available. Mainnet launch will follow after public testing and audits.
 

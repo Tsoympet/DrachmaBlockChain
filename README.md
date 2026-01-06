@@ -1,4 +1,4 @@
-# DRACHMA Blockchain (DRM)
+# PARTHENON CHAIN (Formerly DRACHMA)
 
 [![CI](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/ci.yml/badge.svg)](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/ci.yml)
 [![Release](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/release.yml/badge.svg)](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/release.yml)
@@ -13,7 +13,11 @@
 [![Discussions](https://img.shields.io/badge/Discussions-join-blue.svg)](#community--support)
 [![Roadmap](https://img.shields.io/badge/Roadmap-See%20plans-8A2BE2)](doc/reference/roadmap.md)
 
-DRACHMA is a **Proof-of-Work monetary blockchain** designed for long-term stability, auditability, and minimal trust assumptions.
+**Master Brand**: PARTHENON CHAIN  
+**Theme**: Classical Greece · Value · Order · Timelessness  
+**Visual DNA**: Marble, Bronze, Silver, Obsidian
+
+PARTHENON CHAIN is a **Proof-of-Work monetary blockchain** designed for long-term stability, auditability, and minimal trust assumptions. Built on Classical principles of order, permanence, and timeless value.
 
 The project focuses on:
 - deterministic consensus rules,
@@ -21,7 +25,7 @@ The project focuses on:
 - strict separation of system layers,
 - and transparent network launch conditions.
 
-This repository contains the **reference implementation** of the DRACHMA network.
+This repository contains the **reference implementation** of the PARTHENON CHAIN network.
 
 > **Status: Testnet Ready** — Public testnet nodes, faucets, and explorers are available. Mainnet launch will follow after public testing and audits.
 
@@ -137,7 +141,7 @@ Commands are subject to change as the implementation matures; prefer scripts in 
 
 ## Smart Contracts, NFTs & dApps (mandatory WASM sidechain)
 
-BlockChainDrachma ships a **mandatory WASM execution layer** that is anchored to Layer 1 checkpoints. Domains are enforced by consensus and validation:
+PARTHENON CHAIN ships a **mandatory WASM execution layer** that is anchored to Layer 1 checkpoints. Domains are enforced by consensus and validation:
 
 | Domain            | Asset use                     | RPC entrypoints                                                        |
 |-------------------|-------------------------------|------------------------------------------------------------------------|
@@ -228,7 +232,7 @@ The Layer 3 desktop wallet is testnet-ready. Representative views are available 
 
 Use this checklist before connecting to mainnet or distributing binaries:
 
-- **Build type:** Use release builds with assertions enabled when possible: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DDRACHMA_BUILD_TESTS=OFF`.
+- **Build type:** Use release builds with assertions enabled when possible: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPARTHENON_BUILD_TESTS=OFF`.
 - **Reproducibility:** Build from a tagged release, pin dependency versions, and verify hashes of toolchains/SDKs.
 - **Key hygiene:** Keep the signing key offline; verify maintainer signatures on tags, source archives, and SBOMs.
 - **Network settings:** Start nodes with explicit flags (`--network mainnet`, `--listen`, `--rpcuser`, `--rpcpassword`) and review `deployment.md` for hardening.
@@ -404,6 +408,11 @@ For a comprehensive list of all tasks needed to complete the project and prepare
 - **[Launch Action Items](doc/LAUNCH-ACTION-ITEMS.md)** - Prioritized action plan for mainnet launch
 - **[Mainnet Readiness Assessment](doc/MAINNET-READINESS.md)** - Technical readiness evaluation
 
+**🚀 Performance & Branding:**  
+For optimization tips and brand guidelines:
+- **[Performance Guide](doc/PERFORMANCE-GUIDE.md)** - Comprehensive performance optimization guide with benchmarks
+- **[Branding Guide](doc/BRANDING-GUIDE.md)** - Complete branding guidelines, visual identity, and messaging
+
 ---
 
 ## Status
@@ -433,7 +442,7 @@ Remaining hardening items and edge-case gaps are tracked in:
 
 **Why no smart contracts or on-chain governance?**
 
-- DRACHMA aims to be a minimal monetary network with transparent, predictable rules.
+- PARTHENON CHAIN aims to be a minimal monetary network with transparent, predictable rules.
 - Avoiding programmability reduces attack surface and consensus complexity.
 
 **What is the total supply and issuance schedule?**
@@ -448,7 +457,7 @@ Remaining hardening items and edge-case gaps are tracked in:
 
 **Is there a premine or privileged allocation?**
 
-- No. DRACHMA follows a **fair launch** model—every coin is mined under the same rules.
+- No. PARTHENON CHAIN follows a **fair launch** model—every coin is mined under the same rules.
 
 **Which platforms are supported?**
 

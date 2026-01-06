@@ -1,22 +1,27 @@
-# DRACHMA Frequently Asked Questions (FAQ)
+# PARTHENON CHAIN Frequently Asked Questions (FAQ)
 
-**Version:** 1.0  
+**Version:** 2.0  
 **Last Updated:** January 6, 2026
 
-This document answers common questions about the DRACHMA blockchain.
+**Master Brand**: PARTHENON CHAIN  
+**Theme**: Classical Greece · Value · Order · Timelessness  
+**Visual DNA**: Marble, Bronze, Silver, Obsidian
+
+This document answers common questions about the PARTHENON CHAIN blockchain.
 
 ---
 
 ## General Questions
 
-### What is DRACHMA?
+### What is PARTHENON CHAIN?
 
-DRACHMA is a multi-asset blockchain featuring:
+PARTHENON CHAIN (formerly DRACHMA) is a multi-asset blockchain built on Classical principles featuring:
 - **Proof-of-Work** (SHA-256d) consensus for security
-- **Three native assets:** TLN (Talanton), DRM (Drachma), OBL (Obolos)
+- **Three native assets:** TLN (Talanton/Bronze), DRM (Drachma/Silver), OBL (Obolos/Aegean Blue)
 - **Hybrid PoW/PoS** support with different rules per asset
 - **WASM-based smart contracts** and NFTs
 - **No premine** - fair launch with transparent emission schedule
+- **Classical design** - built to endure like the Parthenon
 
 ### Is mainnet live?
 
@@ -28,7 +33,7 @@ DRACHMA is a multi-asset blockchain featuring:
 
 See `ANALYSIS-EXECUTIVE-SUMMARY.md` for the complete launch roadmap.
 
-### How is DRACHMA different from Bitcoin?
+### How is PARTHENON CHAIN different from Bitcoin?
 
 **Similarities:**
 - SHA-256d proof-of-work
@@ -37,16 +42,18 @@ See `ANALYSIS-EXECUTIVE-SUMMARY.md` for the complete launch roadmap.
 - Open source
 
 **Key differences:**
+- **Classical Greek theme:** Marble, Bronze, Silver, Obsidian design
 - **Multi-asset:** Three assets with different monetary policies
 - **Schnorr signatures:** More efficient than ECDSA
 - **WASM smart contracts:** Mandatory execution layer
 - **Hybrid PoW/PoS:** DRM and OBL support staking
 - **Faster blocks:** 60-second target (vs. Bitcoin's 10 minutes)
 - **Different supply:** 41M DRM (vs. Bitcoin's 21M BTC)
+- **Timeless design:** Built on Classical principles of order and permanence
 
 ### What are TLN, DRM, and OBL?
 
-**TLN (Talanton):**
+**TLN (Talanton) - Bronze:**
 - Pure PoW asset
 - Max supply: 21,000,000
 - Initial block reward: 5 TLN

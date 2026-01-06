@@ -79,13 +79,13 @@ Consensus, cryptography, and wallet key-handling changes require extra scrutiny:
 ## Issue Reporting
 
 - Use issue templates and label the area (Layer 1/2/3, docs, tests, tooling). Include environment details, stack traces, and minimal repro steps.
-- Do not report security issues publicly; follow [SECURITY.md](SECURITY.md).
+- Do not report security issues publicly; follow [docs/security/security-overview.md](docs/security/security-overview.md).
 
 ## Security & Consensus Safety
 
 - Treat consensus code as immutable unless there is strong, peer-reviewed rationale.
 - Never introduce hidden parameters, soft-forks, or policy changes without documentation and broad review.
-- Report vulnerabilities privately per [SECURITY.md](SECURITY.md); do not open public issues.
+- Report vulnerabilities privately per [docs/security/security-overview.md](docs/security/security-overview.md); do not open public issues.
 
 ## Continuous Integration
 

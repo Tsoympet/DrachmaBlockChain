@@ -395,7 +395,7 @@ drachma-blockchain/
 - 🔄 Release candidate binaries and deterministic build reproducibility
 - 🛠️ Mainnet launch following testnet stability, audits, and reproducible builds
 
-More detail is available in [`docs/roadmap.md`](docs/roadmap.md).
+More detail is available in [`docs/reference/roadmap.md`](docs/reference/roadmap.md).
 
 ---
 

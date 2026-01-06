@@ -9,8 +9,14 @@ This directory contains utility scripts for building, testing, and validating th
 ### verify-genesis.sh
 **Purpose:** Verify genesis parameters and supply caps
 
+**Note:** Despite the .sh extension, this is a Python script (for historical reasons).
+
 **Usage:**
 ```bash
+# Direct execution (uses shebang)
+./scripts/verify-genesis.sh
+
+# Or explicit Python invocation
 python3 scripts/verify-genesis.sh
 ```
 
@@ -150,7 +156,7 @@ Before mainnet launch, run these scripts:
 
 2. **Genesis verification:**
    ```bash
-   python3 scripts/verify-genesis.sh
+   ./scripts/verify-genesis.sh
    ```
 
 3. **Extended validation (requires running node):**

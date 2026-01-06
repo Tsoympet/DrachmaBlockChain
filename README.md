@@ -3,7 +3,6 @@
 [![CI](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/ci.yml/badge.svg)](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/ci.yml)
 [![Release](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/release.yml/badge.svg)](https://github.com/Tsoympet/BlockChainDrachma/actions/workflows/release.yml)
 [![codecov](https://codecov.io/gh/Tsoympet/BlockChainDrachma/graph/badge.svg?token=pbNZjIpSXO)](https://codecov.io/gh/Tsoympet/BlockChainDrachma)
-[![Codecov Sunburst](https://codecov.io/gh/Tsoympet/BlockChainDrachma/graphs/sunburst.svg?token=pbNZjIpSXO)](https://codecov.io/gh/Tsoympet/BlockChainDrachma)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 [![GitHub Stars](https://img.shields.io/github/stars/Tsoympet/BlockChainDrachma?style=social)](https://github.com/Tsoympet/BlockChainDrachma/stargazers)
 [![GitHub Forks](https://img.shields.io/github/forks/Tsoympet/BlockChainDrachma?style=social)](https://github.com/Tsoympet/BlockChainDrachma/network/members)

@@ -152,6 +152,27 @@ jobs:
             mingw-w64 g++-mingw-w64-x86-64 \
             wine64 zip
 
+      - name: Create CMake toolchain file
+        run: |
+          mkdir -p cmake
+          cat > cmake/mingw-w64-x86_64.cmake << 'EOF'
+          set(CMAKE_SYSTEM_NAME Windows)
+          set(CMAKE_SYSTEM_PROCESSOR x86_64)
+          
+          set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)
+          set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
+          set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)
+          
+          set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32)
+          set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+          set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+          set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+          
+          set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static-libgcc")
+          set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
+          set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -lpthread")
+          EOF
+
       - name: Build OpenSSL for Windows
         run: |
           wget -q https://www.openssl.org/source/openssl-3.0.13.tar.gz
@@ -191,27 +212,6 @@ jobs:
           cmake --build build-win --parallel
           cmake --install build-win
           cd ..
-
-      - name: Create CMake toolchain file
-        run: |
-          mkdir -p cmake
-          cat > cmake/mingw-w64-x86_64.cmake << 'EOF'
-          set(CMAKE_SYSTEM_NAME Windows)
-          set(CMAKE_SYSTEM_PROCESSOR x86_64)
-          
-          set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)
-          set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
-          set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)
-          
-          set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32)
-          set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-          set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-          set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-          
-          set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -static-libgcc")
-          set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
-          set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -static -lpthread")
-          EOF
 
       - name: Configure (reproducible build)
         env:

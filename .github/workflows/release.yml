@@ -293,7 +293,11 @@ jobs:
           
           # Generate checksums
           cd dist/parthenon-core
-          sha256sum *.exe > SHA256SUMS 2>/dev/null || true
+          if ls *.exe 1> /dev/null 2>&1; then
+            sha256sum *.exe > SHA256SUMS
+          else
+            echo "Warning: No .exe files found to checksum" >&2
+          fi
           cd ../..
           
           # Create archive

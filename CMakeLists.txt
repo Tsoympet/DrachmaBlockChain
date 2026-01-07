@@ -36,10 +36,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Release" AND NOT DRACHMA_COVERAGE)
 endif()
 
 # Platform-specific setup
-if(WIN32)
-    # Required for Windows sockets and threading
-    set(THREADS_PREFER_PTHREAD_FLAG ON)
-endif()
+set(THREADS_PREFER_PTHREAD_FLAG ON)
 
 find_package(Threads REQUIRED)
 find_package(OpenSSL REQUIRED)

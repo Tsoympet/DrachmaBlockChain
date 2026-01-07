@@ -69,13 +69,13 @@ script: |
   
   ninja
   
-  mkdir -p $OUTDIR/bin
+  mkdir -p $OUTDIR/bin $OUTDIR/lib
   install -s -m 755 layer1-core/drachmad $OUTDIR/bin/
   install -s -m 755 layer1-core/drachma-cli $OUTDIR/bin/
   install -s -m 755 drachma_cpu_miner $OUTDIR/bin/ || true
   
   cd ..
-  find . -name "lib*.so*" -exec cp '{}' $OUTDIR/lib \;
+  find . -name "lib*.so*" -exec cp '{}' $OUTDIR/lib \; 2>/dev/null || true
   
   # Create release archive
   cd $OUTDIR

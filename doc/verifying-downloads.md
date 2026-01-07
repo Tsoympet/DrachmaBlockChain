@@ -158,8 +158,13 @@ gpg --keyserver hkps://keys.openpgp.org --recv-keys <KEY_ID>
 # Or import from project repository
 curl https://github.com/Tsoympet/PARTHENON-CHAIN/raw/main/contrib/signing-keys/release.asc | gpg --import
 
-# Verify key fingerprint matches what's published on GitHub
+# IMPORTANT: Verify key fingerprint matches official sources
 gpg --fingerprint <KEY_ID>
+# Compare the fingerprint with what's published on:
+# - GitHub repository README
+# - Official website
+# - Release announcements
+# - Multiple independent sources
 ```
 
 **Important:** Always verify the key fingerprint through multiple independent channels:

@@ -79,13 +79,6 @@ Config ParseArgs(int argc, char* argv[])
     Config cfg;
     for (int i = 1; i < argc; ++i) {
         std::string arg(argv[i]);
-        if (arg == "--help" || arg == "-h") {
-            PrintHelp();
-            std::exit(0);
-        } else if (arg == "--version" || arg == "-v") {
-            PrintVersion();
-            std::exit(0);
-        }
         auto takeValue = [&](const std::string& prefix, auto& out) {
             if (arg.rfind(prefix, 0) == 0 && arg.size() > prefix.size()) {
                 using T = std::remove_reference_t<decltype(out)>;
@@ -137,6 +130,18 @@ std::vector<uint8_t> SeedFromPath(const std::string& path)
 
 int main(int argc, char* argv[])
 {
+    // Handle help and version early
+    for (int i = 1; i < argc; ++i) {
+        std::string arg(argv[i]);
+        if (arg == "--help" || arg == "-h") {
+            PrintHelp();
+            return 0;
+        } else if (arg == "--version" || arg == "-v") {
+            PrintVersion();
+            return 0;
+        }
+    }
+    
     Config cfg = ParseArgs(argc, argv);
     EnsureDatadir(cfg.datadir);
 

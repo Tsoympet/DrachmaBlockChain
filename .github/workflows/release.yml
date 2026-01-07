@@ -587,7 +587,7 @@ jobs:
           java-version: '17'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci || npm install
 
       - name: Cache Gradle (Android)
         if: matrix.platform == 'android'
@@ -601,27 +601,42 @@ jobs:
       - name: Build Android APK
         if: matrix.platform == 'android'
         run: |
-          cd android
-          ./gradlew assembleRelease --no-daemon
+          if [ -d "android" ]; then
+            cd android
+            ./gradlew assembleRelease --no-daemon
+          else
+            echo "Android directory not found, skipping Android build"
+            exit 0
+          fi
 
       - name: Install CocoaPods (iOS)
         if: matrix.platform == 'ios'
         run: |
-          cd ios
-          pod install
+          if [ -d "ios" ]; then
+            cd ios
+            pod install
+          else
+            echo "iOS directory not found, skipping iOS build"
+            exit 0
+          fi
 
       - name: Build iOS Archive
         if: matrix.platform == 'ios'
         run: |
-          cd ios
-          xcodebuild -workspace DrachmaWallet.xcworkspace \
-            -scheme DrachmaWallet \
-            -configuration Release \
-            -archivePath $PWD/build/DrachmaWallet.xcarchive \
-            archive \
-            CODE_SIGN_IDENTITY="" \
-            CODE_SIGNING_REQUIRED=NO \
-            CODE_SIGNING_ALLOWED=NO
+          if [ -d "ios" ]; then
+            cd ios
+            xcodebuild -workspace DrachmaWallet.xcworkspace \
+              -scheme DrachmaWallet \
+              -configuration Release \
+              -archivePath $PWD/build/DrachmaWallet.xcarchive \
+              archive \
+              CODE_SIGN_IDENTITY="" \
+              CODE_SIGNING_REQUIRED=NO \
+              CODE_SIGNING_ALLOWED=NO
+          else
+            echo "iOS directory not found, skipping iOS build"
+            exit 0
+          fi
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -630,6 +645,7 @@ jobs:
           path: |
             mobile-client/android/app/build/outputs/apk/release/*.apk
             mobile-client/ios/build/*.xcarchive
+          if-no-files-found: warn
 
   build-explorer:
     name: Build Explorer

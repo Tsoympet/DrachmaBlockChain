@@ -83,7 +83,7 @@ ctest --test-dir build-cov --output-on-failure
 gcovr --root . --object-directory build-cov --print-summary
 ```
 
-The CI workflow automatically generates coverage reports and uploads them to Codecov. You can view coverage reports at the Codecov badge link in the README.
+The CI workflow automatically generates coverage reports and uploads them to Codecov. View the coverage status using the Codecov badge in the main [README.md](../../README.md).
 
 ## Commit Guidelines
 

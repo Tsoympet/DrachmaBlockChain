@@ -334,9 +334,9 @@ See `doc/getting-started/quickstart.md` for setup.
 
 **For coverage analysis:**
 - Install `gcovr` (not coverage.py): `sudo apt-get install gcovr`
-- Build with coverage enabled: `cmake -DDRACHMA_COVERAGE=ON`
-- Run tests: `ctest --test-dir build`
-- Generate report: `gcovr --root . --print-summary`
+- Build with coverage enabled: `cmake -S . -B build-cov -DDRACHMA_COVERAGE=ON`
+- Run tests: `ctest --test-dir build-cov`
+- Generate report: `gcovr --root . --object-directory build-cov --print-summary`
 
 The CI workflow automatically handles coverage using gcovr and uploads results to Codecov.
 

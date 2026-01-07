@@ -477,9 +477,10 @@ drachma-blockchain/
 
 More detail is available in [`doc/reference/roadmap.md`](doc/reference/roadmap.md).
 
-**📋 Project Completion Tasks:**  
-For a comprehensive list of all tasks needed to complete the project and prepare for mainnet launch, see:
-- **[Project Status](PROJECT-STATUS.md)** - Complete overview of current state, progress, and timeline ⭐ NEW
+**📋 Project Status & Completion Tasks:**  
+For a comprehensive understanding of where we are and what's needed for mainnet launch:
+- **[🎯 Where We Stand](WHERE-WE-STAND.md)** - **START HERE** - Executive summary of current status ⭐ NEW
+- **[Project Status](PROJECT-STATUS.md)** - Complete overview of current state, progress, and timeline
 - **[Quick Task Summary](doc/QUICK-TASK-SUMMARY.md)** - Quick reference guide
 - **[Project Completion Tasks](doc/PROJECT-COMPLETION-TASKS.md)** - Detailed task list with priorities, timelines, and dependencies
 - **[Launch Action Items](doc/LAUNCH-ACTION-ITEMS.md)** - Prioritized action plan for mainnet launch
@@ -497,6 +498,8 @@ For optimization tips and brand guidelines:
 This repository now ships a working reference implementation with Layer 1/2/3 binaries, miners, and ctests wired into CI. 
 
 **Current Status:** ✅ Testnet Ready | ⚠️ Approaching Mainnet Readiness (8-12 weeks estimated)
+
+**📊 For a complete status overview, see [WHERE-WE-STAND.md](WHERE-WE-STAND.md)**
 
 Remaining hardening items and edge-case gaps are tracked in:
 - [`doc/security/AUDIT.md`](doc/security/AUDIT.md) - Known security issues

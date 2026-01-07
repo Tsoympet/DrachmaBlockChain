@@ -54,8 +54,8 @@ This guide walks through building the DRACHMA reference implementation (core nod
 
 ## Build the core node and miners (all platforms)
 ```bash
-git clone https://github.com/Tsoympet/BlockChainDrachma.git
-cd BlockChainDrachma
+git clone https://github.com/Tsoympet/PARTHENON-CHAIN.git
+cd PARTHENON-CHAIN
 
 # Configure
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -67,7 +67,7 @@ Binaries appear under `build/layer1-core/` (node + cli) and `build/miners/`.
 
 ## Build the Qt desktop wallet
 ```bash
-cd BlockChainDrachma
+cd PARTHENON-CHAIN
 cmake -S layer3-app -B build-wallet -DCMAKE_BUILD_TYPE=Release
 cmake --build build-wallet --parallel
 ```

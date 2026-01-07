@@ -3,7 +3,7 @@
 This guide covers running DRACHMA nodes and the desktop wallet on testnet/mainnet, plus hardened procedures for operators and packagers.
 
 ## Quick start options
-- **Pre-built binaries (recommended when available):** Download the latest tagged release from the [GitHub Releases page](https://github.com/Tsoympet/BlockChainDrachma/releases), verify SHA-256 and GPG signatures, then follow the run commands below.
+- **Pre-built binaries (recommended when available):** Download the latest tagged release from the [GitHub Releases page](https://github.com/Tsoympet/PARTHENON-CHAIN/releases), verify SHA-256 and GPG signatures, then follow the run commands below.
 - **Docker:** Use the included `Dockerfile` for a single node or `docker-compose.yml` for a multi-node testnet stack with monitoring.
 - **Build from source:** Follow `../getting-started/building.md` for platform-specific instructions.
 

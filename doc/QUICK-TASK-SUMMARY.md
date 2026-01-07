@@ -209,8 +209,8 @@ Before launching, ensure:
 
 ## Contact
 
-- **Issues:** https://github.com/Tsoympet/BlockChainDrachma/issues
-- **Discussions:** https://github.com/Tsoympet/BlockChainDrachma/discussions
+- **Issues:** https://github.com/Tsoympet/PARTHENON-CHAIN/issues
+- **Discussions:** https://github.com/Tsoympet/PARTHENON-CHAIN/discussions
 - **Security:** security@drachma.org
 
 ---

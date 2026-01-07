@@ -39,7 +39,7 @@ Before you start mining:
 
 ```bash
 # Build from source
-cd BlockChainDrachma
+cd PARTHENON-CHAIN
 make
 sudo make install
 

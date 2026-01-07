@@ -8,8 +8,8 @@ This document provides instructions for building and installing DRACHMA from sou
 
 ```bash
 # Clone the repository
-git clone https://github.com/Tsoympet/BlockChainDrachma.git
-cd BlockChainDrachma
+git clone https://github.com/Tsoympet/PARTHENON-CHAIN.git
+cd PARTHENON-CHAIN
 
 # Install using the convenience script
 ./scripts/install-linux.sh    # For Linux
@@ -24,8 +24,8 @@ sudo make install
 
 ```powershell
 # Clone the repository
-git clone https://github.com/Tsoympet/BlockChainDrachma.git
-cd BlockChainDrachma
+git clone https://github.com/Tsoympet/PARTHENON-CHAIN.git
+cd PARTHENON-CHAIN
 
 # Run the installation script
 .\scripts\install-windows.ps1
@@ -169,7 +169,7 @@ ctest --test-dir build --output-on-failure
 
 - For build issues, see `doc/getting-started/building.md`
 - For running the node, see `README.md`
-- Report bugs: https://github.com/Tsoympet/BlockChainDrachma/issues
+- Report bugs: https://github.com/Tsoympet/PARTHENON-CHAIN/issues
 
 ## See Also
 

@@ -1,4 +1,4 @@
-# BlockChainDrachma NFTs
+# PARTHENON-CHAIN NFTs
 
 Ancient Greek cultural records are modeled as standalone NFTs. They are **not** fungible tokens, do not mint or burn TLN/DRM/OBL, and never participate in supply or consensus calculations.
 They have zero connection to Talanton (TLN) balances or monetary accounting.

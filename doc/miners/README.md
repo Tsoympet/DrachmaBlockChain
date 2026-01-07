@@ -1,6 +1,6 @@
-# BlockChainDrachma Miners
+# PARTHENON-CHAIN Miners
 
-This directory contains CPU and GPU mining implementations for the BlockChainDrachma blockchain.
+This directory contains CPU and GPU mining implementations for the PARTHENON-CHAIN blockchain.
 
 ## Available Miners
 
@@ -185,4 +185,4 @@ Add `--allow-remote` flag when connecting to non-local pools.
 
 ## License
 
-Same as the parent BlockChainDrachma project.
+Same as the parent PARTHENON-CHAIN project.

@@ -634,7 +634,7 @@ assets/
 
 ### 11.2 Download & Usage
 
-**Official Assets**: https://github.com/Tsoympet/BlockChainDrachma/tree/main/assets
+**Official Assets**: https://github.com/Tsoympet/PARTHENON-CHAIN/tree/main/assets
 
 **License**: MIT (same as codebase) - free to use with attribution
 

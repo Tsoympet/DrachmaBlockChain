@@ -55,8 +55,8 @@ See `INSTALL.md` for platform-specific dependency installation.
 
 ```bash
 # Clone repository
-git clone https://github.com/Tsoympet/BlockChainDrachma.git
-cd BlockChainDrachma
+git clone https://github.com/Tsoympet/PARTHENON-CHAIN.git
+cd PARTHENON-CHAIN
 
 # Build with Makefile wrapper
 make
@@ -72,8 +72,8 @@ sudo make install
 
 ```powershell
 # Clone repository
-git clone https://github.com/Tsoympet/BlockChainDrachma.git
-cd BlockChainDrachma
+git clone https://github.com/Tsoympet/PARTHENON-CHAIN.git
+cd PARTHENON-CHAIN
 
 # Build
 mkdir build
@@ -110,7 +110,7 @@ sudo apt-get install -y \
   qttools5-dev-tools
 
 # Build
-cd BlockChainDrachma
+cd PARTHENON-CHAIN
 make
 make test
 ```
@@ -134,7 +134,7 @@ sudo dnf install -y \
   qt5-qttools-devel
 
 # Build
-cd BlockChainDrachma
+cd PARTHENON-CHAIN
 make
 make test
 ```
@@ -156,7 +156,7 @@ sudo pacman -S --needed \
 sudo pacman -S qt5-base qt5-tools
 
 # Build
-cd BlockChainDrachma
+cd PARTHENON-CHAIN
 make
 make test
 ```
@@ -177,7 +177,7 @@ brew install qt@5
 export Qt5_DIR=/usr/local/opt/qt@5/lib/cmake/Qt5
 
 # Build
-cd BlockChainDrachma
+cd PARTHENON-CHAIN
 make
 make test
 ```
@@ -198,7 +198,7 @@ cd vcpkg
 .\vcpkg install qt5:x64-windows
 
 # Build DRACHMA
-cd ..\BlockChainDrachma
+cd ..\PARTHENON-CHAIN
 mkdir build
 cd build
 cmake .. -DCMAKE_TOOLCHAIN_FILE=..\..\vcpkg\scripts\buildsystems\vcpkg.cmake
@@ -373,7 +373,7 @@ sha256sum build/drachma-node > my-build.sha256
 sha256sum build/drachma-cli >> my-build.sha256
 
 # Compare with official release
-wget https://github.com/Tsoympet/BlockChainDrachma/releases/download/v0.1.0/SHA256SUMS
+wget https://github.com/Tsoympet/PARTHENON-CHAIN/releases/download/v0.1.0/SHA256SUMS
 diff my-build.sha256 SHA256SUMS
 ```
 

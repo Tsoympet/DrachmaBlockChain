@@ -1,6 +1,6 @@
 # Code Enhancement Documentation
 
-This document details improvements made to address partial, minimal, or simplified code implementations across the BlockChainDrachma project.
+This document details improvements made to address partial, minimal, or simplified code implementations across the PARTHENON-CHAIN project.
 
 ## Overview
 

@@ -90,6 +90,6 @@ Templates and supporting materials for documentation and releases.
 
 ## Getting Help
 
-- **GitHub Discussions:** [https://github.com/Tsoympet/BlockChainDrachma/discussions](https://github.com/Tsoympet/BlockChainDrachma/discussions)
+- **GitHub Discussions:** [https://github.com/Tsoympet/PARTHENON-CHAIN/discussions](https://github.com/Tsoympet/PARTHENON-CHAIN/discussions)
 - **Matrix:** [https://matrix.to/#/#drachma:matrix.org](https://matrix.to/#/#drachma:matrix.org)
 - **Discord:** [https://discord.gg/drachma](https://discord.gg/drachma)

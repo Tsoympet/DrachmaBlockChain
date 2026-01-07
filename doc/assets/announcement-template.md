@@ -20,8 +20,8 @@ A lean PoW chain with Schnorr signatures, 42M fixed supply, and production-ready
 - Contribute monitoring dashboards, seeds, or new language SDKs
 
 ## Links
-- GitHub: https://github.com/Tsoympet/BlockChainDrachma
-- Docs: https://github.com/Tsoympet/BlockChainDrachma/tree/work/docs
+- GitHub: https://github.com/Tsoympet/PARTHENON-CHAIN
+- Docs: https://github.com/Tsoympet/PARTHENON-CHAIN/tree/work/docs
 - Faucet: https://faucet.testnet.drachma.example (replace with live endpoint)
 - Explorer: https://explorer.testnet.drachma.example (replace with live endpoint)
 

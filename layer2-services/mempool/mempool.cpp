@@ -109,8 +109,9 @@ std::vector<Transaction> Mempool::Snapshot() const
     });
     
     // Extract transactions in sorted order
+    // Note: Using emplace_back with move for better performance
     for (auto& p : pairs) {
-        out.push_back(std::move(p.second));
+        out.emplace_back(std::move(p.second));
     }
     return out;
 }

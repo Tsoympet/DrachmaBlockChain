@@ -96,15 +96,24 @@ std::vector<sidechain::wasm::Instruction> DecodeInstructions(const std::string& 
     bytes.reserve(cleaned.size() / 2);
     
     // Optimize: use lookup table for hex conversion instead of stoi
+    // Lookup table indexed by ASCII value, returns hex digit value or -1 for invalid
     static const int8_t hex_lut[256] = {
+        // Control characters (0x00-0x1F)
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+        // Space and symbols (0x20-0x2F)
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+        // Digits 0-9 (0x30-0x39)
          0, 1, 2, 3, 4, 5, 6, 7, 8, 9,-1,-1,-1,-1,-1,-1,
+        // Uppercase letters: @ABCDEFGHIJKLMNO (0x40-0x4F)
         -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+        // Uppercase letters: PQRSTUVWXYZ[\]^_ (0x50-0x5F)
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+        // Lowercase letters: `abcdefghijklmno (0x60-0x6F)
         -1,10,11,12,13,14,15,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+        // Lowercase letters: pqrstuvwxyz{|}~DEL (0x70-0x7F)
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
+        // Extended ASCII (0x80-0xFF) - all invalid
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,
         -1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,-1,

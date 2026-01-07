@@ -485,8 +485,9 @@ Remaining hardening items and edge-case gaps are tracked in:
 
 **How is the fair launch verifiable?**
 
-- Genesis parameters, launch scripts, and seed configuration live in `testnet/` and `doc/reference/fair-launch.md` so anyone can reproduce the initial state.
+- Genesis parameters, launch scripts, and seed configuration live in `mainnet/`, `testnet/`, and comprehensive documentation in `doc/GENESIS-MINING.md` so anyone can reproduce and verify the initial state.
 - No embedded checkpoints or privileged keys exist; all nodes follow the same rules from block one.
+- The genesis block has been mined and verified with nonce 2437501 (see `doc/GENESIS-MINING.md` for full details).
 
 **Is there a premine or privileged allocation?**
 

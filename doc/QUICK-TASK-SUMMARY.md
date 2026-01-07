@@ -11,7 +11,7 @@
 
 ✅ **Testnet Ready**  
 ⚠️ **NOT Ready for Mainnet**  
-🎯 **Estimated Time to Launch:** 8-12 weeks
+🎯 **Estimated Time to Launch:** 6-10 weeks (updated January 7, 2026)
 
 ---
 
@@ -24,9 +24,9 @@
 - **Action:** Engage professional security firm NOW
 
 ### 🔴 2. Genesis Block Finalization
-- **Status:** Needs mining
-- **Time:** 1-2 weeks
-- **Action:** Mine genesis block with final parameters
+- **Status:** ✅ COMPLETED (January 7, 2026)
+- **Time:** ~~1-2 weeks~~ DONE
+- **Action:** ~~Mine genesis block with final parameters~~ See `doc/GENESIS-MINING.md`
 
 ### 🔴 3. RPC Layer Hardening
 - **Status:** Prototype-grade (from AUDIT.md)
@@ -94,7 +94,7 @@
 ### Weeks 1-2: Start Critical Items
 - Engage security auditor
 - Begin RPC hardening
-- Finalize genesis parameters
+- ~~Finalize genesis parameters~~ ✅ COMPLETED
 
 ### Weeks 3-6: Core Development
 - Complete security audit
@@ -125,7 +125,7 @@ Before launching, ensure:
 
 - ✅ Security audit complete (no critical findings)
 - ✅ All 97+ tests passing
-- ✅ Genesis verified
+- ✅ Genesis verified ✓
 - ✅ RPC hardened
 - ✅ Reproducible builds working
 - ✅ 3+ seed nodes ready
@@ -175,6 +175,7 @@ Before launching, ensure:
 - ✅ Comprehensive documentation
 - ✅ Max supply updated to 41M DRM
 - ✅ Critical bugs fixed (halving interval, subsidy)
+- ✅ Genesis block finalized and documented (January 7, 2026)
 
 ---
 
@@ -190,10 +191,10 @@ Before launching, ensure:
    - Critical attack surface
    - 2-3 weeks of work
 
-3. **FINALIZE GENESIS PARAMETERS**
-   - Mine genesis block
-   - Verify across all configs
-   - Cannot fix after launch
+3. ~~**FINALIZE GENESIS PARAMETERS**~~ ✅ **COMPLETED**
+   - ~~Mine genesis block~~ DONE
+   - ~~Verify across all configs~~ VERIFIED
+   - ~~Cannot fix after launch~~ FINALIZED
 
 ---
 
@@ -202,8 +203,9 @@ Before launching, ensure:
 1. **PROJECT-COMPLETION-TASKS.md** - Full detailed task list
 2. **LAUNCH-ACTION-ITEMS.md** - Prioritized action plan
 3. **MAINNET-READINESS.md** - Technical assessment
-4. **roadmap.md** - Project timeline
-5. **AUDIT.md** - Known issues
+4. **GENESIS-MINING.md** - Genesis block documentation
+5. **roadmap.md** - Project timeline
+6. **AUDIT.md** - Known issues
 
 ---
 
@@ -215,6 +217,6 @@ Before launching, ensure:
 
 ---
 
-**Remember:** Don't rush. 8-12 weeks of focused effort will result in a secure, professional launch. Rushing risks catastrophic failure.
+**Remember:** Don't rush. 6-10 weeks of focused effort will result in a secure, professional launch (reduced from 8-12 weeks due to genesis completion). Rushing risks catastrophic failure.
 
-**The cryptocurrency space has enough failed launches. Let's make DRACHMA a success story.**
+**The cryptocurrency space has enough failed launches. Let's make PARTHENON CHAIN a success story.**

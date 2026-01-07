@@ -1,0 +1,54 @@
+---
+# Production Prometheus Configuration for PARTHENON CHAIN Mainnet
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    network: 'mainnet'
+    cluster: 'production'
+
+# Alertmanager configuration (optional but recommended)
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          # - 'alertmanager:9093'
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - 'alerts.yml'
+
+scrape_configs:
+  # PARTHENON CHAIN mainnet seed nodes
+  # NOTE: Update these hostnames to match your actual deployment
+  # Use environment-specific configuration or service discovery for production
+  - job_name: 'drachma-mainnet-seeds'
+    static_configs:
+      - targets:
+          - 'seed1.drachma.org:9311'
+          - 'seed2.drachma.org:9311'
+          - 'seed3.drachma.org:9311'
+        labels:
+          role: 'seed'
+          
+  # PARTHENON CHAIN mainnet regular nodes
+  - job_name: 'drachma-mainnet-nodes'
+    static_configs:
+      - targets:
+          - 'node1.drachma.org:9311'
+          - 'node2.drachma.org:9311'
+        labels:
+          role: 'node'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # Node exporter for system metrics (optional)
+  - job_name: 'node-exporter'
+    static_configs:
+      - targets:
+          - 'seed1.drachma.org:9100'
+          - 'seed2.drachma.org:9100'
+          - 'seed3.drachma.org:9100'

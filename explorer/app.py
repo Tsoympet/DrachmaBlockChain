@@ -6,6 +6,7 @@ from urllib3.util.retry import Retry
 
 RPC_URL = os.environ.get("DRACHMA_RPC_URL", "http://localhost:18443")
 RPC_AUTH = (os.environ.get("DRACHMA_RPC_USER", "user"), os.environ.get("DRACHMA_RPC_PASS", "pass"))
+NETWORK = os.environ.get("DRACHMA_NETWORK", "testnet")  # mainnet, testnet, or regtest
 
 # Connection pooling for improved performance
 _session = None
@@ -53,6 +54,7 @@ def create_app():
     @app.route("/")
     def index():
         stats = network_stats()
+        stats["network"] = NETWORK
         return render_template("index.html", stats=stats)
 
     @app.route("/block/<height>")

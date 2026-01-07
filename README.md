@@ -31,11 +31,23 @@ This repository contains the **reference implementation** of the PARTHENON CHAIN
 ## Releases
 
 Official binaries and source archives will be published on the GitHub Releases page. Each release will be tagged (vX.Y.Z); the next recommended cut is **`v0.1.0-rc`** to align with the release workflow and explorer shipped in this repository update. Every release will include:
-- Signed artifacts (release tag and archives signed with the maintainer key).
-- SHA-256 checksums for every downloadable file.
-- A generated SBOM and changelog highlighting consensus-impacting changes.
+- **Reproducible builds** - Built with deterministic flags for independent verification
+- **Signed artifacts** - Release tag and archives signed with the maintainer GPG key
+- **SHA-256 checksums** - For every downloadable file
+- **GPG signatures** - Detached signatures for all binaries
+- **SBOM** - Software Bill of Materials listing all dependencies
+- **Changelog** - Highlighting consensus-impacting changes
 
-Always verify signatures and checksums before running binaries.
+**Always verify signatures and checksums before running binaries.** See [Release Verification Guide](doc/release-signing.md) for instructions.
+
+### Building Releases
+
+For reproducible builds:
+```bash
+./scripts/reproducible-build.sh
+```
+
+See [Reproducible Builds Guide](doc/reproducible-builds.md) for details.
 
 ---
 
@@ -239,15 +251,52 @@ The Layer 3 desktop wallet is testnet-ready. Representative views are available 
 
 ## Mainnet Launch
 
+### Infrastructure Deployment
+
+PARTHENON CHAIN now includes production-ready infrastructure tools:
+
+**Seed Nodes:**
+```bash
+# Deploy a seed node
+sudo ./scripts/deploy-seed-node.sh seed-node-1 mainnet
+
+# Start and enable
+sudo systemctl start drachma-seed-node-1
+sudo systemctl enable drachma-seed-node-1
+```
+See [Seed Node Deployment Guide](doc/operators/seed-nodes.md) for details.
+
+**Monitoring:**
+```bash
+# Deploy monitoring stack (Prometheus + Grafana)
+docker-compose -f docker-compose.monitoring.yml up -d
+```
+Access Grafana at http://localhost:3000. See [Monitoring Guide](doc/operators/monitoring.md).
+
+**Extended Testing:**
+```bash
+# Run 7-day stability validation
+python3 scripts/extended-testnet-validation.py \
+  --duration 7 \
+  --nodes http://node1:18332,http://node2:18332
+```
+
+📖 **Quick Reference:** [Mainnet Readiness Guide](doc/MAINNET-READINESS-QUICK-REFERENCE.md)
+
+### Pre-Launch Checklist
+
 Use this checklist before connecting to mainnet or distributing binaries:
 
-- **Build type:** Use release builds with assertions enabled when possible: `cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DPARTHENON_BUILD_TESTS=OFF`.
-- **Reproducibility:** Build from a tagged release, pin dependency versions, and verify hashes of toolchains/SDKs.
-- **Key hygiene:** Keep the signing key offline; verify maintainer signatures on tags, source archives, and SBOMs.
-- **Network settings:** Start nodes with explicit flags (`--network mainnet`, `--listen`, `--rpcuser`, `--rpcpassword`) and review `deployment.md` for hardening.
-- **Bootstrap safety:** Prefer initial block download over external snapshots; if using bootstrap files, verify signatures and perform full validation.
-- **Miner configuration:** Point miners to authenticated endpoints only, with TLS or trusted LAN where available; review pool settings and difficulty floors.
-- **Operational readiness:** Enable logging/rotation, monitor resource usage, and document incident response contacts for your deployment.
+- **Build type:** Use reproducible builds: `./scripts/reproducible-build.sh`
+- **Reproducibility:** Build from a tagged release, verify with independent build
+- **Signatures:** Verify GPG signatures on all binaries and tags
+- **Key hygiene:** Keep the signing key offline; verify maintainer signatures on tags, source archives, and SBOMs
+- **Network settings:** Start nodes with explicit flags (`--network mainnet`, `--listen`, `--rpcuser`, `--rpcpassword`) and review `deployment.md` for hardening
+- **Bootstrap safety:** Prefer initial block download over external snapshots; if using bootstrap files, verify signatures and perform full validation
+- **Miner configuration:** Point miners to authenticated endpoints only, with TLS or trusted LAN where available; review pool settings and difficulty floors
+- **Operational readiness:** Enable logging/rotation, monitor resource usage, and document incident response contacts for your deployment
+- **Infrastructure:** Deploy 3+ seed nodes with monitoring and alerting
+- **Testing:** Complete 7+ day extended stability validation
 
 ## Known Limitations
 

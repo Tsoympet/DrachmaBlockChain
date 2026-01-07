@@ -74,6 +74,11 @@ jobs:
             exit 1
           fi
           tar -czf dist/drachma-${VERSION}-linux.tar.gz -C dist/ubuntu .
+          
+          # Generate checksums
+          cd dist
+          sha256sum drachma-${VERSION}-linux.tar.gz > drachma-${VERSION}-linux.tar.gz.sha256
+          cd ..
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
@@ -109,9 +114,27 @@ jobs:
           ls -R artifacts
           mkdir -p dist
           find artifacts -type f -name '*.tar.gz' -exec cp {} dist/ \;
+          find artifacts -type f -name '*.sha256' -exec cp {} dist/ \;
           if [ -z "$(find dist -type f -print -quit)" ]; then
             echo "No packaged artifacts found." >&2
             exit 1
+          fi
+
+      - name: Sign release artifacts
+        if: ${{ secrets.GPG_PRIVATE_KEY != '' }}
+        run: |
+          # Import GPG key if available
+          if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
+            echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+            
+            # Sign all release files
+            for file in dist/*.tar.gz; do
+              gpg --batch --yes --detach-sign --armor "$file"
+            done
+            
+            echo "Release artifacts signed with GPG"
+          else
+            echo "GPG key not configured - skipping signing"
           fi
 
       - name: Compose release notes

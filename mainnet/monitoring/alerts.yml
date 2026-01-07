@@ -1,0 +1,98 @@
+---
+# Prometheus Alert Rules for PARTHENON CHAIN Mainnet
+groups:
+  - name: drachma_node_alerts
+    interval: 30s
+    rules:
+      # Node is down
+      - alert: NodeDown
+        expr: up{job=~"drachma-mainnet-.*"} == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PARTHENON CHAIN node {{ $labels.instance }} is down"
+          description: "Node {{ $labels.instance }} has been down for more than 5 minutes."
+
+      # Low peer count
+      - alert: LowPeerCount
+        expr: drachma_peer_count < 3
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Node {{ $labels.instance }} has low peer count"
+          description: "Node {{ $labels.instance }} has {{ $value }} peers (threshold: 3)."
+
+      # Node out of sync
+      - alert: NodeOutOfSync
+        expr: (time() - drachma_best_block_time) > 1800
+        for: 15m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Node {{ $labels.instance }} is out of sync"
+          description: "Node {{ $labels.instance }} last block was {{ $value }} seconds ago."
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: drachma_memory_usage_bytes > 8000000000
+        for: 30m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Node {{ $labels.instance }} has high memory usage"
+          description: "Node {{ $labels.instance }} is using {{ $value | humanize }} bytes of memory."
+
+      # Mempool full
+      - alert: MempoolFull
+        expr: drachma_mempool_size > 100000000
+        for: 15m
+        labels:
+          severity: info
+        annotations:
+          summary: "Node {{ $labels.instance }} mempool is full"
+          description: "Mempool size on {{ $labels.instance }} is {{ $value | humanize }} bytes."
+
+      # Chain fork detected
+      - alert: ChainForkDetected
+        expr: changes(drachma_best_block_hash[5m]) > 10
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Possible chain fork on {{ $labels.instance }}"
+          description: "Best block hash changed {{ $value }} times in 5 minutes."
+
+  - name: system_alerts
+    interval: 30s
+    rules:
+      # High CPU usage
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is {{ $value | humanizePercentage }}."
+
+      # High disk usage
+      - alert: HighDiskUsage
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) < 0.1
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High disk usage on {{ $labels.instance }}"
+          description: "Disk usage is {{ $value | humanizePercentage }} full."
+
+      # Disk will fill in 24 hours
+      - alert: DiskWillFillSoon
+        expr: predict_linear(node_filesystem_avail_bytes{mountpoint="/"}[1h], 24*3600) < 0
+        for: 1h
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk on {{ $labels.instance }} will fill in 24 hours"
+          description: "Based on current growth rate, disk will be full in less than 24 hours."

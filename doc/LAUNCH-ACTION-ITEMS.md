@@ -26,21 +26,23 @@
 
 ### 2. Genesis Block Finalization
 **Priority:** HIGHEST  
-**Estimated Time:** 1-2 weeks  
+**Estimated Time:** ~~1-2 weeks~~ **COMPLETED ✅**
 **Owner:** Core Developer
 
 **Actions:**
-- [ ] Clarify subsidy halving interval (210,000 vs 2,102,400 blocks - code and docs disagree)
-- [ ] Mine mainnet genesis block with correct parameters
-- [ ] Update `layer1-core/consensus/params.cpp` mainParams.nGenesisNonce with mined value
-- [ ] Verify genesis hash matches across all configs
-- [ ] Create and test genesis verification script
-- [ ] Publish genesis block parameters with timestamp
+- [x] Clarify subsidy halving interval (2,102,400 blocks - now consistent across code and docs)
+- [x] Mine mainnet genesis block with correct parameters
+- [x] Update `layer1-core/consensus/params.cpp` mainParams.nGenesisNonce with mined value (2437501)
+- [x] Verify genesis hash matches across all configs
+- [x] Create and test genesis verification script (`scripts/verify-genesis.sh`)
+- [x] Publish genesis block parameters with timestamp
+- [x] Document genesis mining process (`doc/GENESIS-MINING.md`)
 
-**Current Issue:** 
-- params.cpp shows `nGenesisNonce = 0` with comment "mined later if not provided"
-- mainnet/genesis.json shows specific nonce but this needs verification
-- Halving interval discrepancy needs resolution
+**Resolution:** 
+- Genesis nonce 2437501 now synchronized across params.cpp and genesis.json
+- Genesis timestamp: 1740787200 (March 1, 2025, 00:00:00 UTC)
+- Halving interval: 2,102,400 blocks (~4 years) - consistent everywhere
+- Full documentation available in `doc/GENESIS-MINING.md`
 
 **Rationale:** Genesis parameters must be perfect - they cannot be changed after launch.
 

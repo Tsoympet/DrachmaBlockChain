@@ -9,7 +9,7 @@ This guide provides a quick introduction to using DRACHMA blockchain software.
 Choose one of the following methods to install DRACHMA:
 
 **Option 1: Use Pre-built Binaries (Recommended)**
-- Download from [GitHub Releases](https://github.com/Tsoympet/BlockChainDrachma/releases)
+- Download from [GitHub Releases](https://github.com/Tsoympet/PARTHENON-CHAIN/releases)
 - Verify SHA-256 checksums and GPG signatures
 - Extract and run
 
@@ -66,6 +66,6 @@ The app attempts to load `assets/i18n/drachma_<locale>.qm`; place translations t
 
 ## Getting Help
 
-- **GitHub Discussions**: [https://github.com/Tsoympet/BlockChainDrachma/discussions](https://github.com/Tsoympet/BlockChainDrachma/discussions)
+- **GitHub Discussions**: [https://github.com/Tsoympet/PARTHENON-CHAIN/discussions](https://github.com/Tsoympet/PARTHENON-CHAIN/discussions)
 - **Matrix**: [https://matrix.to/#/#drachma:matrix.org](https://matrix.to/#/#drachma:matrix.org)
 - **Discord**: [https://discord.gg/drachma](https://discord.gg/drachma)

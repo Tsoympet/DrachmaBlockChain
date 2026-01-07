@@ -1,0 +1,43 @@
+# Build outputs
+build/
+build-*/
+_codeql_build_dir/
+_codeql_detected_source_root
+dist/
+out/
+
+# Git
+.git/
+.gitignore
+
+# IDE and editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Documentation backups
+docs-backup-*/
+
+# macOS and Windows
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+.env
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test files
+test_*.json
+*_old.cpp

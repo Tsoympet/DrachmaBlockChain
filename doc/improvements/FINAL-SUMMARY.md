@@ -2,7 +2,7 @@
 
 ## Mission Accomplished ✅
 
-Successfully identified and enhanced 4 critical areas with partial/minimal implementations in the BlockChainDrachma project.
+Successfully identified and enhanced 4 critical areas with partial/minimal implementations in the PARTHENON-CHAIN project.
 
 ## Deliverables
 

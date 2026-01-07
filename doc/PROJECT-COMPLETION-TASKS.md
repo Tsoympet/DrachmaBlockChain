@@ -597,6 +597,6 @@ This document consolidates information from:
 
 **Questions or Concerns?**  
 Reach out to the core team via:
-- GitHub Issues: https://github.com/Tsoympet/BlockChainDrachma/issues
-- GitHub Discussions: https://github.com/Tsoympet/BlockChainDrachma/discussions
+- GitHub Issues: https://github.com/Tsoympet/PARTHENON-CHAIN/issues
+- GitHub Discussions: https://github.com/Tsoympet/PARTHENON-CHAIN/discussions
 - Email: security@drachma.org

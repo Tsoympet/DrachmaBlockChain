@@ -1,4 +1,4 @@
-# BlockChainDrachma Sidechain (WASM) Specification
+# PARTHENON-CHAIN Sidechain (WASM) Specification
 
 ## Goals
 - Deterministic WASM execution with fixed-cost metering.

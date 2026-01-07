@@ -5,13 +5,14 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        build-essential cmake git ca-certificates \
-       libssl-dev libboost-all-dev python3 \
+       libssl-dev libboost-all-dev libleveldb-dev python3 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /opt/drachma
 COPY . /opt/drachma
 
-RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+RUN rm -rf build && cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+    -DDRACHMA_BUILD_TESTS=OFF -DDRACHMA_BUILD_GUI=OFF \
     && cmake --build build --parallel
 
 EXPOSE 9333 8332

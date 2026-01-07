@@ -1,6 +1,6 @@
 # Code Improvements README
 
-This directory contains documentation and tests for code improvements made to address partial, minimal, or simplified implementations in the BlockChainDrachma project.
+This directory contains documentation and tests for code improvements made to address partial, minimal, or simplified implementations in the PARTHENON-CHAIN project.
 
 ## Quick Start
 

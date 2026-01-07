@@ -1,0 +1,119 @@
+name: Mobile Client Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-android:
+    name: Build Android APK
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile-client
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: mobile-client/package-lock.json
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
+      - name: Build Android Release APK
+        run: |
+          cd android
+          ./gradlew assembleRelease --no-daemon
+
+      - name: Sign APK
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          # This would use signing keys from secrets in production
+          echo "APK signing would happen here with release keys"
+
+      - name: Upload Android APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: drachma-mobile-android
+          path: mobile-client/android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+          retention-days: 7
+
+  build-ios:
+    name: Build iOS IPA
+    runs-on: macos-12
+    defaults:
+      run:
+        working-directory: mobile-client
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: mobile-client/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install CocoaPods
+        run: |
+          cd ios
+          pod install
+
+      - name: Build iOS Release
+        run: |
+          cd ios
+          xcodebuild -workspace DrachmaWallet.xcworkspace \
+            -scheme DrachmaWallet \
+            -configuration Release \
+            -archivePath $PWD/build/DrachmaWallet.xcarchive \
+            archive \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Export IPA
+        run: |
+          cd ios
+          xcodebuild -exportArchive \
+            -archivePath $PWD/build/DrachmaWallet.xcarchive \
+            -exportPath $PWD/build \
+            -exportOptionsPlist $PWD/exportOptions.plist \
+            CODE_SIGN_IDENTITY="" \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Upload iOS IPA
+        uses: actions/upload-artifact@v4
+        with:
+          name: drachma-mobile-ios
+          path: mobile-client/ios/build/*.ipa
+          if-no-files-found: warn
+          retention-days: 7

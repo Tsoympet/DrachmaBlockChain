@@ -11,7 +11,8 @@ RUN apt-get update \
 WORKDIR /opt/drachma
 COPY . /opt/drachma
 
-RUN cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+RUN rm -rf build && cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+    -DDRACHMA_BUILD_TESTS=OFF -DDRACHMA_BUILD_GUI=OFF \
     && cmake --build build --parallel
 
 EXPOSE 9333 8332

@@ -208,6 +208,16 @@ Docker artifacts live alongside the source (`Dockerfile`, `docker-compose.yml`) 
   ```bash
   ./build/layer3-app/drachma-wallet --connect 127.0.0.1:9333
   ```
+- **Mobile Wallet (iOS/Android):**
+  ```bash
+  cd mobile-client
+  npm install
+  # For iOS
+  npx react-native run-ios
+  # For Android
+  npx react-native run-android
+  ```
+  See [`mobile-client/README.md`](mobile-client/README.md) for detailed setup and features.
 
 Commands are subject to change as the implementation matures; prefer scripts in `scripts/` for reproducible setups.
 
@@ -331,6 +341,22 @@ This layer contains no consensus logic.
 
 ---
 
+### Mobile Client
+Location: `mobile-client/`
+
+Responsibilities:
+- Cross-platform mobile wallet (iOS and Android)
+- Secure key management with biometric authentication
+- Multi-asset support (TLN, DRM, OBL)
+- NFT gallery and marketplace access
+- QR code scanning for easy transactions
+- Offline mode for viewing balances
+
+Built with React Native for optimal performance on mobile devices.
+See [`mobile-client/README.md`](mobile-client/README.md) for details.
+
+---
+
 ## Launch Characteristics
 
 The network launches without:
@@ -375,15 +401,16 @@ These miners serve as transparent reference tools and are not optimized black-bo
 
 ```
 drachma-blockchain/
-├─ layer1-core/ # Consensus-critical logic
-├─ layer2-services/ # Networking, RPC, wallet backend, cross-chain
-├─ layer3-app/ # Desktop application
-├─ miners/ # Reference CPU & GPU miners
-├─ testnet/ # Test network parameters
-├─ doc/ # Technical documentation
-├─ tests/ # Unit, integration, and fuzz tests
-├─ common/ # Shared utilities
-└─ scripts/ # Build and run scripts
+├─ layer1-core/       # Consensus-critical logic
+├─ layer2-services/   # Networking, RPC, wallet backend, cross-chain
+├─ layer3-app/        # Desktop application (Qt-based)
+├─ mobile-client/     # Mobile wallet (React Native, iOS/Android)
+├─ miners/            # Reference CPU & GPU miners
+├─ testnet/           # Test network parameters
+├─ doc/               # Technical documentation
+├─ tests/             # Unit, integration, and fuzz tests
+├─ common/            # Shared utilities
+└─ scripts/           # Build and run scripts
 ```
 
 ---

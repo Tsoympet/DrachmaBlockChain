@@ -325,7 +325,7 @@ jobs:
 
   build-macos:
     name: Build macOS (x86_64 + arm64)
-    runs-on: macos-12
+    runs-on: macos-latest
     strategy:
       matrix:
         arch: [x86_64, arm64]
@@ -453,7 +453,7 @@ jobs:
         include:
           - os: windows-latest
             artifact_name: release-qt-wallet-windows
-          - os: macos-12
+          - os: macos-latest
             artifact_name: release-qt-wallet-macos
           - os: ubuntu-20.04
             artifact_name: release-qt-wallet-linux
@@ -558,7 +558,7 @@ jobs:
           - os: ubuntu-latest
             platform: android
             artifact_name: release-mobile-android
-          - os: macos-12
+          - os: macos-latest
             platform: ios
             artifact_name: release-mobile-ios
     defaults:

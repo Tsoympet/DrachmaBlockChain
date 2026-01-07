@@ -6,6 +6,9 @@ _codeql_detected_source_root
 dist/
 out/
 
+# Generated files
+build/common/version.h
+
 # Compiled binaries and objects
 *.o
 *.exe

@@ -1,9 +1,19 @@
 cmake_minimum_required(VERSION 3.16)
-project(DrachmaBlockchain LANGUAGES CXX)
+project(DrachmaBlockchain 
+    VERSION 0.1.0
+    DESCRIPTION "PARTHENON CHAIN - Proof-of-Work Monetary Blockchain"
+    LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+# Configure version header
+configure_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/common/version.h.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/common/version.h"
+    @ONLY
+)
 
 option(DRACHMA_BUILD_TESTS "Build Drachma test executables" ON)
 option(DRACHMA_BUILD_GUI "Build the Qt desktop wallet" OFF)
@@ -84,6 +94,7 @@ add_library(drachma_layer1
 target_include_directories(drachma_layer1
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/layer1-core
+        ${CMAKE_CURRENT_BINARY_DIR}/common
 )
 
 target_link_libraries(drachma_layer1

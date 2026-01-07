@@ -1,0 +1,28 @@
+// Auto-generated version header - DO NOT EDIT MANUALLY
+// This file is generated from version.h.in during CMake configuration
+#ifndef DRACHMA_VERSION_H
+#define DRACHMA_VERSION_H
+
+#define DRACHMA_VERSION_MAJOR @DrachmaBlockchain_VERSION_MAJOR@
+#define DRACHMA_VERSION_MINOR @DrachmaBlockchain_VERSION_MINOR@
+#define DRACHMA_VERSION_PATCH @DrachmaBlockchain_VERSION_PATCH@
+#define DRACHMA_VERSION_STRING "@DrachmaBlockchain_VERSION@"
+#define DRACHMA_PROJECT_DESCRIPTION "@DrachmaBlockchain_DESCRIPTION@"
+
+// Network name
+#define PARTHENON_CHAIN_NAME "PARTHENON CHAIN"
+#define PARTHENON_CHAIN_CODENAME "Drachma"
+
+// Build type
+#ifdef NDEBUG
+#define DRACHMA_BUILD_TYPE "Release"
+#else
+#define DRACHMA_BUILD_TYPE "Debug"
+#endif
+
+// Version as integer for comparison
+#define DRACHMA_VERSION_INT ((DRACHMA_VERSION_MAJOR * 10000) + \
+                             (DRACHMA_VERSION_MINOR * 100) + \
+                             DRACHMA_VERSION_PATCH)
+
+#endif // DRACHMA_VERSION_H

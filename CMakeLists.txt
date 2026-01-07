@@ -516,3 +516,147 @@ install(FILES
     DESTINATION share/doc/drachma
     COMPONENT documentation
 )
+
+# ============================================================================
+# CPack Configuration - Packaging and Installer Generation
+# ============================================================================
+
+# Set package metadata
+set(CPACK_PACKAGE_NAME "parthenon-chain")
+set(CPACK_PACKAGE_VENDOR "PARTHENON CHAIN Contributors")
+set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "PARTHENON CHAIN - Proof-of-Work Monetary Blockchain")
+set(CPACK_PACKAGE_DESCRIPTION "PARTHENON CHAIN (Drachma) is a proof-of-work blockchain with Layer 2 services, EVM sidechain, and WASM smart contracts.")
+set(CPACK_PACKAGE_VERSION_MAJOR ${PROJECT_VERSION_MAJOR})
+set(CPACK_PACKAGE_VERSION_MINOR ${PROJECT_VERSION_MINOR})
+set(CPACK_PACKAGE_VERSION_PATCH ${PROJECT_VERSION_PATCH})
+set(CPACK_PACKAGE_VERSION ${PROJECT_VERSION})
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "ParthenonChain")
+set(CPACK_PACKAGE_CONTACT "https://github.com/Tsoympet/PARTHENON-CHAIN")
+
+# Resource files
+set(CPACK_RESOURCE_FILE_LICENSE "${CMAKE_CURRENT_SOURCE_DIR}/LICENSE")
+set(CPACK_RESOURCE_FILE_README "${CMAKE_CURRENT_SOURCE_DIR}/README.md")
+
+# Component descriptions
+set(CPACK_COMPONENT_RUNTIME_DISPLAY_NAME "Core Binaries")
+set(CPACK_COMPONENT_RUNTIME_DESCRIPTION "Core daemon and CLI tools (drachmad, drachma-cli)")
+set(CPACK_COMPONENT_RUNTIME_REQUIRED ON)
+
+set(CPACK_COMPONENT_MINERS_DISPLAY_NAME "Mining Tools")
+set(CPACK_COMPONENT_MINERS_DESCRIPTION "CPU and GPU mining tools")
+
+set(CPACK_COMPONENT_GUI_DISPLAY_NAME "Qt Wallet")
+set(CPACK_COMPONENT_GUI_DESCRIPTION "Desktop GUI wallet application")
+
+set(CPACK_COMPONENT_DEVELOPMENT_DISPLAY_NAME "Development Files")
+set(CPACK_COMPONENT_DEVELOPMENT_DESCRIPTION "Headers and libraries for development")
+
+set(CPACK_COMPONENT_DOCUMENTATION_DISPLAY_NAME "Documentation")
+set(CPACK_COMPONENT_DOCUMENTATION_DESCRIPTION "Documentation files and man pages")
+
+# Enable component-based installation
+set(CPACK_COMPONENTS_ALL runtime miners gui development documentation)
+
+# Platform-specific generators
+if(WIN32)
+    # Windows NSIS installer
+    set(CPACK_GENERATOR "NSIS;ZIP")
+    set(CPACK_NSIS_DISPLAY_NAME "PARTHENON CHAIN ${PROJECT_VERSION}")
+    set(CPACK_NSIS_PACKAGE_NAME "PARTHENON CHAIN")
+    set(CPACK_NSIS_ENABLE_UNINSTALL_BEFORE_INSTALL ON)
+    set(CPACK_NSIS_MODIFY_PATH ON)
+    
+    # Set icon paths if they exist
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets/drachma.ico")
+        set(CPACK_NSIS_MUI_ICON "${CMAKE_CURRENT_SOURCE_DIR}/assets/drachma.ico")
+        set(CPACK_NSIS_MUI_UNIICON "${CMAKE_CURRENT_SOURCE_DIR}/assets/drachma.ico")
+    endif()
+    
+    set(CPACK_NSIS_HELP_LINK "https://github.com/Tsoympet/PARTHENON-CHAIN")
+    set(CPACK_NSIS_URL_INFO_ABOUT "https://github.com/Tsoympet/PARTHENON-CHAIN")
+    set(CPACK_NSIS_CONTACT "https://github.com/Tsoympet/PARTHENON-CHAIN/issues")
+    
+    # Create Start Menu shortcuts
+    set(CPACK_NSIS_CREATE_ICONS_EXTRA
+        "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Drachma Qt Wallet.lnk' '$INSTDIR\\\\bin\\\\drachma-qt.exe'"
+        "CreateShortCut '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Drachma Daemon.lnk' '$INSTDIR\\\\bin\\\\drachmad.exe'"
+    )
+    set(CPACK_NSIS_DELETE_ICONS_EXTRA
+        "Delete '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Drachma Qt Wallet.lnk'"
+        "Delete '$SMPROGRAMS\\\\$STARTMENU_FOLDER\\\\Drachma Daemon.lnk'"
+    )
+elseif(APPLE)
+    # macOS DMG and Bundle
+    set(CPACK_GENERATOR "DragNDrop;TGZ")
+    set(CPACK_DMG_VOLUME_NAME "PARTHENON CHAIN ${PROJECT_VERSION}")
+    set(CPACK_DMG_FORMAT "UDBZ")
+    
+    # Set background image if it exists
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets/dmg-background.png")
+        set(CPACK_DMG_BACKGROUND_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/assets/dmg-background.png")
+    endif()
+    
+    # Bundle configuration for Qt app
+    if(DRACHMA_BUILD_GUI AND TARGET drachma_qt)
+        set(CPACK_BUNDLE_NAME "Drachma")
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/assets/drachma.icns")
+            set(CPACK_BUNDLE_ICON "${CMAKE_CURRENT_SOURCE_DIR}/assets/drachma.icns")
+        endif()
+        if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/contrib/macos/Info.plist")
+            set(CPACK_BUNDLE_PLIST "${CMAKE_CURRENT_SOURCE_DIR}/contrib/macos/Info.plist")
+        endif()
+    endif()
+else()
+    # Linux - multiple archive formats and DEB/RPM packages
+    set(CPACK_GENERATOR "TGZ;TBZ2;DEB;RPM")
+    
+    # Debian package configuration
+    set(CPACK_DEBIAN_PACKAGE_MAINTAINER "PARTHENON CHAIN Contributors <https://github.com/Tsoympet/PARTHENON-CHAIN>")
+    set(CPACK_DEBIAN_PACKAGE_SECTION "net")
+    set(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+    set(CPACK_DEBIAN_PACKAGE_DEPENDS "libssl1.1 | libssl3, libboost-system1.71.0 | libboost-system1.74.0 | libboost-system1.81.0, libleveldb1d")
+    set(CPACK_DEBIAN_PACKAGE_HOMEPAGE "https://github.com/Tsoympet/PARTHENON-CHAIN")
+    set(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+    set(CPACK_DEBIAN_FILE_NAME DEB-DEFAULT)
+    
+    # RPM package configuration
+    set(CPACK_RPM_PACKAGE_LICENSE "MIT")
+    set(CPACK_RPM_PACKAGE_GROUP "Applications/Internet")
+    set(CPACK_RPM_PACKAGE_URL "https://github.com/Tsoympet/PARTHENON-CHAIN")
+    set(CPACK_RPM_PACKAGE_REQUIRES "openssl-libs >= 1.1.1, boost-system >= 1.71.0, leveldb >= 1.20")
+    set(CPACK_RPM_FILE_NAME RPM-DEFAULT)
+    
+    # Component-specific packages for DEB
+    set(CPACK_DEB_COMPONENT_INSTALL ON)
+    set(CPACK_DEBIAN_RUNTIME_PACKAGE_NAME "parthenon-chain")
+    set(CPACK_DEBIAN_MINERS_PACKAGE_NAME "parthenon-chain-miners")
+    set(CPACK_DEBIAN_GUI_PACKAGE_NAME "parthenon-chain-qt")
+    set(CPACK_DEBIAN_DEVELOPMENT_PACKAGE_NAME "parthenon-chain-dev")
+    
+    # Component-specific packages for RPM
+    set(CPACK_RPM_COMPONENT_INSTALL ON)
+    set(CPACK_RPM_RUNTIME_PACKAGE_NAME "parthenon-chain")
+    set(CPACK_RPM_MINERS_PACKAGE_NAME "parthenon-chain-miners")
+    set(CPACK_RPM_GUI_PACKAGE_NAME "parthenon-chain-qt")
+    set(CPACK_RPM_DEVELOPMENT_PACKAGE_NAME "parthenon-chain-devel")
+endif()
+
+# Archive naming
+set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${PROJECT_VERSION}-${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${PROJECT_VERSION}-source")
+
+# Source package configuration
+set(CPACK_SOURCE_GENERATOR "TGZ;TBZ2;ZIP")
+set(CPACK_SOURCE_IGNORE_FILES
+    "/\\\\.git/"
+    "/\\\\.github/"
+    "/build.*/"
+    "/\\\\.vscode/"
+    "/\\\\.idea/"
+    "\\\\.gitignore"
+    "\\\\.DS_Store"
+    ".*~$"
+)
+
+# Include CPack module
+include(CPack)

@@ -10,7 +10,7 @@ CMAKE_BUILD_TYPE ?= Release
 .DEFAULT_GOAL := all
 
 # Phony targets
-.PHONY: all install clean help test check distclean uninstall
+.PHONY: all install clean help test check distclean uninstall package
 
 all:
 	@echo "Building DRACHMA binaries..."
@@ -52,6 +52,14 @@ uninstall:
 		exit 1; \
 	fi
 
+package:
+	@echo "Creating packages with CPack..."
+	@if [ ! -d "$(BUILD_DIR)" ]; then \
+		echo "Build directory not found. Run 'make' first."; \
+		exit 1; \
+	fi
+	cmake --build $(BUILD_DIR) --target package
+
 help:
 	@echo "DRACHMA Blockchain Build System"
 	@echo ""
@@ -65,6 +73,7 @@ help:
 	@echo "  distclean   Remove build directory entirely"
 	@echo "  test        Run test suite"
 	@echo "  check       Alias for 'test'"
+	@echo "  package     Create installer packages using CPack"
 	@echo "  uninstall   Remove installed files"
 	@echo "  help        Show this help message"
 	@echo ""
@@ -78,3 +87,4 @@ help:
 	@echo "  make PREFIX=/opt/drachma install"
 	@echo "  make BUILD_DIR=mybuild all"
 	@echo "  make test"
+	@echo "  make package           Create distribution packages"

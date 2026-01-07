@@ -1,0 +1,62 @@
+---
+name: "parthenon-osx-0.1"
+enable_cache: true
+distro: "ubuntu"
+suites:
+- "focal"
+architectures:
+- "amd64"
+packages:
+- "g++"
+- "gcc"
+- "cmake"
+- "ninja-build"
+- "ca-certificates"
+- "python3"
+- "pkg-config"
+- "autoconf"
+- "automake"
+- "libtool"
+- "librsvg2-bin"
+- "libtiff-tools"
+- "bsdmainutils"
+- "imagemagick"
+- "libcap-dev"
+- "libz-dev"
+- "libbz2-dev"
+- "xorriso"
+
+remotes:
+- "url": "https://github.com/Tsoympet/PARTHENON-CHAIN.git"
+  "dir": "parthenon-chain"
+
+files:
+- "MacOSX11.0.sdk.tar.gz"
+
+script: |
+  WRAP_DIR=$HOME/wrapped
+  HOSTS="x86_64-apple-darwin arm64-apple-darwin"
+  
+  export TZ="UTC"
+  export BUILD_DIR=`pwd`
+  export SOURCE_DATE_EPOCH=1
+  export LC_ALL=C
+  
+  # Extract macOS SDK
+  tar -xzf MacOSX11.0.sdk.tar.gz
+  SDK_PATH=$BUILD_DIR/MacOSX11.0.sdk
+  
+  # Note: macOS cross-compilation from Linux requires:
+  # 1. macOS SDK (from Xcode, requires Apple Developer account)
+  # 2. osxcross toolchain
+  # 3. Building all dependencies for macOS target
+  # 
+  # For official releases, we recommend building on actual macOS hardware
+  # using the GitHub Actions workflow which runs on macos-12 runners
+  
+  cd parthenon-chain
+  VERSION=$(cat CMakeLists.txt | grep "VERSION" | head -1 | awk '{print $2}' | tr -d ')')
+  
+  echo "macOS Gitian builds should be created on macOS hardware" > $OUTDIR/MACOS_BUILD_STATUS.txt
+  echo "The GitHub Actions release workflow handles this automatically" >> $OUTDIR/MACOS_BUILD_STATUS.txt
+  echo "See .github/workflows/release.yml for the macOS build job" >> $OUTDIR/MACOS_BUILD_STATUS.txt

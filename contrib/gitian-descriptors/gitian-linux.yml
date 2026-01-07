@@ -1,0 +1,84 @@
+---
+name: "parthenon-linux-0.1"
+enable_cache: true
+distro: "ubuntu"
+suites:
+- "focal"
+architectures:
+- "amd64"
+packages:
+- "g++"
+- "gcc"
+- "cmake"
+- "ninja-build"
+- "libssl-dev"
+- "libboost-system-dev"
+- "libleveldb-dev"
+- "pkg-config"
+- "autoconf"
+- "automake"
+- "libtool"
+
+remotes:
+- "url": "https://github.com/Tsoympet/PARTHENON-CHAIN.git"
+  "dir": "parthenon-chain"
+
+files: []
+
+script: |
+  WRAP_DIR=$HOME/wrapped
+  HOSTS="x86_64-linux-gnu"
+  CONFIGFLAGS="--enable-reduce-exports --disable-bench --disable-gui-tests"
+  FAKETIME_HOST_PROGS=""
+  FAKETIME_PROGS="date ar ranlib nm"
+  HOST_CFLAGS="-O2 -march=x86-64 -fno-asynchronous-unwind-tables"
+  HOST_CXXFLAGS="-O2 -march=x86-64 -fno-asynchronous-unwind-tables"
+  HOST_LDFLAGS="-Wl,--build-id=none"
+
+  export QT_RCC_TEST=1
+  export QT_RCC_SOURCE_DATE_OVERRIDE=1
+  export TZ="UTC"
+  export BUILD_DIR=`pwd`
+  mkdir -p ${WRAP_DIR}
+  if test -n "$GBUILD_CACHE_ENABLED"; then
+    export SOURCES_PATH=${GBUILD_COMMON_CACHE}
+    export BASE_CACHE=${GBUILD_PACKAGE_CACHE}
+    mkdir -p ${BASE_CACHE} ${SOURCES_PATH}
+  fi
+
+  # Create the release tarball using (arbitrarily) the first host
+  cd parthenon-chain
+  VERSION=$(cat CMakeLists.txt | grep "VERSION" | head -1 | awk '{print $2}' | tr -d ')')
+  
+  # Deterministic build
+  export SOURCE_DATE_EPOCH=1
+  export LC_ALL=C
+  
+  mkdir -p build-release
+  cd build-release
+  
+  cmake .. \
+    -GNinja \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DDRACHMA_BUILD_GUI=OFF \
+    -DDRACHMA_BUILD_TESTS=OFF \
+    -DDRACHMA_COVERAGE=OFF \
+    -DCMAKE_C_FLAGS="${HOST_CFLAGS}" \
+    -DCMAKE_CXX_FLAGS="${HOST_CXXFLAGS}" \
+    -DCMAKE_EXE_LINKER_FLAGS="${HOST_LDFLAGS}"
+  
+  ninja
+  
+  mkdir -p $OUTDIR/bin
+  install -s -m 755 layer1-core/drachmad $OUTDIR/bin/
+  install -s -m 755 layer1-core/drachma-cli $OUTDIR/bin/
+  install -s -m 755 drachma_cpu_miner $OUTDIR/bin/ || true
+  
+  cd ..
+  find . -name "lib*.so*" -exec cp '{}' $OUTDIR/lib \;
+  
+  # Create release archive
+  cd $OUTDIR
+  find . -type f | sort | tar --mtime="@${SOURCE_DATE_EPOCH}" \
+    --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 --sort=name \
+    --no-recursion -T - -czf $OUTDIR/../parthenon-core-${VERSION}-linux-x86_64.tar.gz

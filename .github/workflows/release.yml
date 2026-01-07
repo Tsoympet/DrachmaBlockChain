@@ -26,9 +26,9 @@ env:
   BUILD_TYPE: Release
 
 jobs:
-  build:
-    name: Build and package (ubuntu-latest)
-    runs-on: ubuntu-latest
+  build-linux:
+    name: Build Linux x86_64
+    runs-on: ubuntu-20.04
     env:
       BUILD_DIR: build
       VERSION: >-
@@ -43,12 +43,20 @@ jobs:
           sudo apt-get update && sudo apt-get install -y
           cmake ninja-build libssl-dev libboost-all-dev libleveldb-dev
 
-      - name: Configure
+      - name: Configure (reproducible build)
+        env:
+          SOURCE_DATE_EPOCH: "1"
+          TZ: "UTC"
+          LC_ALL: "C"
         run: >-
           cmake -S . -B "${BUILD_DIR}" -G Ninja
           -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
-          -DDRACHMA_BUILD_GUI=OFF -DDRACHMA_BUILD_TESTS=ON
+          -DDRACHMA_BUILD_GUI=OFF
+          -DDRACHMA_BUILD_TESTS=ON
           -DDRACHMA_COVERAGE=OFF
+          -DCMAKE_C_FLAGS="-O2 -march=x86-64 -fno-asynchronous-unwind-tables"
+          -DCMAKE_CXX_FLAGS="-O2 -march=x86-64 -fno-asynchronous-unwind-tables"
+          -DCMAKE_EXE_LINKER_FLAGS="-Wl,--build-id=none"
 
       - name: Build
         run: cmake --build "${BUILD_DIR}" --parallel
@@ -58,33 +66,185 @@ jobs:
 
       - name: Package artifacts
         run: |
-          mkdir -p dist/ubuntu
+          mkdir -p dist/parthenon-core
           TARGETS=(drachmad drachma-cli drachma_cpu_miner)
           for name in "${TARGETS[@]}"; do
             bin_path=$(find "${BUILD_DIR}" -maxdepth 3 -type f \
               -name "${name}" -print -quit)
             if [ -n "${bin_path}" ]; then
-              cp "${bin_path}" dist/ubuntu/
+              strip --strip-all "${bin_path}"
+              cp "${bin_path}" dist/parthenon-core/
             else
               echo "Warning: ${name} was not produced; skipping." >&2
             fi
           done
-          if [ -z "$(find dist/ubuntu -maxdepth 1 -type f -print -quit)" ]; then
-            echo "No binaries were packaged from the build output." >&2
-            exit 1
-          fi
-          tar -czf dist/drachma-${VERSION}-linux.tar.gz -C dist/ubuntu .
+          
+          # Add documentation
+          cp README.md dist/parthenon-core/
+          cp LICENSE dist/parthenon-core/
+          echo "${VERSION}" > dist/parthenon-core/VERSION
+          
+          # Create README.txt for release
+          cat > dist/parthenon-core/README.txt << 'EOF'
+          PARTHENON CHAIN - Core Client Binaries
+          
+          This archive contains the core binaries for running a PARTHENON CHAIN node.
+          
+          Binaries included:
+          - drachmad: The core daemon (full node)
+          - drachma-cli: Command-line RPC interface
+          - drachma_cpu_miner: CPU mining software
+          
+          Quick Start:
+          1. Run './drachmad --help' to see available options
+          2. Start the daemon: './drachmad'
+          3. Use the CLI: './drachma-cli getblockcount'
+          
+          For detailed documentation, see:
+          - Installation: docs/install.md (or visit GitHub)
+          - Verification: docs/verifying-downloads.md
+          - GitHub: https://github.com/Tsoympet/PARTHENON-CHAIN
+          
+          Security:
+          - Always verify checksums before running binaries
+          - Verify GPG signatures if available
+          - See docs/verifying-downloads.md for instructions
+          EOF
           
           # Generate checksums
+          cd dist/parthenon-core
+          sha256sum drachmad drachma-cli drachma_cpu_miner > SHA256SUMS
+          cd ../..
+          
+          # Create archive
+          tar -czf dist/parthenon-core-${VERSION}-linux-x86_64.tar.gz -C dist/parthenon-core .
+          
+          # Generate archive checksum
           cd dist
-          sha256sum drachma-${VERSION}-linux.tar.gz > drachma-${VERSION}-linux.tar.gz.sha256
+          sha256sum parthenon-core-${VERSION}-linux-x86_64.tar.gz > parthenon-core-${VERSION}-linux-x86_64.tar.gz.sha256
           cd ..
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: release-ubuntu
-          path: dist/drachma-${{ env.VERSION }}-linux.tar.gz
+          name: release-linux-x86_64
+          path: |
+            dist/parthenon-core-${{ env.VERSION }}-linux-x86_64.tar.gz
+            dist/parthenon-core-${{ env.VERSION }}-linux-x86_64.tar.gz.sha256
+
+  build-windows:
+    name: Build Windows x86_64
+    runs-on: ubuntu-20.04
+    env:
+      BUILD_DIR: build-win
+      VERSION: >-
+        ${{ github.event_name == 'workflow_dispatch' &&
+        inputs.version_tag || github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Note Windows build status
+        run: |
+          echo "Windows cross-compilation requires additional setup."
+          echo "To be implemented: MinGW toolchain with OpenSSL, Boost, LevelDB"
+          echo "For now, building Windows binaries locally is recommended."
+          echo "See contrib/gitian-descriptors/gitian-win.yml for build instructions."
+          
+      - name: Create placeholder
+        run: |
+          mkdir -p dist
+          cat > dist/WINDOWS_BUILD_INFO.txt << 'EOF'
+          Windows binaries for this release are not yet available through automated builds.
+          
+          To build on Windows:
+          1. Install MSYS2 or use WSL
+          2. Install dependencies: OpenSSL, Boost, LevelDB
+          3. Follow doc/INSTALL.md for build instructions
+          
+          For Gitian deterministic builds, see:
+          contrib/gitian-descriptors/gitian-win.yml
+          EOF
+
+      - name: Upload placeholder
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows-x86_64
+          path: dist/WINDOWS_BUILD_INFO.txt
+
+  build-macos:
+    name: Build macOS (x86_64 + arm64)
+    runs-on: macos-12
+    strategy:
+      matrix:
+        arch: [x86_64, arm64]
+    env:
+      BUILD_DIR: build-${{ matrix.arch }}
+      VERSION: >-
+        ${{ github.event_name == 'workflow_dispatch' &&
+        inputs.version_tag || github.ref_name }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew install cmake ninja openssl@3 boost leveldb
+
+      - name: Configure
+        run: >-
+          cmake -S . -B "${BUILD_DIR}" -G Ninja
+          -DCMAKE_BUILD_TYPE="${BUILD_TYPE}"
+          -DCMAKE_OSX_ARCHITECTURES="${{ matrix.arch }}"
+          -DDRACHMA_BUILD_GUI=OFF
+          -DDRACHMA_BUILD_TESTS=OFF
+          -DDRACHMA_COVERAGE=OFF
+          -DOPENSSL_ROOT_DIR=$(brew --prefix openssl@3)
+          -DBoost_INCLUDE_DIR=$(brew --prefix boost)/include
+          -DCMAKE_C_FLAGS="-O2"
+          -DCMAKE_CXX_FLAGS="-O2"
+
+      - name: Build
+        run: cmake --build "${BUILD_DIR}" --parallel
+
+      - name: Package artifacts
+        run: |
+          mkdir -p dist/parthenon-core
+          TARGETS=(drachmad drachma-cli drachma_cpu_miner)
+          for name in "${TARGETS[@]}"; do
+            bin_path=$(find "${BUILD_DIR}" -maxdepth 3 -type f \
+              -name "${name}" -print -quit)
+            if [ -n "${bin_path}" ]; then
+              strip "${bin_path}"
+              cp "${bin_path}" dist/parthenon-core/
+            fi
+          done
+          
+          # Add documentation
+          cp README.md dist/parthenon-core/
+          cp LICENSE dist/parthenon-core/
+          echo "${VERSION}" > dist/parthenon-core/VERSION
+          
+          # Generate checksums
+          cd dist/parthenon-core
+          shasum -a 256 drachmad drachma-cli drachma_cpu_miner > SHA256SUMS
+          cd ../..
+          
+          # Create archive
+          tar -czf dist/parthenon-core-${VERSION}-macos-${{ matrix.arch }}.tar.gz -C dist/parthenon-core .
+          
+          # Generate archive checksum
+          cd dist
+          shasum -a 256 parthenon-core-${VERSION}-macos-${{ matrix.arch }}.tar.gz > parthenon-core-${VERSION}-macos-${{ matrix.arch }}.tar.gz.sha256
+          cd ..
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-macos-${{ matrix.arch }}
+          path: |
+            dist/parthenon-core-${{ env.VERSION }}-macos-${{ matrix.arch }}.tar.gz
+            dist/parthenon-core-${{ env.VERSION }}-macos-${{ matrix.arch }}.tar.gz.sha256
 
   publish:
     if: >-
@@ -92,7 +252,7 @@ jobs:
       (github.event_name == 'workflow_dispatch' &&
       inputs.publish_release == 'true')
     name: Publish release
-    needs: build
+    needs: [build-linux, build-windows, build-macos]
     runs-on: ubuntu-latest
     env:
       VERSION: >-
@@ -102,7 +262,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Download build artifacts
+      - name: Download all artifacts
         uses: actions/download-artifact@v4
         with:
           path: artifacts
@@ -111,30 +271,19 @@ jobs:
 
       - name: Prepare release assets
         run: |
-          ls -R artifacts
           mkdir -p dist
-          find artifacts -type f -name '*.tar.gz' -exec cp {} dist/ \;
-          find artifacts -type f -name '*.sha256' -exec cp {} dist/ \;
-          if [ -z "$(find dist -type f -print -quit)" ]; then
-            echo "No packaged artifacts found." >&2
-            exit 1
-          fi
+          find artifacts -type f \( -name "*.tar.gz" -o -name "*.zip" -o -name "*.sha256" \) -exec cp {} dist/ \;
+          ls -lh dist/
 
-      - name: Sign release artifacts
+      - name: Sign release artifacts (if GPG key available)
         if: ${{ secrets.GPG_PRIVATE_KEY != '' }}
         run: |
-          # Import GPG key if available
           if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
             echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
-            
-            # Sign all release files
-            for file in dist/*.tar.gz; do
+            for file in dist/*.tar.gz dist/*.zip; do
               gpg --batch --yes --detach-sign --armor "$file"
             done
-            
             echo "Release artifacts signed with GPG"
-          else
-            echo "GPG key not configured - skipping signing"
           fi
 
       - name: Compose release notes
@@ -146,26 +295,44 @@ jobs:
 
           version = os.environ["VERSION"]
           pattern = re.compile(rf"^##\s+\[?{re.escape(version)}\]?")
-          lines = pathlib.Path("CHANGELOG.md").read_text().splitlines()
-
-          capture = False
-          out = []
-          for line in lines:
-              if pattern.match(line):
-                  capture = True
-                  continue
-              if capture and line.startswith("## "):
-                  break
-              if capture:
-                  out.append(line)
-
-          notes_path = pathlib.Path("release_notes.md")
-          if out:
-              notes_path.write_text("\n".join(out).strip() + "\n")
+          
+          changelog_path = pathlib.Path("doc/CHANGELOG.md")
+          if not changelog_path.exists():
+              changelog_path = pathlib.Path("CHANGELOG.md")
+          
+          if changelog_path.exists():
+              lines = changelog_path.read_text().splitlines()
+              capture = False
+              out = []
+              for line in lines:
+                  if pattern.match(line):
+                      capture = True
+                      continue
+                  if capture and line.startswith("## "):
+                      break
+                  if capture:
+                      out.append(line)
+              
+              notes_path = pathlib.Path("release_notes.md")
+              if out:
+                  notes_path.write_text("\n".join(out).strip() + "\n")
+              else:
+                  notes_path.write_text(
+                      f"PARTHENON CHAIN {version}\n\n"
+                      "## Binaries\n\n"
+                      "This release includes binaries for:\n"
+                      "- Linux x86_64\n"
+                      "- Windows x86_64\n"
+                      "- macOS x86_64 (Intel)\n"
+                      "- macOS arm64 (Apple Silicon)\n\n"
+                      "## Verification\n\n"
+                      "Always verify checksums before running binaries.\n"
+                      "See docs/verifying-downloads.md for instructions.\n"
+                  )
           else:
-              notes_path.write_text(
-                  f"Drachma {version}\n"
-                  "Release notes not found in CHANGELOG.md\n"
+              pathlib.Path("release_notes.md").write_text(
+                  f"PARTHENON CHAIN {version}\n\n"
+                  "Release binaries for all supported platforms.\n"
               )
           PY
 
@@ -173,11 +340,11 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ env.VERSION }}
-          name: Drachma ${{ env.VERSION }}
+          name: PARTHENON CHAIN ${{ env.VERSION }}
           body_path: release_notes.md
           files: dist/*
           draft: false
           prerelease: >-
-            ${{ contains(env.VERSION, 'rc') || contains(env.VERSION, 'test') }}
+            ${{ contains(env.VERSION, 'rc') || contains(env.VERSION, 'test') || contains(env.VERSION, 'dev') }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

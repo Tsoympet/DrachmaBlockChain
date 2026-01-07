@@ -1,0 +1,72 @@
+---
+name: "parthenon-win-0.1"
+enable_cache: true
+distro: "ubuntu"
+suites:
+- "focal"
+architectures:
+- "amd64"
+packages:
+- "g++"
+- "gcc"
+- "cmake"
+- "ninja-build"
+- "mingw-w64"
+- "g++-mingw-w64-x86-64"
+- "nsis"
+- "zip"
+- "ca-certificates"
+- "python3"
+- "pkg-config"
+- "autoconf"
+- "automake"
+- "libtool"
+
+remotes:
+- "url": "https://github.com/Tsoympet/PARTHENON-CHAIN.git"
+  "dir": "parthenon-chain"
+
+files:
+- "openssl-3.0.13.tar.gz"
+- "boost_1_83_0.tar.gz"
+
+script: |
+  WRAP_DIR=$HOME/wrapped
+  HOSTS="x86_64-w64-mingw32"
+  
+  export TZ="UTC"
+  export BUILD_DIR=`pwd`
+  export SOURCE_DATE_EPOCH=1
+  export LC_ALL=C
+  
+  # Build OpenSSL for Windows
+  tar xzf openssl-3.0.13.tar.gz
+  cd openssl-3.0.13
+  ./Configure mingw64 --cross-compile-prefix=x86_64-w64-mingw32- \
+    --prefix=$BUILD_DIR/deps no-shared
+  make -j$(nproc)
+  make install_sw
+  cd ..
+  
+  # Build Boost for Windows
+  tar xzf boost_1_83_0.tar.gz
+  cd boost_1_83_0
+  ./bootstrap.sh
+  echo "using gcc : mingw : x86_64-w64-mingw32-g++ ;" > user-config.jam
+  ./b2 --with-system toolset=gcc-mingw target-os=windows \
+    variant=release link=static threading=multi runtime-link=static \
+    --prefix=$BUILD_DIR/deps install -j$(nproc)
+  cd ..
+  
+  # Build PARTHENON CHAIN
+  cd parthenon-chain
+  VERSION=$(cat CMakeLists.txt | grep "VERSION" | head -1 | awk '{print $2}' | tr -d ')')
+  
+  # Note: This is a placeholder. Full Windows cross-compilation requires:
+  # 1. Building all dependencies (OpenSSL, Boost, LevelDB) for MinGW
+  # 2. Creating proper CMake toolchain file
+  # 3. Handling static linking correctly
+  # This should be completed before official mainnet launch
+  
+  echo "Windows Gitian build requires additional setup" > $OUTDIR/WINDOWS_BUILD_STATUS.txt
+  echo "See contrib/gitian-descriptors/gitian-win.yml for requirements" >> $OUTDIR/WINDOWS_BUILD_STATUS.txt

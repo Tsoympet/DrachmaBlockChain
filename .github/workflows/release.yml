@@ -28,7 +28,7 @@ env:
 jobs:
   build-linux:
     name: Build Linux x86_64
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       BUILD_DIR: build
       VERSION: >-
@@ -134,7 +134,7 @@ jobs:
 
   build-windows:
     name: Build Windows x86_64
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     env:
       BUILD_DIR: build-win
       VERSION: >-
@@ -467,7 +467,7 @@ jobs:
             artifact_name: release-qt-wallet-windows
           - os: macos-latest
             artifact_name: release-qt-wallet-macos
-          - os: ubuntu-20.04
+          - os: ubuntu-22.04
             artifact_name: release-qt-wallet-linux
     env:
       VERSION: >-

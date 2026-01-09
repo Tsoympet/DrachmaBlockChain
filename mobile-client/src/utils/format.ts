@@ -5,11 +5,7 @@
 /**
  * Format cryptocurrency amount
  */
-export const formatCrypto = (
-  amount: string | number,
-  decimals = 8,
-  symbol = 'DRACHMA',
-): string => {
+export const formatCrypto = (amount: string | number, decimals = 8, symbol = 'DRACHMA'): string => {
   const num = typeof amount === 'string' ? parseFloat(amount) : amount;
   return `${num.toFixed(decimals)} ${symbol}`;
 };
@@ -28,11 +24,7 @@ export const formatFiat = (amount: string | number, currency = 'USD'): string =>
 /**
  * Truncate address for display
  */
-export const truncateAddress = (
-  address: string,
-  startChars = 10,
-  endChars = 8,
-): string => {
+export const truncateAddress = (address: string, startChars = 10, endChars = 8): string => {
   if (address.length <= startChars + endChars) {
     return address;
   }
@@ -58,14 +50,20 @@ export const formatDate = (timestamp: number): string => {
 export const formatRelativeTime = (timestamp: number): string => {
   const now = Date.now();
   const diff = now - timestamp;
-  
+
   const seconds = Math.floor(diff / 1000);
   const minutes = Math.floor(seconds / 60);
   const hours = Math.floor(minutes / 60);
   const days = Math.floor(hours / 24);
-  
-  if (days > 0) return `${days} day${days > 1 ? 's' : ''} ago`;
-  if (hours > 0) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-  if (minutes > 0) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+
+  if (days > 0) {
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  }
+  if (hours > 0) {
+    return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+  }
+  if (minutes > 0) {
+    return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+  }
   return 'Just now';
 };

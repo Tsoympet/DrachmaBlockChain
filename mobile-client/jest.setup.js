@@ -40,7 +40,7 @@ jest.mock('expo-clipboard', () => ({
 }));
 
 jest.mock('expo-random', () => ({
-  getRandomBytes: (length) => new Uint8Array(length).fill(7),
+  getRandomBytes: length => new Uint8Array(length).fill(7),
 }));
 
 // Silence the warning: Animated: `useNativeDriver` is not supported

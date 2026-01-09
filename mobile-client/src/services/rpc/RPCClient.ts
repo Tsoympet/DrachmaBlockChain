@@ -1,6 +1,6 @@
 /**
  * RPC Client for PARTHENON CHAIN (Drachma)
- * 
+ *
  * Provides a secure connection to Drachma nodes for wallet operations.
  * Supports authentication, request batching, and error handling.
  */
@@ -42,10 +42,13 @@ export class RPCClient {
       headers: {
         'Content-Type': 'application/json',
       },
-      auth: config.username && config.password ? {
-        username: config.username,
-        password: config.password,
-      } : undefined,
+      auth:
+        config.username && config.password
+          ? {
+              username: config.username,
+              password: config.password,
+            }
+          : undefined,
     });
   }
 
@@ -62,11 +65,9 @@ export class RPCClient {
 
     try {
       const response = await this.client.post<RPCResponse<T>>('', request);
-      
+
       if (response.data.error) {
-        throw new Error(
-          `RPC Error (${response.data.error.code}): ${response.data.error.message}`
-        );
+        throw new Error(`RPC Error (${response.data.error.code}): ${response.data.error.message}`);
       }
 
       return response.data.result as T;
@@ -91,12 +92,10 @@ export class RPCClient {
 
     try {
       const response = await this.client.post<RPCResponse<T>[]>('', requests);
-      
+
       return response.data.map(res => {
         if (res.error) {
-          throw new Error(
-            `RPC Error (${res.error.code}): ${res.error.message}`
-          );
+          throw new Error(`RPC Error (${res.error.code}): ${res.error.message}`);
         }
         return res.result as T;
       });
@@ -119,7 +118,9 @@ export class RPCClient {
 
   async sendToAddress(address: string, amount: number, assetId?: string): Promise<string> {
     const params = [address, amount];
-    if (assetId) params.push(assetId);
+    if (assetId) {
+      params.push(assetId);
+    }
     return this.call('sendtoaddress', params);
   }
 

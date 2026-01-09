@@ -52,11 +52,7 @@ function MainTabs() {
 export function AppNavigator() {
   return (
     <Stack.Navigator>
-      <Stack.Screen 
-        name="MainTabs" 
-        component={MainTabs}
-        options={{headerShown: false}}
-      />
+      <Stack.Screen name="MainTabs" component={MainTabs} options={{headerShown: false}} />
     </Stack.Navigator>
   );
 }

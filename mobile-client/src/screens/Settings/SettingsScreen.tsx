@@ -63,10 +63,7 @@ export const SettingsScreen: React.FC = () => {
             subtitle={APP_CONFIG.APP_VERSION}
             onPress={() => console.log('Version info')}
           />
-          <SettingItem
-            title="Terms of Service"
-            onPress={() => console.log('Terms')}
-          />
+          <SettingItem title="Terms of Service" onPress={() => console.log('Terms')} />
         </View>
 
         <Button

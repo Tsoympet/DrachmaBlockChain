@@ -1,9 +1,9 @@
 /**
  * Mobile Mining Service for PARTHENON CHAIN
- * 
+ *
  * Specialized lightweight mining implementation for mobile devices.
  * This is NOT the same as PC miners (CPU/GPU/CUDA/OpenCL).
- * 
+ *
  * Features:
  * - Battery-aware mining with automatic throttling
  * - Low-power mode for background mining
@@ -21,18 +21,18 @@ export interface MobileMiningConfig {
   poolUrl?: string;
   workerName?: string;
   poolPassword?: string;
-  
+
   // Mobile-specific settings
   maxBatteryDrain: number; // Percentage per hour (default: 5%)
   enableOnBattery: boolean; // Allow mining on battery (default: false)
   enableOnCharging: boolean; // Allow mining when charging (default: true)
   minBatteryLevel: number; // Stop mining below this level (default: 30%)
   maxTemperature: number; // Stop mining above this temp in Celsius (default: 40°C)
-  
+
   // Performance settings (mobile-optimized)
   hashBatchSize: number; // Number of hashes per batch (default: 100, vs 1024+ on PC)
   sleepBetweenBatches: number; // Milliseconds to sleep between batches (default: 100ms)
-  
+
   // Low-power mode
   lowPowerMode: boolean; // Reduce hash rate when in background
   backgroundHashBatchSize: number; // Smaller batches in background (default: 10)
@@ -64,10 +64,10 @@ export interface MiningJob {
 
 /**
  * Mobile Mining Service
- * 
+ *
  * This is a specialized implementation for mobile devices that is fundamentally
  * different from the PC miners:
- * 
+ *
  * 1. Uses single-threaded or minimal threading (vs multi-core on PC)
  * 2. Implements battery and temperature monitoring
  * 3. Uses smaller hash batches with sleep intervals
@@ -81,19 +81,19 @@ export class MobileMiningService {
   private isRunning: boolean = false;
   private currentJob: MiningJob | null = null;
   private startTime: number = 0;
-  private miningInterval: NodeJS.Timeout | null = null;
-  private monitoringInterval: NodeJS.Timeout | null = null;
-  
+  private miningInterval: ReturnType<typeof setInterval> | null = null;
+  private monitoringInterval: ReturnType<typeof setInterval> | null = null;
+
   // Mobile-specific state
   private currentNonce: number = 0;
   private isInBackground: boolean = false;
-  
+
   constructor(rpcClient: RPCClient, config?: Partial<MobileMiningConfig>) {
     this.rpcClient = rpcClient;
     this.config = this.getDefaultConfig(config);
     this.stats = this.getInitialStats();
   }
-  
+
   private getDefaultConfig(config?: Partial<MobileMiningConfig>): MobileMiningConfig {
     return {
       enabled: false,
@@ -109,7 +109,7 @@ export class MobileMiningService {
       ...config,
     };
   }
-  
+
   private getInitialStats(): MobileMiningStats {
     return {
       isActive: false,
@@ -123,7 +123,7 @@ export class MobileMiningService {
       isCharging: false,
     };
   }
-  
+
   /**
    * Start mobile mining
    */
@@ -132,29 +132,29 @@ export class MobileMiningService {
       console.log('Mobile mining already running');
       return;
     }
-    
+
     // Check if we should mine based on battery/charging state
     if (!this.canStartMining()) {
       console.log('Cannot start mining: battery/charging conditions not met');
       return;
     }
-    
+
     this.isRunning = true;
     this.stats.isActive = true;
     this.startTime = Date.now();
-    
+
     console.log('Starting mobile mining (specialized mobile implementation)');
-    
+
     // Start device monitoring
     this.startDeviceMonitoring();
-    
+
     // Get initial mining job
     await this.fetchMiningJob();
-    
+
     // Start mining loop (mobile-optimized)
     this.startMiningLoop();
   }
-  
+
   /**
    * Stop mobile mining
    */
@@ -162,39 +162,39 @@ export class MobileMiningService {
     console.log('Stopping mobile mining');
     this.isRunning = false;
     this.stats.isActive = false;
-    
+
     if (this.miningInterval) {
       clearInterval(this.miningInterval);
       this.miningInterval = null;
     }
-    
+
     if (this.monitoringInterval) {
       clearInterval(this.monitoringInterval);
       this.monitoringInterval = null;
     }
   }
-  
+
   /**
    * Check if mining can start based on battery/charging conditions
    */
   private canStartMining(): boolean {
     const {isCharging, batteryLevel} = this.stats;
-    
+
     if (batteryLevel < this.config.minBatteryLevel) {
       return false;
     }
-    
+
     if (isCharging && this.config.enableOnCharging) {
       return true;
     }
-    
+
     if (!isCharging && this.config.enableOnBattery) {
       return true;
     }
-    
+
     return false;
   }
-  
+
   /**
    * Start device monitoring (battery, temperature)
    * This is mobile-specific functionality not present in PC miners
@@ -202,17 +202,19 @@ export class MobileMiningService {
   private startDeviceMonitoring(): void {
     this.monitoringInterval = setInterval(() => {
       this.updateDeviceStats();
-      
+
       // Auto-stop if conditions are no longer met
-      if (this.stats.batteryLevel < this.config.minBatteryLevel ||
-          this.stats.temperature > this.config.maxTemperature ||
-          (!this.stats.isCharging && !this.config.enableOnBattery)) {
+      if (
+        this.stats.batteryLevel < this.config.minBatteryLevel ||
+        this.stats.temperature > this.config.maxTemperature ||
+        (!this.stats.isCharging && !this.config.enableOnBattery)
+      ) {
         console.log('Stopping mining due to device conditions');
         this.stopMining();
       }
     }, 5000); // Check every 5 seconds
   }
-  
+
   /**
    * Update device statistics
    * Note: In a real React Native app, this would use native modules
@@ -222,8 +224,7 @@ export class MobileMiningService {
     const level = await Battery.getBatteryLevelAsync();
     const state = await Battery.getBatteryStateAsync();
     const isCharging =
-      state === Battery.BatteryState.CHARGING ||
-      state === Battery.BatteryState.FULL;
+      state === Battery.BatteryState.CHARGING || state === Battery.BatteryState.FULL;
 
     this.stats.batteryLevel = Math.round(level * 100);
     this.stats.isCharging = isCharging;
@@ -233,7 +234,7 @@ export class MobileMiningService {
     this.stats.temperature = Math.round(baseTemperature + loadHeat);
     this.stats.uptime = Math.floor((Date.now() - this.startTime) / 1000);
   }
-  
+
   /**
    * Fetch mining job from pool or node
    */
@@ -264,7 +265,7 @@ export class MobileMiningService {
       };
     }
   }
-  
+
   /**
    * Start the mobile mining loop
    * This is fundamentally different from PC miners:
@@ -279,19 +280,19 @@ export class MobileMiningService {
       if (!this.isRunning || !this.currentJob) {
         return;
       }
-      
+
       const batchSize = this.isInBackground
         ? this.config.backgroundHashBatchSize
         : this.config.hashBatchSize;
-      
+
       const startNonce = this.currentNonce;
       let found = false;
-      
+
       // Mine a small batch (mobile-optimized)
       for (let i = 0; i < batchSize && !found; i++) {
         const nonce = startNonce + i;
         const hash = await this.computeHash(this.currentJob, nonce);
-        
+
         if (this.meetsTarget(hash, this.currentJob.target)) {
           console.log(`Mobile miner found share! Nonce: ${nonce}`);
           await this.submitShare(this.currentJob, nonce);
@@ -299,20 +300,20 @@ export class MobileMiningService {
           this.stats.sharesFound++;
         }
       }
-      
+
       this.currentNonce = startNonce + batchSize;
-      
+
       // Update hash rate (mobile-specific calculation)
       const elapsedSeconds = (Date.now() - this.startTime) / 1000;
       this.stats.hashRate = this.currentNonce / elapsedSeconds;
-      
+
       // Sleep between batches to prevent overheating (mobile-specific)
       setTimeout(mineNextBatch, this.config.sleepBetweenBatches);
     };
-    
+
     mineNextBatch();
   }
-  
+
   /**
    * Compute hash for mobile mining
    * Simplified implementation optimized for mobile ARM processors
@@ -320,18 +321,14 @@ export class MobileMiningService {
    */
   private async computeHash(job: MiningJob, nonce: number): Promise<string> {
     const header = `${job.version}${job.prevHash}${job.merkleRoot}${job.time}${job.bits}${nonce}`;
-    const first = await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      header,
-      {encoding: Crypto.CryptoEncoding.HEX}
-    );
-    return await Crypto.digestStringAsync(
-      Crypto.CryptoDigestAlgorithm.SHA256,
-      first,
-      {encoding: Crypto.CryptoEncoding.HEX}
-    );
+    const first = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, header, {
+      encoding: Crypto.CryptoEncoding.HEX,
+    });
+    return await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, first, {
+      encoding: Crypto.CryptoEncoding.HEX,
+    });
   }
-  
+
   /**
    * Check if hash meets target difficulty
    */
@@ -340,7 +337,7 @@ export class MobileMiningService {
     const targetValue = BigInt(`0x${target}`);
     return hashValue <= targetValue;
   }
-  
+
   /**
    * Submit found share to pool
    */
@@ -358,7 +355,7 @@ export class MobileMiningService {
       this.stats.sharesRejected++;
     }
   }
-  
+
   /**
    * Set background/foreground mode
    * Mobile-specific: reduce mining when app is in background
@@ -367,21 +364,21 @@ export class MobileMiningService {
     this.isInBackground = isBackground;
     console.log(`Mobile miner ${isBackground ? 'entering' : 'exiting'} background mode`);
   }
-  
+
   /**
    * Update mining configuration
    */
   updateConfig(config: Partial<MobileMiningConfig>): void {
     this.config = {...this.config, ...config};
   }
-  
+
   /**
    * Get current mining statistics
    */
   getStats(): MobileMiningStats {
     return {...this.stats};
   }
-  
+
   /**
    * Get current configuration
    */

@@ -11,10 +11,7 @@ interface AddressDisplayProps {
   onCopy?: () => void;
 }
 
-export const AddressDisplay: React.FC<AddressDisplayProps> = ({
-  address,
-  onCopy,
-}) => {
+export const AddressDisplay: React.FC<AddressDisplayProps> = ({address, onCopy}) => {
   const truncatedAddress = `${address.slice(0, 10)}...${address.slice(-8)}`;
 
   return (

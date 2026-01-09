@@ -11,10 +11,7 @@ interface TransactionItemProps {
   onPress?: () => void;
 }
 
-export const TransactionItem: React.FC<TransactionItemProps> = ({
-  transaction,
-  onPress,
-}) => {
+export const TransactionItem: React.FC<TransactionItemProps> = ({transaction, onPress}) => {
   const isSend = transaction.type === 'send';
   const statusColor =
     transaction.status === 'confirmed'
@@ -22,28 +19,21 @@ export const TransactionItem: React.FC<TransactionItemProps> = ({
       : transaction.status === 'pending'
       ? '#FFC107'
       : '#DC3545';
-  
+
   const displayAddress = isSend ? transaction.to : transaction.from;
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={onPress}
-      activeOpacity={0.7}>
+    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.left}>
         <Text style={styles.type}>{isSend ? '↑ Sent' : '↓ Received'}</Text>
-        <Text style={styles.address}>
-          {displayAddress.slice(0, 10)}...
-        </Text>
+        <Text style={styles.address}>{displayAddress.slice(0, 10)}...</Text>
       </View>
       <View style={styles.right}>
         <Text style={[styles.amount, isSend && styles.sendAmount]}>
           {isSend ? '-' : '+'}
           {transaction.amount}
         </Text>
-        <Text style={[styles.status, {color: statusColor}]}>
-          {transaction.status}
-        </Text>
+        <Text style={[styles.status, {color: statusColor}]}>{transaction.status}</Text>
       </View>
     </TouchableOpacity>
   );

@@ -3,8 +3,4 @@
  */
 
 export {MobileMiningService} from './MobileMiningService';
-export type {
-  MobileMiningConfig,
-  MobileMiningStats,
-  MiningJob,
-} from './MobileMiningService';
+export type {MobileMiningConfig, MobileMiningStats, MiningJob} from './MobileMiningService';

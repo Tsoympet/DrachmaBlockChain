@@ -1,10 +1,11 @@
 /**
  * Cryptographic Operations Service
- * 
+ *
  * Provides encryption, decryption, hashing, and key derivation utilities.
  */
 
-import {secp256k1} from '@noble/secp256k1';
+import * as secp from '@noble/secp256k1';
+import {sha256 as sha256Hash} from '@noble/hashes/sha2';
 import {Buffer} from 'buffer';
 import * as Random from 'expo-random';
 
@@ -13,14 +14,14 @@ export class CryptoService {
    * Generate a random private key
    */
   static generatePrivateKey(): Uint8Array {
-    return secp256k1.utils.randomPrivateKey();
+    return secp.utils.randomPrivateKey();
   }
 
   /**
    * Derive public key from private key
    */
   static getPublicKey(privateKey: Uint8Array, compressed = true): Uint8Array {
-    return secp256k1.getPublicKey(privateKey, compressed);
+    return secp.getPublicKey(privateKey, compressed);
   }
 
   /**
@@ -28,17 +29,14 @@ export class CryptoService {
    */
   static sha256(data: Uint8Array | string): Uint8Array {
     const buffer = typeof data === 'string' ? Buffer.from(data, 'utf8') : data;
-    return secp256k1.utils.sha256(buffer);
+    return sha256Hash(buffer);
   }
 
   /**
    * Sign message with Schnorr signature
    */
-  static async schnorrSign(
-    message: Uint8Array,
-    privateKey: Uint8Array,
-  ): Promise<Uint8Array> {
-    return await secp256k1.schnorr.sign(message, privateKey);
+  static async schnorrSign(message: Uint8Array, privateKey: Uint8Array): Promise<Uint8Array> {
+    return await secp.schnorr.sign(message, privateKey);
   }
 
   /**
@@ -49,28 +47,25 @@ export class CryptoService {
     message: Uint8Array,
     publicKey: Uint8Array,
   ): Promise<boolean> {
-    return await secp256k1.schnorr.verify(signature, message, publicKey);
+    return await secp.schnorr.verify(signature, message, publicKey);
   }
 
   /**
    * Sign message with ECDSA signature
    */
-  static async ecdsaSign(
-    message: Uint8Array,
-    privateKey: Uint8Array,
-  ): Promise<Uint8Array> {
-    return await secp256k1.sign(message, privateKey);
+  static async ecdsaSign(message: Uint8Array, privateKey: Uint8Array): Promise<Uint8Array> {
+    return await secp.sign(message, privateKey);
   }
 
   /**
    * Verify ECDSA signature
    */
-  static ecdsaVerify(
+  static async ecdsaVerify(
     signature: Uint8Array,
     message: Uint8Array,
     publicKey: Uint8Array,
-  ): boolean {
-    return secp256k1.verify(signature, message, publicKey);
+  ): Promise<boolean> {
+    return secp.verify(signature, message, publicKey);
   }
 
   /**

@@ -1,6 +1,6 @@
 /**
  * Wallet Service for PARTHENON CHAIN Mobile Wallet
- * 
+ *
  * Handles key management, transaction signing, and wallet operations.
  * Uses BIP39 for mnemonic generation and HD wallet derivation.
  */
@@ -8,7 +8,8 @@
 import {mnemonicToSeedSync, generateMnemonic, validateMnemonic} from '@scure/bip39';
 import {wordlist} from '@scure/bip39/wordlists/english';
 import {HDKey} from '@scure/bip32';
-import {secp256k1} from '@noble/secp256k1';
+import * as secp from '@noble/secp256k1';
+import {sha256 as sha256Hash} from '@noble/hashes/sha2';
 import {Buffer} from 'buffer';
 import {SecureStorage} from '../storage/SecureStorage';
 
@@ -84,7 +85,7 @@ export class WalletService {
       throw new Error('Failed to derive private key');
     }
 
-    const publicKey = secp256k1.getPublicKey(child.privateKey, true);
+    const publicKey = secp.getPublicKey(child.privateKey, true);
     const address = this.generateAddress(publicKey);
 
     return {
@@ -100,7 +101,7 @@ export class WalletService {
    * Generate Drachma address from public key
    */
   private generateAddress(publicKey: Uint8Array): string {
-    const hash = secp256k1.utils.sha256(publicKey);
+    const hash = sha256Hash(publicKey);
     return 'drm' + Buffer.from(hash).toString('hex').slice(0, 40);
   }
 
@@ -117,7 +118,9 @@ export class WalletService {
    */
   async getCurrentAccount(): Promise<WalletAccount | null> {
     const wallet = await this.getWallet();
-    if (!wallet || wallet.accounts.length === 0) return null;
+    if (!wallet || wallet.accounts.length === 0) {
+      return null;
+    }
     return wallet.accounts[wallet.currentAccountIndex];
   }
 
@@ -133,10 +136,10 @@ export class WalletService {
     const seed = mnemonicToSeedSync(wallet.mnemonic);
     const newIndex = wallet.accounts.length;
     const account = await this.deriveAccount(seed, newIndex);
-    
+
     wallet.accounts.push(account);
     await this.storage.setItem(WalletService.WALLET_KEY, JSON.stringify(wallet));
-    
+
     return account;
   }
 
@@ -148,7 +151,7 @@ export class WalletService {
     if (!wallet || index >= wallet.accounts.length) {
       throw new Error('Invalid account index');
     }
-    
+
     wallet.currentAccountIndex = index;
     await this.storage.setItem(WalletService.WALLET_KEY, JSON.stringify(wallet));
   }
@@ -163,11 +166,11 @@ export class WalletService {
     }
 
     const privateKey = Buffer.from(account.privateKey, 'hex');
-    const txHash = secp256k1.utils.sha256(Buffer.from(JSON.stringify(txData)));
-    
+    const txHash = sha256Hash(Buffer.from(JSON.stringify(txData)));
+
     // Sign with Schnorr
-    const signature = await secp256k1.schnorr.sign(txHash, privateKey);
-    
+    const signature = await secp.schnorr.sign(txHash, privateKey);
+
     return Buffer.from(signature).toString('hex');
   }
 

@@ -1,6 +1,6 @@
 /**
  * Mobile Mining Redux Slice
- * 
+ *
  * State management for mobile mining functionality.
  * This manages the specialized mobile mining service state.
  */
@@ -60,7 +60,7 @@ const miningSlice = createSlice({
     setMiningError: (state, action: PayloadAction<string | null>) => {
       state.error = action.payload;
     },
-    resetMiningStats: (state) => {
+    resetMiningStats: state => {
       state.stats = initialState.stats;
     },
   },

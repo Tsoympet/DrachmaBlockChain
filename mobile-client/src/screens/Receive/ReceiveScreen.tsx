@@ -14,12 +14,16 @@ export const ReceiveScreen: React.FC = () => {
   const {currentAddress} = useSelector((state: RootState) => state.wallet);
 
   const handleCopyAddress = async () => {
-    if (!currentAddress) return;
+    if (!currentAddress) {
+      return;
+    }
     await Clipboard.setStringAsync(currentAddress);
   };
 
   const handleShare = async () => {
-    if (!currentAddress) return;
+    if (!currentAddress) {
+      return;
+    }
     await Share.share({
       message: `My Drachma address: ${currentAddress}`,
     });
@@ -29,9 +33,7 @@ export const ReceiveScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
         <Text style={styles.title}>Receive Drachma</Text>
-        <Text style={styles.subtitle}>
-          Share your address to receive payments
-        </Text>
+        <Text style={styles.subtitle}>Share your address to receive payments</Text>
 
         {currentAddress && (
           <>

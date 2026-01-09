@@ -36,9 +36,7 @@ describe('HomeScreen', () => {
       wallet: {
         isInitialized: true,
         currentAddress: 'drm1234567890abcdef',
-        balances: [
-          {assetId: 'drm', symbol: 'DRM', name: 'Drachma', balance: 10, decimals: 8},
-        ],
+        balances: [{assetId: 'drm', symbol: 'DRM', name: 'Drachma', balance: 10, decimals: 8}],
         transactions: [],
         isLoading: false,
         error: null,
@@ -48,7 +46,7 @@ describe('HomeScreen', () => {
     const {getByText} = render(
       <Provider store={store}>
         <HomeScreen />
-      </Provider>
+      </Provider>,
     );
 
     expect(getByText(/balance/i)).toBeTruthy();
@@ -59,7 +57,7 @@ describe('HomeScreen', () => {
     const {getByText} = render(
       <Provider store={store}>
         <HomeScreen />
-      </Provider>
+      </Provider>,
     );
 
     const sendButton = getByText(/send/i);
@@ -84,7 +82,7 @@ describe('WalletScreen', () => {
     const {getByText} = render(
       <Provider store={store}>
         <WalletScreen />
-      </Provider>
+      </Provider>,
     );
 
     expect(getByText(/create wallet/i)).toBeTruthy();
@@ -106,7 +104,7 @@ describe('SendScreen', () => {
     const {getByPlaceholderText} = render(
       <Provider store={store}>
         <SendScreen />
-      </Provider>
+      </Provider>,
     );
 
     expect(getByPlaceholderText(/recipient address/i)).toBeTruthy();
@@ -127,7 +125,7 @@ describe('SendScreen', () => {
     const {getByPlaceholderText, getByText, findByText} = render(
       <Provider store={store}>
         <SendScreen />
-      </Provider>
+      </Provider>,
     );
 
     const addressInput = getByPlaceholderText(/recipient address/i);
@@ -157,7 +155,7 @@ describe('ReceiveScreen', () => {
     const {getByText} = render(
       <Provider store={store}>
         <ReceiveScreen />
-      </Provider>
+      </Provider>,
     );
 
     expect(getByText(testAddress)).toBeTruthy();
@@ -178,7 +176,7 @@ describe('ReceiveScreen', () => {
     const {getByTestId} = render(
       <Provider store={store}>
         <ReceiveScreen />
-      </Provider>
+      </Provider>,
     );
 
     expect(getByTestId('qr-code')).toBeTruthy();

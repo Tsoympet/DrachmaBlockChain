@@ -14,8 +14,8 @@ export const HomeScreen: React.FC = () => {
   const navigation = useNavigation();
   const {currentAddress, balances} = useSelector((state: RootState) => state.wallet);
   const drmBalance = useMemo(
-    () => balances.find(balance => balance.assetId === 'drm'),
-    [balances]
+    () => balances.find((balance: any) => balance.assetId === 'drm'),
+    [balances],
   );
 
   return (
@@ -31,21 +31,18 @@ export const HomeScreen: React.FC = () => {
             style={styles.animation}
           />
         </View>
-        
-        <BalanceCard
-          balance={(drmBalance?.balance ?? 0).toFixed(4)}
-          currency="DRM"
-        />
+
+        <BalanceCard balance={(drmBalance?.balance ?? 0).toFixed(4)} currency="DRM" />
 
         <View style={styles.actions}>
-          <Button 
-            title="Send" 
-            onPress={() => navigation.navigate('Send' as never)} 
+          <Button
+            title="Send"
+            onPress={() => navigation.navigate('Send' as never)}
             style={styles.actionButton}
           />
-          <Button 
-            title="Receive" 
-            onPress={() => navigation.navigate('Receive' as never)} 
+          <Button
+            title="Receive"
+            onPress={() => navigation.navigate('Receive' as never)}
             style={styles.actionButton}
             variant="outline"
           />

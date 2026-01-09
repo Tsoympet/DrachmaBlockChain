@@ -42,9 +42,7 @@ const walletSlice = createSlice({
       state.balances = action.payload;
     },
     updateBalance: (state, action: PayloadAction<AssetBalance>) => {
-      const index = state.balances.findIndex(
-        b => b.assetId === action.payload.assetId
-      );
+      const index = state.balances.findIndex(b => b.assetId === action.payload.assetId);
       if (index >= 0) {
         state.balances[index] = action.payload;
       } else {

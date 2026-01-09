@@ -12,11 +12,7 @@ interface NFTGalleryProps {
   numColumns?: number;
 }
 
-export const NFTGallery: React.FC<NFTGalleryProps> = ({
-  nfts,
-  onNFTPress,
-  numColumns = 2,
-}) => {
+export const NFTGallery: React.FC<NFTGalleryProps> = ({nfts, onNFTPress, numColumns = 2}) => {
   return (
     <FlatList
       data={nfts}

@@ -24,10 +24,7 @@ export const TransactionsScreen: React.FC = () => {
       <FlatList
         data={transactions}
         renderItem={({item}) => (
-          <TransactionItem
-            transaction={item}
-            onPress={() => handleTransactionPress(item)}
-          />
+          <TransactionItem transaction={item} onPress={() => handleTransactionPress(item)} />
         )}
         keyExtractor={item => item.id}
         ListEmptyComponent={

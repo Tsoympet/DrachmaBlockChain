@@ -8,7 +8,7 @@ export interface MiningConfig {
   workerName?: string;
   minerAddress?: string;
   threads?: number;
-  
+
   // Mobile-specific
   maxBatteryDrain?: number;
   enableOnBattery?: boolean;
@@ -26,7 +26,7 @@ export interface MiningStats {
   uptime: number;
   difficulty?: number;
   lastShareTime?: number;
-  
+
   // Mobile-specific
   temperature?: number;
   batteryLevel?: number;

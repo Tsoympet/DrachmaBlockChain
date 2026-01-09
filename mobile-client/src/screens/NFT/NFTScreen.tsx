@@ -18,7 +18,7 @@ export const NFTScreen: React.FC = () => {
       <View style={styles.header}>
         <Text style={styles.title}>NFT Gallery</Text>
       </View>
-      <NFTGallery nfts={LOCAL_NFTS} onNFTPress={handleNFTPress} />
+      <NFTGallery nfts={[...LOCAL_NFTS]} onNFTPress={handleNFTPress} />
     </SafeAreaView>
   );
 };

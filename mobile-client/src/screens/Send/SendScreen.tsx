@@ -19,8 +19,8 @@ export const SendScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const drmBalance = useMemo(
-    () => balances.find(balance => balance.assetId === 'drm'),
-    [balances]
+    () => balances.find((balance: any) => balance.assetId === 'drm'),
+    [balances],
   );
 
   const handleSend = () => {
@@ -63,7 +63,7 @@ export const SendScreen: React.FC = () => {
         timestamp: Date.now(),
         status: 'pending',
         memo: sanitizedMemo || undefined,
-      })
+      }),
     );
 
     dispatch(
@@ -73,7 +73,7 @@ export const SendScreen: React.FC = () => {
         name: 'Drachma',
         balance: Math.max(0, available - numericAmount),
         decimals: 8,
-      })
+      }),
     );
 
     setRecipient('');

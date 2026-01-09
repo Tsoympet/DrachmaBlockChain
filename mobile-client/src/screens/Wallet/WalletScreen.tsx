@@ -15,9 +15,7 @@ const walletService = new WalletService();
 
 export const WalletScreen: React.FC = () => {
   const dispatch = useDispatch();
-  const {currentAddress, balances, isInitialized} = useSelector(
-    (state: RootState) => state.wallet
-  );
+  const {currentAddress, balances, isInitialized} = useSelector((state: RootState) => state.wallet);
   const [isBusy, setIsBusy] = useState(false);
 
   useEffect(() => {
@@ -35,8 +33,8 @@ export const WalletScreen: React.FC = () => {
   }, [dispatch]);
 
   const primaryBalance = useMemo(
-    () => balances.find(balance => balance.assetId === 'drm'),
-    [balances]
+    () => balances.find((balance: any) => balance.assetId === 'drm'),
+    [balances],
   );
 
   const handleCreateWallet = async () => {
@@ -48,7 +46,7 @@ export const WalletScreen: React.FC = () => {
         dispatch(setCurrentAddress(account.address));
         dispatch(setInitialized(true));
       }
-      Alert.alert('Recovery Phrase', mnemonic, {cancelable: true});
+      Alert.alert('Recovery Phrase', mnemonic, [{text: 'OK', onPress: () => {}}]);
     } catch (error) {
       Alert.alert('Wallet Error', 'Unable to create wallet.');
     } finally {
@@ -81,7 +79,7 @@ export const WalletScreen: React.FC = () => {
 
         <Card style={styles.card}>
           <Text style={styles.cardTitle}>Balances</Text>
-          {balances.map(balance => (
+          {balances.map((balance: any) => (
             <View key={balance.assetId} style={styles.balanceRow}>
               <Text style={styles.balanceLabel}>{balance.symbol}</Text>
               <Text style={styles.balanceValue}>

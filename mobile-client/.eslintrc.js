@@ -1,6 +1,6 @@
 module.exports = {
   root: true,
-  extends: '@react-native',
+  extends: '@react-native-community',
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint', 'react', 'react-native'],
   parserOptions: {
@@ -17,12 +17,12 @@ module.exports = {
     // TypeScript rules
     '@typescript-eslint/no-unused-vars': ['warn', {argsIgnorePattern: '^_'}],
     '@typescript-eslint/no-explicit-any': 'warn',
-    
+
     // React rules
     'react/prop-types': 'off', // TypeScript handles this
     'react-native/no-inline-styles': 'warn',
     'react-native/no-unused-styles': 'warn',
-    
+
     // General rules
     'no-console': ['warn', {allow: ['warn', 'error']}],
     'prefer-const': 'warn',

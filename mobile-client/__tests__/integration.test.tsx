@@ -1,6 +1,6 @@
 /**
  * Integration Tests
- * 
+ *
  * Tests that verify the integration between different components,
  * services, and the Redux store.
  */
@@ -44,7 +44,7 @@ describe('Wallet Integration Tests', () => {
   it('fetches balance from RPC', async () => {
     const mockBalance = '100.50';
     const mockAddress = 'drm1234567890abcdef1234567890abcdef12345678';
-    
+
     (rpcClient.call as jest.Mock).mockResolvedValue({
       result: mockBalance,
     });

@@ -5,11 +5,9 @@
 export interface WalletAccount {
   address: string;
   publicKey: string;
-  privateKey?: string;
-  derivationPath: string;
-  index: number;
-  balance?: string;
-  name?: string;
+  label?: string;
+  balance: number;
+  derivationPath?: string;
 }
 
 export interface WalletData {
@@ -20,12 +18,21 @@ export interface WalletData {
 }
 
 export interface WalletState {
-  initialized: boolean;
-  locked: boolean;
-  address: string | null;
-  balance: string | null;
+  isInitialized: boolean;
+  isLocked: boolean;
+  currentAddress: string | null;
   accounts: WalletAccount[];
-  currentAccountIndex: number;
+  balance: string;
+  address: string | null;
   isLoading: boolean;
   error: string | null;
+}
+
+export interface AssetBalance {
+  assetId: string;
+  symbol: string;
+  name: string;
+  balance: number;
+  decimals: number;
+  usdValue?: number;
 }

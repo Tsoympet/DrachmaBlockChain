@@ -2,27 +2,53 @@
  * Mining-related TypeScript types
  */
 
-export interface MiningState {
-  isActive: boolean;
-  hashRate: number;
-  totalMined: string;
-  difficulty: number;
-  currentBlockReward: string;
-  isLoading: boolean;
-  error: string | null;
-}
-
 export interface MiningConfig {
   enabled: boolean;
-  threads: number;
-  intensity: 'low' | 'medium' | 'high';
   poolUrl?: string;
+  workerName?: string;
+  minerAddress?: string;
+  threads?: number;
+  
+  // Mobile-specific
+  maxBatteryDrain?: number;
+  enableOnBattery?: boolean;
+  enableOnCharging?: boolean;
+  minBatteryLevel?: number;
+  maxTemperature?: number;
 }
 
 export interface MiningStats {
+  isActive: boolean;
   hashRate: number;
-  sharesSubmitted: number;
+  sharesFound: number;
   sharesAccepted: number;
+  sharesRejected: number;
   uptime: number;
-  totalEarned: string;
+  difficulty?: number;
+  lastShareTime?: number;
+  
+  // Mobile-specific
+  temperature?: number;
+  batteryLevel?: number;
+  isCharging?: boolean;
+}
+
+export interface MiningJob {
+  jobId: string;
+  target: string;
+  difficulty: number;
+  height: number;
+  prevHash: string;
+  merkleRoot: string;
+  timestamp: number;
+  nonce?: number;
+}
+
+export interface MiningPoolInfo {
+  url: string;
+  name: string;
+  fee: number;
+  minPayout: number;
+  paymentInterval: number;
+  status: 'active' | 'inactive' | 'maintenance';
 }

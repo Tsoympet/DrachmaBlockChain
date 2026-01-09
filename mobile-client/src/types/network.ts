@@ -2,19 +2,34 @@
  * Network-related TypeScript types
  */
 
+export type NetworkType = 'mainnet' | 'testnet' | 'regtest';
+
 export interface NetworkInfo {
+  type: NetworkType;
   name: string;
   rpcUrl: string;
-  chainId: number;
-  blockHeight?: number;
-  gasPrice?: string;
+  rpcPort: number;
+  explorer?: string;
+  chainId?: number;
 }
 
 export interface NetworkState {
-  current: NetworkInfo;
-  connected: boolean;
+  type: NetworkType;
+  isConnected: boolean;
   blockHeight: number;
-  gasPrice: string;
-  isLoading: boolean;
-  error: string | null;
+  peerCount: number;
+  isSyncing: boolean;
+  syncProgress: number;
+  rpcUrl: string;
+  latency?: number;
+  lastBlockTime?: number;
+}
+
+export interface PeerInfo {
+  id: string;
+  address: string;
+  version: string;
+  services: string;
+  syncedBlocks: number;
+  latency: number;
 }

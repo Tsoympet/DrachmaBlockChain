@@ -36,6 +36,20 @@ describe('Format Utils', () => {
       const address = 'drm123';
       expect(truncateAddress(address)).toBe(address);
     });
+
+    it('does not truncate when length matches start and end chars', () => {
+      const address = 'drm1234567890abcd';
+      expect(truncateAddress(address)).toBe(address);
+    });
+
+    it('supports custom start and end chars', () => {
+      const address = 'drm1234567890';
+      expect(truncateAddress(address, 4, 4)).toBe('drm1...7890');
+    });
+
+    it('returns empty string when input is empty', () => {
+      expect(truncateAddress('')).toBe('');
+    });
   });
 });
 
